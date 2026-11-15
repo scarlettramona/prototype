@@ -43,8 +43,8 @@ projects/template-application/src/
 ```
 
 What's there today: `layout/` (header, footer and the shell around the router
-outlet), `core/theme/` (light/dark theme), `ui/patterns/theme-button/` and
-`ui/components/label-above/`.
+outlet), `core/theme/` (light/dark theme), `core/charts/` (ECharts setup),
+`ui/patterns/theme-button/` and `ui/components/label-above/`.
 
 ### Form field with the label above
 
@@ -71,6 +71,45 @@ The styles are in `styles/components/material-component-overrides/_mat-form-fiel
    routes file the same way.
 3. Keep code inside the feature until a second feature needs it, then move it
    to `core/` (headless) or `ui/` (presentational).
+
+## Charts
+
+Charts use [Apache ECharts](https://echarts.apache.org/) through
+[ngx-echarts](https://github.com/xieziyu/ngx-echarts). ECharts is loaded lazily,
+the first time a chart renders, so it does not add to the initial bundle.
+
+Only the chart types and components registered in `app/core/charts/echarts.ts`
+are included: bar, line, pie and scatter charts; dataset, dataZoom, grid,
+legend, markLine, title and tooltip components. Register anything else there
+before using it in a chart's options, or ECharts will ignore it.
+
+```ts
+import { NgxEchartsDirective } from 'ngx-echarts';
+import type { EChartsCoreOption } from 'echarts/core';
+import { ThemeService } from '../../core/theme/theme.service';
+
+@Component({
+  imports: [NgxEchartsDirective],
+  template: `<div echarts [options]="options" [theme]="theme() === 'dark' ? 'dark' : ''" class="chart"></div>`,
+  styles: `.chart { height: 360px; }`,
+})
+export class ReadingsChartComponent {
+  protected readonly theme = inject(ThemeService).theme;
+
+  readonly options: EChartsCoreOption = {
+    backgroundColor: 'transparent', // let the app surface show through
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: ['Mon', 'Tue', 'Wed'] },
+    yAxis: { type: 'value' },
+    series: [{ type: 'line', data: [120, 132, 101] }],
+  };
+}
+```
+
+- The chart element needs a height; ECharts fills its container.
+- Binding `[theme]` as above makes the chart follow the app's light/dark toggle
+  (the chart re-renders when it changes).
+- Charts resize with their container automatically.
 
 ## Scripts
 
