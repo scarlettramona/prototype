@@ -1,0 +1,4 @@
+# Run from the workspace root (the git root).
+cd "$(dirname "$0")/.." || exit 1
+
+npm run lint

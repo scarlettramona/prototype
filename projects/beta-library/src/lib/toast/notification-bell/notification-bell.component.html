@@ -1,0 +1,18 @@
+@let count = (unreadCount$ | async) ?? 0;
+<button
+  aria-label="Notifications"
+  mat-icon-button
+  matBadgeColor="warn"
+  type="button"
+  [attr.aria-expanded]="isPanelOpen()"
+  [class.bell--active]="isPanelOpen()"
+  [matBadge]="formatBadge(count)"
+  [matBadgeHidden]="count === 0"
+  (click)="togglePanel()"
+>
+  <mat-icon>notifications</mat-icon>
+</button>
+
+@if (isPanelOpen()) {
+  <lib-notification-panel (closed)="closePanel()" />
+}

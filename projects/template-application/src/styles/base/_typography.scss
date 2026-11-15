@@ -1,0 +1,62 @@
+/* typography
+* all custom text/font styling lives here
+*/
+
+body {
+  font: var(--mat-sys-body-medium);
+}
+
+p {
+  margin: var(--spacing-80) 0;
+}
+
+h1 {
+  font: var(--mat-sys-headline-small);
+  margin: 0 0 var(--spacing-80);
+}
+
+h2 {
+  font: var(--mat-sys-title-large);
+  margin: var(--spacing-240) 0 var(--spacing-120);
+}
+
+h3 {
+  font: var(--mat-sys-title-medium);
+  margin: var(--spacing-160) 0 var(--spacing-80);
+}
+
+h4 {
+  font: var(--mat-sys-title-small);
+  margin: var(--spacing-120) 0 var(--spacing-60);
+}
+
+code {
+  font-family: 'Source Code Pro';
+  font-size: 1em;
+  overflow-wrap: break-word;
+}
+
+/* in-content navigation links */
+.app-link {
+  color: var(--mat-sys-primary);
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:not([href]) {
+    color: var(--mat-sys-on-surface-variant);
+    cursor: default;
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+/* de-emphasised inline text */
+.text-muted {
+  color: var(--mat-sys-on-surface-variant);
+}

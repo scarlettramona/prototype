@@ -1,0 +1,15 @@
+<app-header class="shell__header" [isNavOpen]="isNavOpen()" (toggleNav)="toggleNav()" />
+
+<mat-sidenav-container class="shell">
+  <mat-sidenav class="shell__sidenav" mode="side" role="navigation" [opened]="isNavOpen()">
+    <app-sidenav />
+  </mat-sidenav>
+
+  <mat-sidenav-content class="shell__content">
+    <router-outlet />
+  </mat-sidenav-content>
+</mat-sidenav-container>
+
+<app-footer class="shell__footer" />
+
+<lib-toast-container />

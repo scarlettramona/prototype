@@ -1,0 +1,124 @@
+@use 'sass:map';
+@use '../theme-palette.scss' as palette;
+
+$light-palette-overrides: (
+  /* Primary */ // primary: map.get(template-palette.$tertiary-palette, 30),
+  // on-primary
+  // primary-container
+  // on-primary-container
+  // primary-fixed
+  // on-primary-fixed
+  // on-primary-fixed-variant
+  // primary-fixed-dim
+  // inverse-primary
+  /* Secondary */ // secondary
+  // on-secondary
+  // secondary-container
+  // on-secondary-container
+  // secondary-fixed
+  // on-secondary-fixed
+  // on-secondary-fixed-variant
+  // secondary-fixed-dim
+  /* Tertiary */ // tertiary
+  // on-tertiary
+  // tertiary-container
+  // on-tertiary-container
+  // tertiary-fixed
+  // on-tertiary-fixed
+  // on-tertiary-fixed-variant
+  // tertiary-fixed-dim
+  /* Error */ // error
+  // on-error
+  // error-container
+  // on-error-container
+  /* Surface */
+  surface: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 70)} 10%,
+      map.get(map.get(palette.$primary-palette, neutral), 98)
+    ),
+  // on-surface
+  // on-surface-variant
+  // surface-bright
+  surface-container: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 80)} 10%,
+      map.get(map.get(palette.$primary-palette, neutral), 94)
+    ),
+  surface-container-high: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 80)} 10%,
+      map.get(map.get(palette.$primary-palette, neutral), 92)
+    ),
+  surface-container-highest: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 80)} 10%,
+      map.get(map.get(palette.$primary-palette, neutral), 90)
+    ),
+  surface-container-low: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 80)} 10%,
+      map.get(map.get(palette.$primary-palette, neutral), 96)
+    ),
+  surface-container-lowest: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 80)} 10%,
+      map.get(map.get(palette.$primary-palette, neutral), 100)
+    ),
+  // surface-dim
+  // surface-tint
+  // surface-variant
+  // inverse-surface
+  // inverse-on-surface
+  /* Miscellaneous */
+  background: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 80)} 10%,
+      map.get(map.get(palette.$primary-palette, neutral), 98)
+    ),
+  // on-background
+  // neutral-variant20s
+  // neutral10
+  // outline
+  // outline-variant
+  // scrim
+   // shadow
+);
+
+$dark-palette-overrides: (
+  background: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 10)} 15%,
+      map.get(map.get(palette.$primary-palette, neutral), 6)
+    ),
+  surface: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 10)} 15%,
+      map.get(map.get(palette.$primary-palette, neutral), 6)
+    ),
+  surface-container: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 10)} 15%,
+      map.get(map.get(palette.$primary-palette, neutral), 12)
+    ),
+  surface-container-low: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 10)} 15%,
+      map.get(map.get(palette.$primary-palette, neutral), 10)
+    ),
+  surface-container-lowest: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 10)} 15%,
+      map.get(map.get(palette.$primary-palette, neutral), 4)
+    ),
+  surface-container-high: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 10)} 15%,
+      map.get(map.get(palette.$primary-palette, neutral), 17)
+    ),
+  surface-container-highest: color-mix(
+      in oklab,
+      #{map.get(palette.$primary-palette, 10)} 15%,
+      map.get(map.get(palette.$primary-palette, neutral), 22)
+    ),
+);

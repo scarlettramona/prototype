@@ -1,0 +1,20 @@
+@use 'sass:map';
+@use '../theme-palette.scss' as template-palette;
+
+$corner-overrides: (
+  corner-full: 9999px,
+
+  corner-extra-large: 12px,
+  corner-extra-large-top: 12px 12px 0 0,
+
+  corner-large: 8px,
+  corner-large-end: 0 8px 8px 0,
+  corner-large-start: 8px 0 0 8px,
+  corner-large-top: 8px 8px 0 0,
+
+  corner-medium: 6px,
+  corner-small: 4px,
+  corner-extra-small: 2px,
+  corner-extra-small-top: 2px 2px 0 0,
+  corner-none: 0,
+);

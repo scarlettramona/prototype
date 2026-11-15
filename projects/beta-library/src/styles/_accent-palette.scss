@@ -1,0 +1,149 @@
+// accent color palette for the lozenge
+//
+// Categorical brand tones (no semantic meaning). Each accent declares explicit
+// light and dark hex for three roles: `bg` (surface), `border`, and `status`
+// (the foreground used for both label text and icon). Apps override any value
+// per accent with the `--lozenge-accent-<key>-*` custom properties.
+
+$accent-palettes: (
+  'red': (
+    bg: (
+      light: #ffeceb,
+      dark: #362321,
+    ),
+    border: (
+      light: #f87168,
+      dark: #883e39,
+    ),
+    status: (
+      light: #ae2a19,
+      dark: #fcbfbb,
+    ),
+  ),
+  'orange': (
+    bg: (
+      light: #fff3eb,
+      dark: #362a1b,
+    ),
+    border: (
+      light: #faa53d,
+      dark: #8a5b22,
+    ),
+    status: (
+      light: #974f0c,
+      dark: #fdd7a8,
+    ),
+  ),
+  'yellow': (
+    bg: (
+      light: #fff7d6,
+      dark: #332c13,
+    ),
+    border: (
+      light: #e2b203,
+      dark: #7c6202,
+    ),
+    status: (
+      light: #7f5f01,
+      dark: #f2dc8e,
+    ),
+  ),
+  'lime': (
+    bg: (
+      light: #efffd6,
+      dark: #2c3223,
+    ),
+    border: (
+      light: #b3df72,
+      dark: #627b3f,
+    ),
+    status: (
+      light: #4c6b1f,
+      dark: #ddf1c0,
+    ),
+  ),
+  'green': (
+    bg: (
+      light: #dcfff1,
+      dark: #222e29,
+    ),
+    border: (
+      light: #6cc3a1,
+      dark: #3b6b59,
+    ),
+    status: (
+      light: #216e4e,
+      dark: #bde4d5,
+    ),
+  ),
+  'teal': (
+    bg: (
+      light: #e3fafc,
+      dark: #202f30,
+    ),
+    border: (
+      light: #60c6d2,
+      dark: #356d74,
+    ),
+    status: (
+      light: #1d7f8c,
+      dark: #b7e5eb,
+    ),
+  ),
+  'blue': (
+    bg: (
+      light: #e9f2ff,
+      dark: #212935,
+    ),
+    border: (
+      light: #669df1,
+      dark: #385685,
+    ),
+    status: (
+      light: #0055cc,
+      dark: #bad3f9,
+    ),
+  ),
+  'purple': (
+    bg: (
+      light: #f3e6fe,
+      dark: #2c2635,
+    ),
+    border: (
+      light: #b689f4,
+      dark: #644b86,
+    ),
+    status: (
+      light: #5e4db2,
+      dark: #decafa,
+    ),
+  ),
+  'magenta': (
+    bg: (
+      light: #ffecf8,
+      dark: #33232d,
+    ),
+    border: (
+      light: #e774bb,
+      dark: #7f4067,
+    ),
+    status: (
+      light: #943d73,
+      dark: #f4c0e0,
+    ),
+  ),
+  'gray': (
+    bg: (
+      light: #f1f2f4,
+      dark: #2d2d2e,
+    ),
+    border: (
+      light: #b7b9be,
+      dark: #656669,
+    ),
+    status: (
+      light: #44464a,
+      dark: #dfe0e2,
+    ),
+  ),
+);

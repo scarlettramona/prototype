@@ -1,0 +1,26 @@
+// public SCSS entry point for beta-library design tokens.
+//
+//   @use 'beta-library/styles' as beta;   // published package, or
+//   @use 'index' as beta;                 // via stylePreprocessorOptions includePaths
+//   @include beta.beta-library-tokens;
+//
+// the status palette is forwarded so apps can use it directly — both as SCSS
+// (`$palettes`, `resolve`, …) and as the emitted `--status-<name>-<step>`
+// custom properties:
+//
+//   @use 'beta-library/styles/status-palette' as palette;
+
+@forward 'status-palette';
+@forward 'accent-palette';
+@forward 'spacing';
+@forward 'notification-tokens';
+
+@use 'status-palette';
+@use 'spacing';
+@use 'notification-tokens';
+
+@mixin beta-library-tokens {
+  @include status-palette.status-palette-tokens;
+  @include spacing.spacing-tokens;
+  @include notification-tokens.notification-tokens;
+}

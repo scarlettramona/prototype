@@ -1,0 +1,15 @@
+<span
+  [class]="containerClasses()"
+  [style.background-color]="containerStyle().backgroundColor"
+  [style.max-width]="containerStyle().maxWidth"
+>
+  <lib-lozenge-content
+    [styleOverride]="styleOverride()"
+    [textMaxWidth]="textMaxWidth()"
+    [textMaxWidthIsPercent]="resolvedMaxWidth().isPercent"
+    [textTestId]="textTestId()"
+  >
+    <ng-content select="[lozengeIcon]" ngProjectAs="[lozengeIcon]" />
+    <ng-content />
+  </lib-lozenge-content>
+</span>

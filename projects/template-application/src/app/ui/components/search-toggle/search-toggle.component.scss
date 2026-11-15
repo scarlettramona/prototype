@@ -1,0 +1,45 @@
+@use '@angular/material' as mat;
+
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 0;
+  height: var(--spacing-480);
+}
+
+.search-toggle__trigger {
+  transition:
+    opacity 0.25s ease,
+    width 0.25s ease;
+}
+
+.search-toggle__field {
+  width: 0;
+  opacity: 0;
+  transition:
+    width 0.25s ease,
+    opacity 0.2s ease;
+}
+
+:host(.search-toggle--open) {
+  .search-toggle__trigger {
+    opacity: 0;
+    width: 0;
+    min-width: 0;
+    padding: 0;
+    pointer-events: none;
+  }
+
+  .search-toggle__field {
+    width: 100%;
+    opacity: 1;
+    @include mat.form-field-overrides(
+      (
+        container-vertical-padding: var(--spacing-80),
+        container-height: 40px,
+      )
+    );
+  }
+}

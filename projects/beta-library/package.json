@@ -1,0 +1,14 @@
+{
+  "name": "beta-library",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "^21.1.0",
+    "@angular/core": "^21.1.0",
+    "@angular/cdk": "^21.2.1",
+    "@angular/material": "^21.2.1"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}
