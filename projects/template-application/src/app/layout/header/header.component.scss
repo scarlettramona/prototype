@@ -7,17 +7,60 @@
     )
   );
 }
+
 .header__branding {
   padding: inherit;
   display: flex;
+  align-items: center;
 }
+
 .header__logo {
+  width: 32px;
+  height: 32px;
   color: var(--mat-sys-on-primary-container);
 }
 
 .header__title {
-  margin-left: var(--spacing-80);
+  margin-left: var(--spacing-100);
+  font: var(--mat-sys-headline-medium);
   color: var(--app-shell-on-background);
+}
+
+.header__nav {
+  display: flex;
+  gap: var(--spacing-100);
+  margin-left: var(--spacing-100);
+}
+
+// Inactive modules: plain text on the shell. Active: filled primary.
+// The extra classes outrank mat-toolbar's own button colour rule.
+.header .header__nav .mat-mdc-button.header__nav-item {
+  @include mat.button-overrides(
+    (
+      text-label-text-color: var(--app-shell-on-background),
+      text-horizontal-padding: var(--spacing-120),
+    )
+  );
+
+  &.header__nav-item--active {
+    @include mat.button-overrides(
+      (
+        text-label-text-color: var(--mat-sys-on-primary),
+        text-state-layer-color: var(--mat-sys-on-primary),
+      )
+    );
+    background-color: var(--mat-sys-primary);
+  }
+
+  // Not built in this prototype; Figma shows it in the primary text colour.
+  &.header__nav-item--unbuilt {
+    @include mat.button-overrides(
+      (
+        text-label-text-color: var(--mat-sys-primary),
+      )
+    );
+    cursor: default;
+  }
 }
 
 .header__spacer {
@@ -27,6 +70,11 @@
 .header__actions {
   display: flex;
   align-items: center;
+  @include mat.icon-button-overrides(
+    (
+      icon-color: var(--app-shell-on-background),
+    )
+  );
 }
 
 .header__user-name {
@@ -35,12 +83,4 @@
   pointer-events: none;
   opacity: 0.9;
   color: var(--app-shell-on-background);
-}
-
-.header__actions {
-  @include mat.icon-button-overrides(
-    (
-      icon-color: var(--app-shell-on-background),
-    )
-  );
 }

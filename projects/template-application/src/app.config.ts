@@ -6,6 +6,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { provideEchartsCore } from 'ngx-echarts';
 
+import { PrototypeStateService } from './app/core/prototype-state/prototype-state.service';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -20,5 +21,7 @@ export const appConfig: ApplicationConfig = {
       const logo = inject(DomSanitizer).bypassSecurityTrustResourceUrl('logo-small.svg');
       inject(MatIconRegistry).addSvgIcon('logo-small', logo);
     }),
+    // Start watching ?state= from the first navigation.
+    provideAppInitializer(() => void inject(PrototypeStateService)),
   ],
 };

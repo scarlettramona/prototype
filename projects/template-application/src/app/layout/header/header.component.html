@@ -1,13 +1,34 @@
 <mat-toolbar class="header">
   <div class="header__branding">
     <mat-icon class="header__logo" svgIcon="logo-small" />
-    <span class="header__title">Design System</span>
+    <span class="header__title">PIWA</span>
   </div>
+
+  <nav class="header__nav" aria-label="Modules">
+    @for (item of navItems; track item.label) {
+      @if (item.path) {
+        <a
+          class="header__nav-item"
+          mat-button
+          [routerLink]="item.path"
+          routerLinkActive="header__nav-item--active"
+          ariaCurrentWhenActive="page"
+          >{{ item.label }}</a
+        >
+      } @else {
+        <a class="header__nav-item header__nav-item--unbuilt" mat-button aria-disabled="true">{{ item.label }}</a>
+      }
+    }
+  </nav>
+
   <span class="header__spacer"></span>
-  <span class="header__user-name mat-font-body-md">Welcome, Reagan, Scarlett R</span>
+  <span class="header__user-name mat-font-body-md">Welcome, User, User</span>
 
   <!-- actions -->
   <div class="header__actions">
+    @if (isDev) {
+      <app-state-menu />
+    }
     <button class="material-symbols-rounded" mat-icon-button matTooltip="Admin Center" type="button">
       <mat-icon>manage_accounts</mat-icon>
     </button>
