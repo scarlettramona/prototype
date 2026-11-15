@@ -1,114 +1,15 @@
-# Template Workspace
+# Prototype
 
-An Angular workspace to start new projects from. It ships the plumbing every
-app ends up needing — theming, layout shell (header and footer), routing conventions, shared UI
-primitives, and a component library — with no business domain baked in.
+An Angular 21 workspace with two projects:
 
-Generated with [Angular CLI](https://github.com/angular/angular-cli) 21.
+| Project                | Type        | Description                                                                 |
+| ---------------------- | ----------- | --------------------------------------------------------------------------- |
+| `template-application` | application | App shell (header, footer, theming, breadcrumbs) and a component showcase.  |
+| `beta-library`         | library     | UI library: callouts, inline notifications, lozenges, toasts.               |
 
-## What's in here
-
-| Project                | Type        | Description                                                                           |
-| ---------------------- | ----------- | ------------------------------------------------------------------------------------- |
-| `template-application` | application | The app shell: layout, routing, theming, shared components, and a component showcase. |
-| `beta-library`         | library     | Publishable UI library: callouts, inline notifications, lozenges, and toasts.         |
-
-The only feature in the app is `feature/components`, a live showcase of the
-library plus a Material "kitchen sink". Delete it once your own features exist,
-or keep it around as a styling reference.
-
-## Architecture
-
-The app follows the frontend architecture section of the SDD. Code is divided
-into architecture areas, each with one loading policy and one set of areas it
-may depend on. The dependency rules are kept by review.
-
-### Project parameters
-
-| Parameter                       | Value for this project                                        |
-| ------------------------------- | ------------------------------------------------------------- |
-| Application shell model         | Single shell                                                  |
-| Maximum feature nesting depth   | 1                                                             |
-| Route preloading                | Disabled                                                      |
-| `ui/` structure                 | One consolidated area                                         |
-| Type-only imports               | Governed by the dependency table                              |
-| Shared component library        | `beta-library`                                                |
-| Global style and token location | `projects/template-application/src/styles/`                   |
-
-### Structure
-
-```text
-projects/template-application/src/
-  main.ts                    bootstrap
-  app.component.ts           bootstrap — renders the single shell
-  app.config.ts              bootstrap — delegates to provideCore()
-  app.routes.ts              bootstrap — top-level lazy routes
-  environments/              build-time configuration
-  styles/                    global styles, theme, design tokens
-  app/
-    core/                    headless shared logic; no components
-      config/                ENVIRONMENT token and its provider
-      date/                  date adapter, date/time helpers
-      http/                  HTTP infrastructure
-      icons/                 SVG icon registration
-      routing/               path + URL maps, breadcrumbs, router guards
-      storage/               localStorage wrapper token
-      theme/                 light/dark theme state
-      core.providers.ts      provideCore(), composed from the above
-    layout/                  application shell; eager
-    ui/
-      components/            generic units; inputs and outputs only
-      patterns/              reusable non-routed use cases; may consume core/
-    feature/                 routed workflows; every first-level feature is lazy
-      components/
-        components.routes.ts
-        pages/
-        sub-features/
-          kitchen-sink/
-            kitchen-sink.routes.ts
-            pages/
-```
-
-### Dependency rules
-
-| Area                           | Loading                                      | May depend on                                                       |
-| ------------------------------ | -------------------------------------------- | ------------------------------------------------------------------- |
-| `core/`                        | Scope per service; placement by import graph | `core/`                                                             |
-| `layout/`                      | Eager                                        | `layout/`, `core/`, `ui/`                                           |
-| `ui/`                          | Set by the importing code                    | `core/`, `ui/`                                                      |
-| Feature routes (`*.routes.ts`) | Lazy relative to its parent                  | `core/`, same feature's implementation, direct sub-features' routes |
-| Feature implementation         | Lazy                                         | `core/`, `ui/`, same feature, ancestor feature                      |
-| Bootstrap files                | Eager                                        | Bootstrap, `environments/`, `core/`, `layout/`, first-level routes  |
-
-Anything not listed is denied. A few consequences worth stating outright:
-
-- **Siblings never import each other.** If two features need the same thing,
-  extract it up to `core/` (headless), `ui/components/` (generic UI), or
-  `ui/patterns/` (both), and have each depend on that.
-- **An ancestor never imports a sub-feature**, since a static import would pull
-  the sub-feature into the ancestor's bundle and undo its lazy loading. A
-  sub-feature reading from its ancestor is fine.
-- **Cross-feature navigation goes through `core/routing/`**, never a literal
-  path string — a feature cannot import a sibling's constants.
-- **Type-only imports follow the same table.** Having no runtime cost does not
-  change the ownership question.
-- **`ui/components/` takes data through inputs and outputs only.** A unit that
-  needs an application service is a pattern, not a component.
-
-### Adding a feature
-
-1. Decide first-level or sub-feature. If it would nest only for naming reasons,
-   it is first-level.
-2. Create `app/feature/<name>/<name>.routes.ts`. Add `<name>.constants.ts` only
-   when the routes file and the implementation need the same path values.
-3. Register it with `loadChildren()` and a dynamic import — in `app.routes.ts`
-   for a first-level feature, in the parent's routes file for a sub-feature.
-4. Add its segments to `core/routing/app-paths.ts` and its URLs to
-   `core/routing/routes.ts` if anything outside the feature links to it.
-5. Keep the implementation inside the feature folder. Do not pre-place code in
-   `core/` or `ui/` for reuse that has not happened yet.
-6. Give feature-scoped services route-level `providers`, and record a reset
-   strategy for any that hold transient state.
+The only feature is `feature/components`, a showcase of the library plus a
+Material "kitchen sink". Delete it once your own features exist, or keep it as
+a styling reference.
 
 ## Getting started
 
@@ -117,45 +18,62 @@ npm install
 npm start          # dev server on http://localhost:4200/
 ```
 
-The app imports `beta-library` from `dist/`, so the library has to be built
-first. Every script that needs it (`start`, `build`, `test`, `watch`) builds it
-for you — run `npm run build:lib` by hand only if you want it on its own.
+The app imports `beta-library` from `dist/`, so the library is built first.
+`start`, `build`, `watch` and `test` all do that for you.
 
-## Making it yours
+## Structure
 
-1. Rename the `template-application` project in `angular.json`, `package.json`
-   and the `projects/` directory, and update `<title>` in `src/index.html`.
-2. Point `src/environments/environment.ts` at your API and add whatever fields
-   your app needs to the `Environment` type in `app/core/config/environment.token.ts`.
-3. Add app-wide providers through a per-concern `provide*()` function under
-   `app/core/`, composed into `provideCore()` — not inline in `app.config.ts`.
-4. Add a feature (see [Adding a feature](#adding-a-feature)).
-5. Swap the logos in `projects/template-application/public/` and adjust the
-   palettes in `src/styles/base/`.
+```text
+projects/template-application/src/
+  main.ts                 bootstrap
+  app.component.ts        bootstrap
+  app.config.ts           bootstrap — all app-wide providers
+  app.routes.ts           bootstrap — top-level lazy routes
+  styles/                 global styles, theme, design tokens
+  app/
+    core/                 headless shared logic; no components
+      <domain>/           business domain: services, state, guards, models
+      <concern>/          cross-cutting: routing, http, util
+    layout/               application shell; eager
+    ui/
+      components/         generic presentational units; inputs and outputs only
+      patterns/           reusable non-routed use cases; can consume core/
+    feature/              routed business workflows; every first-level feature is lazy
+      <feature>/
+        <feature>.routes.ts
+        <feature>.constants.ts
+        sub-features/
+          <sub-feature>/
+```
+
+What's in `core/` today: `routing/` (breadcrumb trail) and `theme/` (light/dark
+theme). `ui/patterns/` has the page frame, breadcrumb and theme button.
+
+### Adding a feature
+
+1. Create `app/feature/<name>/<name>.routes.ts`, with its page components in
+   folders beside it. Add `<name>.constants.ts` for route segments that the
+   routes file and anything else share.
+2. Register it in `app.routes.ts` with `loadChildren()` and a dynamic import.
+   A sub-feature goes under `sub-features/` and is registered in its parent's
+   routes file the same way.
+3. Set `data: { breadcrumb: 'Label' }` on routes that should appear in the
+   breadcrumb trail.
+4. Keep code inside the feature until a second feature needs it, then move it
+   to `core/` (headless) or `ui/` (presentational).
 
 ## Scripts
 
-| Command                | What it does                                                    |
-| ---------------------- | --------------------------------------------------------------- |
-| `npm start`            | Dev server with hot reload                                      |
-| `npm run build`        | Production build of library + app into `dist/`                  |
-| `npm run build:lib`    | Build `beta-library` only                                       |
-| `npm test`             | Unit tests for both projects, via [Vitest](https://vitest.dev/) |
-| `npm run test:watch`   | App unit tests in watch mode                                    |
-| `npm run verify`       | Test and build                                                  |
+| Command              | What it does                                                    |
+| -------------------- | --------------------------------------------------------------- |
+| `npm start`          | Dev server with hot reload                                      |
+| `npm run build`      | Production build of library + app into `dist/`                  |
+| `npm run build:lib`  | Build `beta-library` only                                       |
+| `npm test`           | Unit tests for both projects, via [Vitest](https://vitest.dev/) |
+| `npm run test:watch` | App unit tests in watch mode                                    |
+| `npm run verify`     | Test and build                                                  |
 
-### Bundle budgets
-
-The production build fails over 1 MB and warns over 750 kB of initial JS. The
-Material-based shell alone is roughly 665 kB raw (~155 kB transferred), so the
-warning threshold leaves room for a feature or two before it needs a look.
-
-## Scaffolding
-
-```bash
-ng generate component features/my-feature/my-page
-ng generate --help
-```
+The production build fails over 1 MB and warns over 750 kB of initial JS.
 
 ## Additional resources
 

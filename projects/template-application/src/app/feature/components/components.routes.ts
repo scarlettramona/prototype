@@ -1,31 +1,31 @@
 import type { Route } from '@angular/router';
 
-import { APP_PATHS } from '../../core/routing/app-paths';
+import { COMPONENTS_PATHS } from './components.constants';
 
 export const COMPONENTS_ROUTES: Route[] = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: APP_PATHS.components.buttons,
+    redirectTo: COMPONENTS_PATHS.buttons,
   },
   {
-    path: APP_PATHS.components.buttons,
+    path: COMPONENTS_PATHS.buttons,
     data: { breadcrumb: 'Buttons' },
-    loadComponent: () => import('./pages/button-demo/button-demo.component').then((m) => m.ButtonDemoComponent),
+    loadComponent: () => import('./button-demo/button-demo.component').then((m) => m.ButtonDemoComponent),
   },
   {
-    path: APP_PATHS.components.notifications,
+    path: COMPONENTS_PATHS.notifications,
     data: { breadcrumb: 'Notifications' },
     loadComponent: () =>
-      import('./pages/notifications-demo/notifications-demo.component').then((m) => m.NotificationsDemoComponent),
+      import('./notifications-demo/notifications-demo.component').then((m) => m.NotificationsDemoComponent),
   },
   {
-    path: APP_PATHS.components.lozenges,
+    path: COMPONENTS_PATHS.lozenges,
     data: { breadcrumb: 'Lozenges' },
-    loadComponent: () => import('./pages/lozenges-demo/lozenges-demo.component').then((m) => m.LozengesDemoComponent),
+    loadComponent: () => import('./lozenges-demo/lozenges-demo.component').then((m) => m.LozengesDemoComponent),
   },
   {
-    path: APP_PATHS.components.kitchenSink.base,
+    path: COMPONENTS_PATHS.kitchenSink.base,
     data: { breadcrumb: 'Kitchen Sink' },
     loadChildren: () => import('./sub-features/kitchen-sink/kitchen-sink.routes').then((m) => m.KITCHEN_SINK_ROUTES),
   },

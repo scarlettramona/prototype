@@ -13,10 +13,6 @@
 @use './base/material-system-overrides/corner-overrides' as shape-overrides;
 @use './base/material-system-overrides/palette-overrides' as palette-overrides;
 @use 'index' as beta;
-@use './components/tables';
-@use './components/list-table';
-@use './components/detail-page';
-@use './components/inline-edit-table';
 @use './components/showcase';
 
 @include mat.system-classes();
