@@ -153,8 +153,6 @@ for you — run `npm run build:lib` by hand only if you want it on its own.
    in `app/layout/sidenav/sidenav.config.ts`.
 5. Swap the logos in `projects/template-application/public/` and adjust the
    palettes in `src/styles/base/`.
-6. If the workspace stops being a subdirectory of the git root, simplify the
-   `prepare` script to plain `husky` and drop the `cd` line from each hook.
 
 ## Scripts
 
@@ -171,10 +169,6 @@ for you — run `npm run build:lib` by hand only if you want it on its own.
 | `npm run format:check` | Prettier check                                                  |
 | `npm run format:fix`   | Prettier write                                                  |
 | `npm run verify`       | Format, lint, architecture, test, build — what CI should run    |
-
-Husky hooks keep that honest: `pre-commit` formats staged files with
-lint-staged, `commit-msg` enforces [conventional commits](https://www.conventionalcommits.org/),
-and `pre-push` runs the linter.
 
 ### Bundle budgets
 
