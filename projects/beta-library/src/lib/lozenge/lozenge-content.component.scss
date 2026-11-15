@@ -1,0 +1,61 @@
+// structural styles for the lozenge content row
+// loaded with ViewEncapsulation.None so the rules apply within both the display
+// and dropdown-trigger wrappers.
+
+.lozenge__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lozenge--spacing-spacious .lozenge__content {
+  gap: 6px;
+}
+
+.lozenge__content--loading {
+  opacity: 0;
+}
+
+.lozenge__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  // distinct status icon color (set per appearance on `.lozenge`); falls back
+  // to the label color when unset.
+  color: var(--lozenge-icon-color, currentColor);
+
+  &:empty {
+    display: none;
+  }
+
+  // the lozenge owns the icon size so consumers only choose which icon to use
+  mat-icon,
+  .material-symbols-rounded,
+  .material-symbols-outlined {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    line-height: 1;
+  }
+}
+
+.lozenge__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  // typography inherits from `.lozenge` (`--mat-sys-label-large`)
+}
+
+.lozenge__chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: currentColor;
+  transition: transform 120ms ease-in-out;
+}
+
+.lozenge--selected .lozenge__chevron {
+  transform: rotate(180deg);
+}

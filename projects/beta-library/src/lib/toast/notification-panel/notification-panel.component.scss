@@ -1,0 +1,187 @@
+.panel-overlay {
+  position: fixed;
+  inset: 60px 0 0 0; // below header
+  z-index: var(--z-panel, 200);
+  background: transparent;
+}
+
+.panel {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  background: var(--mat-sys-surface-container-high);
+  z-index: calc(var(--z-panel, 200) + 1);
+  box-shadow: var(--shadow-panel);
+  display: flex;
+  flex-direction: column;
+  animation: panel-enter var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-xl) var(--spacing-xxl);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  flex-shrink: 0;
+}
+
+.panel__title {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+  letter-spacing: var(--mat-sys-title-medium-tracking);
+  color: var(--mat-sys-on-surface);
+}
+
+.panel__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.panel__count {
+  font: var(--mat-sys-body-small);
+  letter-spacing: var(--mat-sys-body-small-tracking);
+  color: var(--notification-meta-color);
+  background: var(--mat-sys-surface-container);
+  padding: var(--spacing-sm) 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.panel__dismiss {
+  margin-left: auto;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.panel__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md) 0;
+}
+
+.panel__entry {
+  padding: var(--spacing-lg) var(--spacing-xxl);
+  border-bottom: 1px solid var(--mat-sys-surface-container);
+  transition: opacity var(--transition-fast) ease;
+
+  &--read {
+    opacity: 0.55;
+  }
+
+  &--unread {
+    opacity: 1;
+    border-left: 3px solid light-dark(var(--status-information-40), var(--status-information-70));
+    padding-left: 17px;
+  }
+}
+
+.panel__entry-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.panel__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.panel__status-label {
+  font: var(--mat-sys-label-medium);
+  letter-spacing: var(--mat-sys-label-medium-tracking);
+}
+
+.panel__message {
+  margin: 0 0 var(--spacing-sm);
+  font: var(--mat-sys-body-medium);
+  letter-spacing: var(--mat-sys-body-medium-tracking);
+  color: var(--notification-body-color);
+}
+
+.panel__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.panel__timestamp {
+  font: var(--mat-sys-body-small);
+  letter-spacing: var(--mat-sys-body-small-tracking);
+  color: var(--notification-meta-color);
+}
+
+.panel__dismissed-label {
+  font: var(--mat-sys-body-small);
+  letter-spacing: var(--mat-sys-body-small-tracking);
+  color: var(--notification-meta-color);
+  // `font` shorthand resets font-style, so re-assert italic after it
+  font-style: italic;
+}
+
+// ── Status-specific color — bold tone (40/70) per status ────────────────
+.panel__entry--info {
+  .panel__status-dot {
+    background-color: light-dark(var(--status-information-40), var(--status-information-70));
+  }
+  .panel__status-label {
+    color: light-dark(var(--status-information-40), var(--status-information-70));
+  }
+}
+
+.panel__entry--success {
+  .panel__status-dot {
+    background-color: light-dark(var(--status-success-40), var(--status-success-70));
+  }
+  .panel__status-label {
+    color: light-dark(var(--status-success-40), var(--status-success-70));
+  }
+}
+
+.panel__entry--warning {
+  .panel__status-dot {
+    background-color: light-dark(var(--status-warning-40), var(--status-warning-70));
+  }
+  .panel__status-label {
+    color: light-dark(var(--status-warning-40), var(--status-warning-70));
+  }
+}
+
+.panel__entry--error {
+  .panel__status-dot {
+    background-color: light-dark(var(--status-danger-40), var(--status-danger-70));
+  }
+  .panel__status-label {
+    color: light-dark(var(--status-danger-40), var(--status-danger-70));
+  }
+}
+
+.panel__empty {
+  padding: var(--spacing-5xl) var(--spacing-xxl);
+  text-align: center;
+  font: var(--mat-sys-body-medium);
+  letter-spacing: var(--mat-sys-body-medium-tracking);
+  color: var(--notification-meta-color);
+}

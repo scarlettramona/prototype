@@ -1,0 +1,5 @@
+<div aria-live="polite" class="toast-container" role="status">
+  @for (toast of activeToasts$ | async; track toast.id) {
+    <lib-toast [toast]="toast" (dismissed)="onDismissed($event)" />
+  }
+</div>

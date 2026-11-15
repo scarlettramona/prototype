@@ -1,0 +1,21 @@
+<mat-toolbar class="header">
+  <div class="header__branding">
+    <mat-icon class="header__logo" svgIcon="logo-small" />
+    <span class="header__title">Design System</span>
+  </div>
+  <span class="header__spacer"></span>
+  <span class="header__user-name mat-font-body-md">Welcome, Reagan, Scarlett R</span>
+
+  <!-- actions -->
+  <div class="header__actions">
+    <button class="material-symbols-rounded" mat-icon-button matTooltip="Admin Center" type="button">
+      <mat-icon>manage_accounts</mat-icon>
+    </button>
+    <lib-notification-bell matTooltip="Notifications" />
+    <app-theme-button matTooltip="Theme" />
+
+    <button aria-label="Help" class="material-symbols-rounded" mat-icon-button matTooltip="Help Topics" type="button">
+      <mat-icon>help</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>

@@ -1,0 +1,33 @@
+<button
+  type="button"
+  [attr.aria-busy]="isLoading() ? 'true' : null"
+  [attr.aria-controls]="ariaControls()"
+  [attr.aria-disabled]="isLoading() ? 'true' : null"
+  [attr.aria-expanded]="ariaExpanded()"
+  [attr.aria-haspopup]="ariaHaspopup()"
+  [attr.aria-label]="isLoading() ? 'Loading' : ariaLabel()"
+  [attr.data-testid]="testId() || null"
+  [class]="containerClasses()"
+  [style.background-color]="containerStyle().backgroundColor"
+  [style.cursor]="containerStyle().cursor"
+  [style.max-width]="containerStyle().maxWidth"
+  (click)="onClick($event)"
+>
+  <lib-lozenge-content
+    [chevronTestId]="chevronTestId()"
+    [isLoading]="isLoading()"
+    [showChevron]="true"
+    [styleOverride]="styleOverride()"
+    [textMaxWidth]="textMaxWidth()"
+    [textMaxWidthIsPercent]="resolvedMaxWidth().isPercent"
+    [textTestId]="textTestId()"
+  >
+    <ng-content select="[lozengeIcon]" ngProjectAs="[lozengeIcon]" />
+    <ng-content />
+  </lib-lozenge-content>
+  @if (isLoading()) {
+    <span class="lozenge__loading-overlay">
+      <lib-lozenge-spinner [size]="spacing() === 'spacious' ? 'small' : 'xsmall'" [testId]="spinnerTestId()" />
+    </span>
+  }
+</button>

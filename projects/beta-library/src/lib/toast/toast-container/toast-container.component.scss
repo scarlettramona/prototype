@@ -1,0 +1,16 @@
+@use '../../../styles/spacing' as *;
+
+.toast-container {
+  position: fixed;
+  top: calc(56px + var(--spacing-xl)); // header height + gap
+  right: var(--spacing-xxl);
+  z-index: var(--z-toast, 300);
+  display: flex;
+  flex-direction: column;
+  gap: var(--notification-spacing-stack);
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}

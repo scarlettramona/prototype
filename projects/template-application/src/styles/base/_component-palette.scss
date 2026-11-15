@@ -1,0 +1,25 @@
+/* App-specific component palette
+ *
+ * Custom color tokens for individual components live here so per component
+ * styling stays consistent and theme-aware in one place. Reference them
+ * from component stylesheets w `var(--app-…)` maybe we should think of a better prefix later but whatever.
+ *
+ * theme awareness is provided by the CSS `light-dark()` function. this app already declares
+ * `color-scheme: light` / `dark` on its `.theme-light` / `.theme-dark`
+ * classes, so `light-dark()` resolves automatically when the theme toggles (i think) */
+
+@use 'sass:map';
+@use './theme-palette' as palette;
+
+:root {
+  /* header surface */
+  --app-shell-background: light-dark(
+    #{map.get(map.get(palette.$primary-palette, secondary), 80)},
+    #{map.get(map.get(palette.$primary-palette, secondary), 20)}
+  );
+  --app-shell-on-background: light-dark(
+    #{map.get(map.get(palette.$primary-palette, secondary), 20)},
+    #{map.get(map.get(palette.$primary-palette, secondary), 95)}
+  );
+}
+// #{map.get(palette.$primary-palette, 10)},
