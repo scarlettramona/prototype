@@ -7,13 +7,6 @@
     )
   );
 }
-.header__hamburger {
-  @include mat.icon-button-overrides(
-    (
-      icon-color: var(--app-shell-on-background),
-    )
-  );
-}
 .header__branding {
   padding: inherit;
   display: flex;

@@ -1,7 +1,7 @@
 # Template Workspace
 
 An Angular workspace to start new projects from. It ships the plumbing every
-app ends up needing — theming, layout shell, routing conventions, shared UI
+app ends up needing — theming, layout shell (header and footer), routing conventions, shared UI
 primitives, and a component library — with no business domain baked in.
 
 Generated with [Angular CLI](https://github.com/angular/angular-cli) 21.
@@ -21,8 +21,7 @@ or keep it around as a styling reference.
 
 The app follows the frontend architecture section of the SDD. Code is divided
 into architecture areas, each with one loading policy and one set of areas it
-may depend on. The dependency rules are enforced in CI, not just in review —
-see [Conformance](#conformance).
+may depend on. The dependency rules are kept by review.
 
 ### Project parameters
 
@@ -35,7 +34,6 @@ see [Conformance](#conformance).
 | Type-only imports               | Governed by the dependency table                              |
 | Shared component library        | `beta-library`                                                |
 | Global style and token location | `projects/template-application/src/styles/`                   |
-| Boundary enforcement tooling    | `eslint-plugin-boundaries` + `scripts/check-architecture.mjs` |
 
 ### Structure
 
@@ -106,28 +104,11 @@ Anything not listed is denied. A few consequences worth stating outright:
 3. Register it with `loadChildren()` and a dynamic import — in `app.routes.ts`
    for a first-level feature, in the parent's routes file for a sub-feature.
 4. Add its segments to `core/routing/app-paths.ts` and its URLs to
-   `core/routing/routes.ts` if anything outside the feature links to it. The
-   sidenav lives in `layout/` and can only read them from `core/`.
+   `core/routing/routes.ts` if anything outside the feature links to it.
 5. Keep the implementation inside the feature folder. Do not pre-place code in
    `core/` or `ui/` for reuse that has not happened yet.
 6. Give feature-scoped services route-level `providers`, and record a reset
    strategy for any that hold transient state.
-
-### Conformance
-
-`npm run lint` runs [`eslint-plugin-boundaries`](https://www.jsboundaries.dev/)
-over the dependency table above: each area is matched by path, and a policy
-that does not allow an import fails the build. Route configuration is selected
-by filename within a feature, because a `*.routes.ts` file has to be reachable
-from its parent while the implementation beside it must not be.
-
-Two rules cannot be expressed as import rules, so `npm run lint:arch`
-(`scripts/check-architecture.mjs`) covers them: feature nesting depth, and the
-requirement that `core/` stay headless. `npm run verify` runs both.
-
-What the automated checks do **not** cover, and review still has to: placement
-by area and domain, collocation and extraction decisions, service scope and
-lifecycle, design-token use, and library-over-local-reimplementation.
 
 ## Getting started
 
@@ -142,15 +123,13 @@ for you — run `npm run build:lib` by hand only if you want it on its own.
 
 ## Making it yours
 
-1. Rename the `template-application` project in `angular.json`, `package.json`,
-   the `projects/` directory, and the `APP` path in `eslint.config.js`; update
-   `<title>` in `src/index.html`.
+1. Rename the `template-application` project in `angular.json`, `package.json`
+   and the `projects/` directory, and update `<title>` in `src/index.html`.
 2. Point `src/environments/environment.ts` at your API and add whatever fields
    your app needs to the `Environment` type in `app/core/config/environment.token.ts`.
 3. Add app-wide providers through a per-concern `provide*()` function under
    `app/core/`, composed into `provideCore()` — not inline in `app.config.ts`.
-4. Add a feature (see [Adding a feature](#adding-a-feature)) and its nav entries
-   in `app/layout/sidenav/sidenav.config.ts`.
+4. Add a feature (see [Adding a feature](#adding-a-feature)).
 5. Swap the logos in `projects/template-application/public/` and adjust the
    palettes in `src/styles/base/`.
 
@@ -163,12 +142,7 @@ for you — run `npm run build:lib` by hand only if you want it on its own.
 | `npm run build:lib`    | Build `beta-library` only                                       |
 | `npm test`             | Unit tests for both projects, via [Vitest](https://vitest.dev/) |
 | `npm run test:watch`   | App unit tests in watch mode                                    |
-| `npm run lint`         | ESLint over both projects, architecture boundaries included     |
-| `npm run lint:fix`     | ESLint autofix                                                  |
-| `npm run lint:arch`    | Structural checks: nesting depth, headless `core/`              |
-| `npm run format:check` | Prettier check                                                  |
-| `npm run format:fix`   | Prettier write                                                  |
-| `npm run verify`       | Format, lint, architecture, test, build — what CI should run    |
+| `npm run verify`       | Test and build                                                  |
 
 ### Bundle budgets
 

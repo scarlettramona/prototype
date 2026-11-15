@@ -1,15 +1,4 @@
 <mat-toolbar class="header">
-  <button
-    aria-label="Toggle navigation"
-    class="header__hamburger"
-    mat-icon-button
-    type="button"
-    [attr.aria-expanded]="isNavOpen()"
-    (click)="toggleNav.emit()"
-  >
-    <mat-icon class="material-symbols-rounded">menu</mat-icon>
-  </button>
-
   <div class="header__branding">
     <mat-icon class="header__logo" svgIcon="logo-small" />
     <span class="header__title">Design System</span>

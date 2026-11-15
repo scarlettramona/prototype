@@ -22,9 +22,4 @@ describe('LayoutShellComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('toggles the sidenav', () => {
-    expect(component.isNavOpen()).toBe(true);
-    component.toggleNav();
-    expect(component.isNavOpen()).toBe(false);
-  });
 });
