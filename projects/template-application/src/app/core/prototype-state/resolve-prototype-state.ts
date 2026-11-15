@@ -18,7 +18,7 @@ export interface ResolvedVnvState {
   visibleQi: Qi[];
   selectedReadingIds: string[];
   popover: 'load-form' | 'vnv-form' | null;
-  loadForm: null | { start: number; end: number; locationId: string | null; search: string; filters: string[] };
+  loadForm: null | { start: number; end: number; locationId: string | null; search: string; filters: string[]; showNoData: boolean };
 }
 
 export interface ResolvedIllLibraryState {
@@ -106,6 +106,7 @@ function resolveVnv(name: PrototypeStateName, f: VnvFixture, ds: VnvDataset): Re
           locationId: f.loadForm.locationId ?? null,
           search: f.loadForm.search ?? '',
           filters: [...(f.loadForm.filters ?? [])],
+          showNoData: f.loadForm.showNoData ?? false,
         }
       : null,
   };

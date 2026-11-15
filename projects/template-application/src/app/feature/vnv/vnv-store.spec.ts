@@ -109,6 +109,31 @@ describe('VnvStore', () => {
     expect(store.selectedIds().size).toBe(0);
   });
 
+  it('loads a subset of a location, with the header counting what is loaded', async () => {
+    const range = { start: new Date(2026, 6, 19).getTime(), end: new Date(2026, 9, 19).getTime() };
+    const pending = store.load('241-AN-WST-104-TI', range, ['AN104-WST-TI-038', 'AN104-WST-TI-036']);
+    expect(store.loading()).toBe(true);
+    await pending;
+    expect(store.headerSummary()).toEqual({ name: '241-AN-WST-104-TI', sensorCount: 2 });
+    expect(store.loadedSensorIds()).toEqual(['AN104-WST-TI-036', 'AN104-WST-TI-038']); // location order
+    expect(store.result()!.sensors.map((s) => s.id)).toEqual(['AN104-WST-TI-036', 'AN104-WST-TI-038']);
+    expect(store.loadedRange()).toEqual(range);
+  });
+
+  it('gives the Load sensors form its tree and sensor index', async () => {
+    await store.loadPickerData();
+    expect(store.farm()!.groups.map((g) => g.id)).toEqual(['241-AN-TMAC', '241-AN-WST', '241-AN-WSTA']);
+    expect(store.sensorIndex().length).toBe(82);
+  });
+
+  it('passes a load-form fixture to the form and shows its dates', async () => {
+    await store.applyState(resolvePrototypeState('vnv-load-form-no-data', data) as ResolvedVnvState);
+    expect(store.loadFormOpen()).toBe(true);
+    expect(store.loadFormInit()).toMatchObject({ locationId: '241-AN-TMAC-103-TI', filters: ['TI'], showNoData: true });
+    expect(store.range()).toEqual({ start: new Date(2026, 6, 19).getTime(), end: new Date(2026, 9, 19).getTime() });
+    expect(store.loadedRange().start).toBe(new Date(2025, 0, 1).getTime()); // Cancel goes back to this
+  });
+
   it('toggles sensors and clamps the window to the loaded range', async () => {
     await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
     store.toggleSensor('AN103-TMAC-TI-U1-RJA');

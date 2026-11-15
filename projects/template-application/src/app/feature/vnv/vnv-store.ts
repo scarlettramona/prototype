@@ -2,12 +2,15 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { QI_VALUES, type Qi } from '../../core/qi/qi.models';
 import type { ResolvedVnvState } from '../../core/prototype-state/resolve-prototype-state';
 import { VnvMockService } from '../../core/vnv/vnv-mock.service';
-import type { VnvLoadResult, VnvLocation } from '../../core/vnv/vnv.models';
+import type { Sensor, VnvFarm, VnvLoadResult, VnvLocation } from '../../core/vnv/vnv.models';
 import type { DateRangeValue } from '../../ui/components/date-range-field/date-range-field.component';
 import type { ContentView } from '../../ui/components/view-switcher/view-switcher.component';
 import { DAY_MS, endOfDay, startOfDay } from '../../core/mock-data/dates';
 import { groupBySensor, type SensorSeries, type XRange } from './components/vnv-chart/vnv-chart-options';
 import { DEFAULT_TABLE_SORT, type TableSort } from './components/vnv-table/vnv-table-rows';
+
+/** A fixture's Load sensors form settings (see `ResolvedVnvState.loadForm`). */
+export type LoadFormInit = NonNullable<ResolvedVnvState['loadForm']>;
 
 /**
  * VNV screen state. Provided by `VnvPageComponent`, so it lives as long as the
@@ -47,9 +50,30 @@ export class VnvStore {
   readonly grouped = signal(false);
   readonly collapsedGroups = signal<ReadonlySet<string>>(new Set());
 
+  // Load sensors (Phase 5).
+  /** The sensors of `location` that are loaded (a subset is allowed). */
+  readonly loadedSensorIds = signal<readonly string[]>([]);
+  /** The range the loaded data covers (Cancel in the Load sensors popover restores it). */
+  readonly loadedRange = signal<DateRangeValue>({ start: 0, end: 0 });
+  /** What a `?state=` fixture wants the Load sensors form to show; consumed by the form. */
+  readonly loadFormInit = signal<LoadFormInit | null>(null);
+  /** The Load sensors tree and every sensor's data range (loaded once). */
+  readonly farm = signal<VnvFarm | null>(null);
+  readonly sensorIndex = signal<readonly Sensor[]>([]);
+  private pickerData?: Promise<void>;
+
+  /** Loads the tree and sensor index for the Load sensors form, once. */
+  loadPickerData(): Promise<void> {
+    this.pickerData ??= Promise.all([this.service.getFarm(), this.service.getSensorIndex()]).then(([farm, sensors]) => {
+      this.farm.set(farm);
+      this.sensorIndex.set(sensors);
+    });
+    return this.pickerData;
+  }
+
   readonly headerSummary = computed(() => {
     const l = this.location();
-    return l ? { name: l.id, sensorCount: l.sensorIds.length } : null;
+    return l ? { name: l.id, sensorCount: this.loadedSensorIds().length } : null;
   });
 
   /** x-extent of the loaded data: the date range, whole days. */
@@ -89,13 +113,17 @@ export class VnvStore {
     return qi && (qi === 'Good' || qi === 'Suspect') && sel.every((r) => r.qi === qi) ? { qi } : null;
   });
 
-  /** Loads a location's sensors for a range (replaces what's loaded). */
-  async load(locationId: string, range: DateRangeValue): Promise<void> {
+  /** Loads a location's sensors (all, or the given subset) for a range, replacing what's loaded. */
+  async load(locationId: string, range: DateRangeValue, sensorIds?: readonly string[]): Promise<void> {
+    this.loading.set(true); // show the loading state straight away
     const farm = await this.service.getFarm();
     const location = farm.groups.flatMap((g) => g.locations).find((l) => l.id === locationId) ?? null;
     if (!location) throw new Error(`Unknown location: ${locationId}`);
     this.location.set(location);
+    this.loadedSensorIds.set(sensorIds?.length ? location.sensorIds.filter((id) => sensorIds.includes(id)) : [...location.sensorIds]);
     this.hiddenSensorIds.set(new Set());
+    this.baselineSensorId.set(null);
+    this.oosSensorId.set(null);
     await this.fetch(range);
   }
 
@@ -110,18 +138,23 @@ export class VnvStore {
     this.visibleQi.set([...state.visibleQi]);
     this.loadFormOpen.set(state.popover === 'load-form');
     this.fitY.set(true);
+    this.loadFormInit.set(state.loadForm ? { ...state.loadForm } : null);
     if (!state.loaded) {
       this.clear();
+      if (state.loadForm) this.range.set({ start: state.loadForm.start, end: state.loadForm.end });
       return;
     }
     this.showAllData.set(state.loaded.showAllData);
     const farm = await this.service.getFarm();
     const location = farm.groups.flatMap((g) => g.locations).find((l) => l.id === state.loaded!.locationId) ?? null;
     this.location.set(location);
+    this.loadedSensorIds.set([...(location?.sensorIds ?? [])]);
     this.hiddenSensorIds.set(new Set(state.hiddenSensorIds));
     await this.fetch({ start: startOfDay(state.loaded.start), end: startOfDay(state.loaded.end) });
     this.selectedIds.set(new Set(state.selectedReadingIds));
     this.vnvPopoverOpen.set(state.popover === 'vnv-form');
+    // A load-form fixture shows its own dates in the open form (they're shared with the header).
+    if (state.popover === 'load-form' && state.loadForm) this.range.set({ start: state.loadForm.start, end: state.loadForm.end });
     // Show a selection where it can be seen: about three weeks around it.
     const times = this.selectedReadings().map((r) => r.timestamp);
     if (times.length) this.setWindow({ start: Math.min(...times) - 18 * DAY_MS, end: Math.max(...times) + 2 * DAY_MS });
@@ -131,6 +164,7 @@ export class VnvStore {
   clear(): void {
     this.loadToken++;
     this.location.set(null);
+    this.loadedSensorIds.set([]);
     this.result.set(null);
     this.loading.set(false);
     this.window.set(null);
@@ -215,9 +249,10 @@ export class VnvStore {
     this.clearSelection();
     this.loading.set(true);
     try {
-      const result = await this.service.load({ sensorIds: location.sensorIds, start: range.start, end: endOfDay(range.end) });
+      const result = await this.service.load({ sensorIds: [...this.loadedSensorIds()], start: range.start, end: endOfDay(range.end) });
       if (token !== this.loadToken) return; // superseded
       this.result.set(result);
+      this.loadedRange.set(range);
       const ids = result.sensors.map((s) => s.id);
       if (!ids.includes(this.baselineSensorId() ?? '')) this.baselineSensorId.set(ids.find((id) => !this.hiddenSensorIds().has(id)) ?? null);
       if (!ids.includes(this.oosSensorId() ?? '')) this.oosSensorId.set(result.outOfService[0]?.sensorId ?? ids[0] ?? null);

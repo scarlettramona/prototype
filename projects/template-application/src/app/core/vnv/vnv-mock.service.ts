@@ -25,6 +25,12 @@ export class VnvMockService {
     return this.respond(ids.flatMap((id) => (ds.sensors.has(id) ? [{ ...ds.sensors.get(id)! }] : [])));
   }
 
+  /** Every sensor with its data range: the Load sensors form computes no-data from this as dates change. */
+  async getSensorIndex(): Promise<Sensor[]> {
+    const ds = await this.data.vnvDataset();
+    return this.respond([...ds.sensors.values()].map((s) => ({ ...s })));
+  }
+
   /** Which of `ids` have readings in the range (for the picker's no-data state). */
   async sensorsWithData(ids: readonly string[], start: number, end: number): Promise<Set<string>> {
     const ds = await this.data.vnvDataset();

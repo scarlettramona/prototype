@@ -310,3 +310,44 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 - **Default states:** every VNV `?state=` now loads the typical case, **241-AN-TMAC-103-TI with 6 sensors** (as in the Figma header). One of its sensors has no data after 03/31/2025, which is realistic and useful for the picker.
 - **Stress case:** **`vnv-chart-40-sensors`** loads 241-AN-WSTA-102-TI (40 sensors, including the 5 real ones).
 - **Out of service:** `AN103-TMAC-TI-U2-RJA` has an out-of-service window (09/14–09/30/2026), so the default panel shows one.
+
+### Phase 5 · Load sensors form
+
+**Decisions** (Scarlett, 2026-11-15, or Figma-wins)
+- **One component at a time:** ticking a sensor in another location switches the selection there. The header shows that location and the number of **loaded** sensors (a subset is allowed).
+- **Filters are name tokens:** Add filters lists TI, TMAC, WST and WSTA. A sensor shows only if its location and sensor-id tokens (split on `-`) contain every chip, so WST ≠ WSTA.
+- **First visit shows Cancel** (as Figma does), which resets the form. **Set to default** (first visit only) = the **last 3 months of data**, 08/12/2026 – 11/12/2026.
+- **Dates are shared with the page header.**
+  - Editing the form's dates updates the header straight away.
+  - Popover Cancel/Escape/backdrop restores **the range that's loaded** (`store.loadedRange`).
+  - A load-form `?state=` shows its fixture dates.
+- **No-data sensors:**
+  - A notice reads "N sensor(s) with no data in the selected date range" with a **Show all** switch, off by default.
+  - With it on, those sensors are dimmed with a "no data" tag and no checkbox, as in the `miller-item` set.
+  - In search, groups with no selectable sensors are dimmed.
+- **The popover widens from 806 to 968 px while searching**, as Figma's search frame (`1:12068`) does, so "group › location" paths fit.
+- **First visit:** the title and form share a centred 1,248 px column (`1:11016`), and the footer is sticky to the window until the form ends.
+- **The footer summary** is `<location> | N selected`, in `on-surface-variant`.
+- **Fixtures:**
+  - `vnv-chart-load-form-open` and `vnv-load-form-search` now use the filter `TI` only; TI + WST + U3 would match nothing.
+  - **New** `vnv-load-form-no-data` (`1:11972`).
+  - `loadForm.showNoData` added.
+
+**Pieces**
+- `feature/vnv/components/load-sensors-form/`:
+  - **`LoadSensorsFormComponent`** (`app-load-sensors-form`):
+    - Inputs: `mode: 'page' | 'popover'`, `farm`, `sensors`, `loadedSensorIds`, `initial: LoadSensorsInit | null`; model `range`.
+    - Outputs: `load: LoadSensorsRequest { locationId, sensorIds, range }`, `cancel`.
+    - It exports `defaultLoadRange()`.
+  - **`load-sensors-model.ts`** (pure):
+    - `tokensOf`, `filterOptions`, `matchesFilters`, `matchesSearch`, `hasData`, `splitName` (stem + bold suffix), `highlight`.
+    - `buildTree`, `buildList`, `buildSearch`, `checkState`.
+    - `toggleSensor` / `setSensors` (the one-component rule).
+- **`VnvMockService.getSensorIndex()`:** every sensor with its data range.
+- **`VnvStore` additions:**
+  - `loadedSensorIds`, `loadedRange`, `loadFormInit`, `farm`, `sensorIndex`.
+  - `loadPickerData()`.
+  - `load(locationId, range, sensorIds?)`, which now loads a subset and sets `loading` straight away.
+- **`VnvPageComponent`:** with nothing loaded, it renders the form in page mode (first visit). Load data opens it in popover mode with `--load-form-max-height`. `onLoad` loads and switches to Chart view.
+
+**Tests:** `load-sensors-model.spec.ts`, plus additions to `vnv-store.spec.ts`.

@@ -1,0 +1,273 @@
+@use '@angular/material' as mat;
+
+// Figma sensor-query 1:11792: surface-container card, 24 px padding, filled
+// fields on surface-variant, tree | list columns, query-actions footer.
+:host {
+  display: flex;
+  flex-direction: column;
+  background: var(--mat-sys-surface-container);
+  border-radius: var(--mat-sys-corner-large);
+  color: var(--mat-sys-on-surface);
+  @include mat.form-field-overrides(
+    (
+      filled-container-color: var(--mat-sys-surface-variant),
+      filled-active-indicator-color: var(--mat-sys-on-surface-variant),
+    )
+  );
+}
+
+:host(.popover) {
+  width: 806px;
+  max-height: var(--load-form-max-height, 80vh);
+  box-shadow: var(--mat-sys-level2);
+}
+
+// Search results show "group › location" paths: Figma's search frame (1:12068) is 968 px wide.
+:host(.popover.searching) {
+  width: 968px;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-240);
+  padding: var(--spacing-240);
+}
+
+.heading {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+}
+
+.field {
+  width: 258px;
+}
+
+.dates {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-160);
+}
+
+.set-default {
+  margin-bottom: var(--spacing-80);
+}
+
+.query {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-160);
+}
+
+.search {
+  width: 100%;
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-160);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-80);
+  height: 28px;
+  padding: 0 var(--spacing-80) 0 var(--spacing-120);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-extra-small);
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+  box-sizing: border-box;
+}
+
+.chip__remove {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
+.columns {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 410px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-width: 1px 0;
+}
+
+:host(.popover) .columns {
+  min-height: 0;
+}
+
+.tree,
+.list {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: var(--spacing-240);
+  overflow: auto;
+}
+
+.tree {
+  border-right: 1px solid var(--mat-sys-outline-variant);
+}
+
+.list {
+  background: var(--mat-sys-surface-container-high);
+}
+
+.tree__row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--spacing-160) 0 0;
+  border: 0;
+  background: none;
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-large);
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+  }
+}
+
+.tree__chevron {
+  width: 40px;
+  text-align: center;
+}
+
+.tree__row--leaf {
+  padding-left: 60px;
+}
+
+.tree__row--active {
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-primary);
+}
+
+.tree__count {
+  margin-left: auto;
+}
+
+.list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding-left: var(--spacing-80);
+}
+
+.list__title {
+  font: var(--mat-sys-title-medium);
+}
+
+.item,
+.parent {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  font: var(--mat-sys-body-large);
+}
+
+.item--indent {
+  padding-left: 40px;
+}
+
+.item__name {
+  flex: 1 1 auto;
+  padding: 0 var(--spacing-80);
+  white-space: nowrap;
+}
+
+.item__no-check {
+  width: 40px;
+}
+
+.parent__path {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  mat-icon {
+    flex-shrink: 0;
+    margin: 0 var(--spacing-40);
+  }
+}
+
+.hit {
+  font-weight: 700;
+  color: var(--mat-sys-primary);
+}
+
+.dim {
+  opacity: 0.38;
+}
+
+.tag {
+  padding: var(--spacing-40) var(--spacing-60);
+  border-radius: var(--mat-sys-corner-extra-small);
+  background: var(--mat-sys-surface-container-low);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-160);
+  margin-top: var(--spacing-160);
+  padding: var(--spacing-80) var(--spacing-80) var(--spacing-80) var(--spacing-160);
+  border-radius: var(--mat-sys-corner-extra-small);
+  background: var(--mat-sys-surface-container);
+  font: var(--mat-sys-body-medium);
+}
+
+.link {
+  white-space: nowrap;
+  @include mat.button-overrides((text-horizontal-padding: var(--spacing-80)));
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-160) var(--spacing-240);
+  background: var(--mat-sys-surface-container);
+  border-radius: 0 0 var(--mat-sys-corner-large) var(--mat-sys-corner-large);
+}
+
+:host(.page) .actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+.summary {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.actions__buttons {
+  display: flex;
+  gap: var(--spacing-160);
+}

@@ -30,7 +30,15 @@ export interface VnvFixture {
   selectionCount?: number;
   popover?: 'load-form' | 'vnv-form';
   /** Load sensors form contents, when it's open or is the page. */
-  loadForm?: { start: string; end: string; locationId?: string; search?: string; filters?: readonly string[] };
+  loadForm?: {
+    start: string;
+    end: string;
+    locationId?: string;
+    search?: string;
+    filters?: readonly string[];
+    /** The no-data notice's "Show all" switch. */
+    showNoData?: boolean;
+  };
 }
 
 export interface IllLibraryFixture {
@@ -87,7 +95,15 @@ export const PROTOTYPE_STATES = {
     loaded: VNV_LOADED,
     view: 'chart',
     popover: 'load-form',
-    loadForm: { ...LOAD_FORM_DATES, locationId: VNV_LOADED.locationId, filters: ['TI', 'WST'] },
+    loadForm: { ...LOAD_FORM_DATES, locationId: VNV_LOADED.locationId, filters: ['TI'] },
+  },
+  'vnv-load-form-no-data': {
+    module: 'vnv',
+    frame: '1:11972',
+    loaded: VNV_LOADED,
+    view: 'chart',
+    popover: 'load-form',
+    loadForm: { ...LOAD_FORM_DATES, locationId: VNV_LOADED.locationId, filters: ['TI'], showNoData: true },
   },
   'vnv-load-form-search': {
     module: 'vnv',
@@ -95,7 +111,8 @@ export const PROTOTYPE_STATES = {
     loaded: VNV_LOADED,
     view: 'chart',
     popover: 'load-form',
-    loadForm: { ...LOAD_FORM_DATES, search: 'U3', filters: ['TI', 'WST'] },
+    // Filters are AND-ed name tokens: TI + U3 finds the TMAC U3 sensors (Figma 1:12068).
+    loadForm: { ...LOAD_FORM_DATES, search: 'U3', filters: ['TI'] },
   },
   'vnv-chart-40-sensors': { module: 'vnv', loaded: VNV_LOADED_MAX, view: 'chart' },
   'vnv-chart-sensors-hidden': { module: 'vnv', loaded: VNV_LOADED, view: 'chart', hiddenSensorCount: 2 },
