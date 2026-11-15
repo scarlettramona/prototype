@@ -47,7 +47,9 @@
             "tsConfig": "projects/template-application/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "stylePreprocessorOptions": {
-              "includePaths": ["projects/beta-library/src/styles"]
+              "includePaths": [
+                "projects/beta-library/src/styles"
+              ]
             },
             "assets": [
               {
@@ -55,7 +57,9 @@
                 "input": "projects/template-application/public"
               }
             ],
-            "styles": ["projects/template-application/src/styles/styles.scss"]
+            "styles": [
+              "projects/template-application/src/styles/styles.scss"
+            ]
           },
           "configurations": {
             "production": {
@@ -95,15 +99,6 @@
         },
         "test": {
           "builder": "@angular/build:unit-test"
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "projects/template-application/src/**/*.ts",
-              "projects/template-application/src/**/*.html"
-            ]
-          }
         }
       }
     },
@@ -129,12 +124,6 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "projects/beta-library/tsconfig.spec.json"
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": ["projects/beta-library/src/**/*.ts", "projects/beta-library/src/**/*.html"]
           }
         }
       }
