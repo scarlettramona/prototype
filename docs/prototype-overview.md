@@ -229,3 +229,42 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 **Dev pages:** `/dev/gallery` (`feature/dev/component-gallery/`) shows every component in its states, with an Events line that logs outputs.
 
 **Tests:** `ui/components/shared-components.spec.ts`.
+
+### Phase 3 · VNV chart view
+
+**Decisions** (Scarlett, 2026-11-15)
+- **Navigator + Reset added** to the VNV chart, though the VNV frame lacks them (ILL pattern).
+- **Fit Y switch added** to the VNV toolbar ("Fit Y" + switch, on by default).
+- **Show all data is visual only:** it keeps its state but doesn't change the data until its behaviour is defined.
+- **Export opens a menu: "Chart image (PNG)" / "Data (CSV)"**, both real downloads. **Wording is mine; to be confirmed.**
+- **Right panel follows Figma's order:** Legend, then Baseline sensor, then Equipment out of service. The whole panel scrolls with 40 sensors.
+- **Baseline and out of service** are drawn for the sensor selected in each panel select. The baseline is a solid `FURNITURE` line in a faint `FURNITURE` limit band; out of service is a shaded `markArea`.
+- **Markers** draw only when the window is **≤ 60 days** (`MARKER_MAX_DAYS`). Wider views show lines only, because 40 sensors of markers become a solid mass.
+
+**Route and pieces**
+- `/vnv` → `feature/vnv/vnv-page/` (`VnvPageComponent`). It provides `VnvStore` and reacts to `PrototypeStateService.state()`: a VNV state is applied, and `null` means first visit (title only).
+- `feature/vnv/vnv-store.ts` (`VnvStore`, page-scoped):
+  - **Signals:** `location`, `range`, `showAllData`, `view`, `result`, `loading`, `hiddenSensorIds`, `visibleQi`, `baselineSensorId`, `oosSensorId`, `window` (`null` = full), `fitY`, `loadFormOpen`.
+  - **Computed:** `headerSummary`, `xRange`, `effectiveWindow`, `atFullRange`, `series` (grouped by sensor), `baseline`, `outOfService`.
+  - **Methods:** `load(locationId, range)`, `reloadRange(range)`, `applyState(ResolvedVnvState)`, `clear()`, `toggleSensor(id)`, `setWindow()` (clamped), `resetWindow()`.
+- `feature/vnv/components/vnv-chart/`:
+  - `VnvChartComponent` (`app-vnv-chart`) is the chart card: quality filter, Fit Y, divider, the Export menu, the chart, and the navigator with Reset.
+  - `vnv-chart-options.ts` holds the pure builders: `buildVnvChartOptions`, `windowOption`, `yRangeFor` (1st–99th percentile + 8%), `baselineAt`, `readoutFormatter`, `nearest`, `toCsv`, `groupBySensor`, `showMarkers`.
+- `feature/vnv/components/vnv-reference-panel/` (`app-vnv-reference-panel`): the Legend (toggle rows), Baseline sensor (swatch select + detail rows) and Equipment out of service.
+- `ui/components/chart-navigator/` (`app-chart-navigator`, shared; ILL uses it in Phase 7):
+  - **Inputs:** `series: NavigatorSeries[]`, `xMin`, `xMax`, `inverse`, `window` (model, `null` = full), `labelFormatter`.
+  - **Rendering:** a preview on x-axis 0, with the slider on a hidden x-axis 1 so the preview never zooms.
+  - **Drag label:** a primary bubble above the dragged handle.
+- `PlutoChartThemeService.tokens()` now exposes the resolved token colours, including `surfaceContainer`, for loading masks and export backgrounds.
+- The Load data popover is an empty 806 px `.app-popover` anchored under the button (Phase 5 fills it). `?state=vnv-chart-load-form-open` finds the button after render.
+- `view === 'table'` leaves an empty area for Phase 4.
+
+**Chart performance rules** (68k readings, 40 sensors)
+- **Window changes merge:** the full option rebuilds only when the data or the marker flag changes. Window and y-range changes go through `[merge]` (`windowOption`). Read the window `untracked` inside the options computed, and do the same in the navigator.
+- **Plain points:** series use `[t, v]` data with a `symbol` callback, not an object per point. Objects were roughly 4× slower.
+- **Window-only processing:** the inside dataZoom uses `filterMode: 'filter'`, so only the window's points are processed.
+- **No entry animation:** `animationDuration: 0` stops rebuilds from sweeping in; `animationDurationUpdate: 300` keeps rescales animated.
+- **One update per frame:** chart zoom events are coalesced to one store update per animation frame.
+- **Measured** in the dev build, 40 sensors: a pan is 150–230 ms per frame, a rebuild ~340 ms, and the full range ~300 ms.
+
+**Tests:** `vnv-chart-options.spec.ts`, `vnv-store.spec.ts`.

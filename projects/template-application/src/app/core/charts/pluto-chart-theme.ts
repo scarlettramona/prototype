@@ -7,6 +7,7 @@ import { SERIES_COLORS } from './chart-palette';
  * it can't use `var(--…)`; these are read from the live tokens instead.
  */
 export interface PlutoChartTokens {
+  surfaceContainer: string;
   surfaceContainerLowest: string;
   onSurface: string;
   onSurfaceVariant: string;
@@ -16,6 +17,7 @@ export interface PlutoChartTokens {
 }
 
 const TOKEN_VARS: Record<keyof PlutoChartTokens, string> = {
+  surfaceContainer: '--mat-sys-surface-container',
   surfaceContainerLowest: '--mat-sys-surface-container-lowest',
   onSurface: '--mat-sys-on-surface',
   onSurfaceVariant: '--mat-sys-on-surface-variant',
@@ -119,9 +121,12 @@ export class PlutoChartThemeService {
   /** Name for logs and tests: `pluto-dark` or `pluto-light`. */
   readonly name = computed(() => `pluto-${this.themeService.theme()}`);
 
-  /** Rebuilt when the app theme toggles, so charts re-render in the new colours. */
-  readonly theme = computed(() => {
+  /** The resolved token colours, for options that need them directly (loading, export background). */
+  readonly tokens = computed(() => {
     this.themeService.theme(); // dependency: the <html> class has flipped by now
-    return buildPlutoChartTheme(readPlutoChartTokens(this.document));
+    return readPlutoChartTokens(this.document);
   });
+
+  /** Rebuilt when the app theme toggles, so charts re-render in the new colours. */
+  readonly theme = computed(() => buildPlutoChartTheme(this.tokens()));
 }

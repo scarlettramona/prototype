@@ -16,6 +16,7 @@ describe('Chart palette', () => {
 
   it('builds the theme from tokens', () => {
     const theme = buildPlutoChartTheme({
+      surfaceContainer: 'rgb(30, 32, 34)',
       surfaceContainerLowest: 'rgb(12, 14, 16)',
       onSurface: 'rgb(226, 226, 229)',
       onSurfaceVariant: 'rgb(221, 227, 233)',

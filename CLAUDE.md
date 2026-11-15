@@ -89,6 +89,8 @@ There is **no linter**; ESLint and Prettier were removed from the template. Keep
 - **Vertical rules** between groups in a row use `<span class="app-divider-vertical"></span>`.
 - **No amber.** Unsaved or changed values use `--mat-sys-primary`.
 - **VNV legend rows toggle on click** (no checkbox). The ILL scans legend uses checkboxes.
+- **Big charts:** build the full ECharts option only when the data changes, and send window and y-range changes through ngx-echarts `[merge]`. Read the window `untracked` in the full-option computed. Use `[x, y]` arrays plus a `symbol` callback, not an object per point. See the "Chart performance rules" in the overview.
+- **Zoom windows** are shared through a `window` model (`{ start, end } | null`, where `null` is the full range). Use `app-chart-navigator` for navigators.
 - Check shared components in `/dev/gallery`, and add new shared pieces there with their states.
 
 ## Prototype mechanics
