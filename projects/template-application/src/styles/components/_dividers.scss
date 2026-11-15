@@ -1,0 +1,8 @@
+// A 1 px vertical rule between groups in a row (page header, VNV form header,
+// selection action bar). It stretches to the row's height.
+.app-divider-vertical {
+  align-self: stretch;
+  flex-shrink: 0;
+  width: 1px;
+  background: var(--mat-sys-outline-variant);
+}

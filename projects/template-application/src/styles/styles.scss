@@ -1,6 +1,8 @@
 @use '@angular/material' as mat;
 @use './base/theme-palette.scss' as template-palette;
 @use './components/icons';
+@use './components/popover';
+@use './components/dividers';
 @use 'sass:map';
 @use 'material-symbols/rounded.css';
 @use './components/material-component-overrides/mat-button';

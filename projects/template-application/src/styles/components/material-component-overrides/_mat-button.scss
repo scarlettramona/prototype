@@ -12,11 +12,11 @@
 
   @include mat.button-overrides(
     (
-      filled-container-shape: var(--mat-sys-corner-small),
-      outlined-container-shape: var(--mat-sys-corner-small),
-      protected-container-shape: var(--mat-sys-corner-small),
-      tonal-container-shape: var(--mat-sys-corner-small),
-      text-container-shape: var(--mat-sys-corner-small),
+      filled-container-shape: var(--mat-sys-corner-extra-small),
+      outlined-container-shape: var(--mat-sys-corner-extra-small),
+      protected-container-shape: var(--mat-sys-corner-extra-small),
+      tonal-container-shape: var(--mat-sys-corner-extra-small),
+      text-container-shape: var(--mat-sys-corner-extra-small),
     )
   );
   @include mat.icon-button-overrides(

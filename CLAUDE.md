@@ -83,6 +83,14 @@ public/                 static assets, served from the site root (mock CSVs go i
 
 There is **no linter**; ESLint and Prettier were removed from the template. Keep code formatted to match the surrounding files.
 
+## UI conventions
+
+- **Popovers:** use a CDK `cdkConnectedOverlay` with `[cdkConnectedOverlayHasBackdrop]="true"` and `cdkConnectedOverlayBackdropClass="app-popover-backdrop"`, close on `backdropClick` and on Escape (`overlayKeydown`), and put `.app-popover` on the content root. Add `cdkTrapFocus cdkTrapFocusAutoCapture` so focus moves in and returns to the trigger.
+- **Vertical rules** between groups in a row use `<span class="app-divider-vertical"></span>`.
+- **No amber.** Unsaved or changed values use `--mat-sys-primary`.
+- **VNV legend rows toggle on click** (no checkbox). The ILL scans legend uses checkboxes.
+- Check shared components in `/dev/gallery`, and add new shared pieces there with their states.
+
 ## Prototype mechanics
 
 - Mock services add 300–800 ms of latency. Mutations live in memory until reload.

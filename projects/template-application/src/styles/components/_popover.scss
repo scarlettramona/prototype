@@ -1,0 +1,20 @@
+// Shared popover surface (Figma: vnv-popover 1:11679, legend 1:11633).
+// Use on the root element inside a `cdkConnectedOverlay` template:
+//   <ng-template cdkConnectedOverlay …><div class="app-popover">…</div></ng-template>
+
+.app-popover {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-240);
+  padding: var(--spacing-160) var(--spacing-240);
+  background: var(--mat-sys-surface-container-high);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-medium);
+  color: var(--mat-sys-on-surface);
+  box-shadow: var(--mat-sys-level2);
+}
+
+// Transparent backdrop that closes the popover on outside click.
+.app-popover-backdrop {
+  background: transparent;
+}

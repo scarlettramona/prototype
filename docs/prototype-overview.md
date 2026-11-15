@@ -61,13 +61,13 @@ Each phase brief lists only its own frames.
 **Colour and charts**
 - Pluto design tokens for every colour, spacing and type value. No hard-coded hex values in components, except the chart palette module.
 - Series palette (sensors and scans): `#4C8DF6, #4CD07D, #9B7BEA, #F2555A, #2FC4D4, #D96BE0, #8DB8FF, #A6D96A, #F08CB4, #4FB8A0`. Beyond 10 series, cycle with dashes: solid, `[7,3]`, `[2,2]`, `[8,3,2,3]` (supports 40).
-- **Amber `#E3B341` means unsaved / changed** and is never a series colour.
+- **No amber** (decided 2026-11-15, Figma wins): unsaved / changed values use **primary**, and edited fields get a neutral dot. `AMBER` stays in the palette module but is unused.
 - QI → ECharts symbol: Good `circle`, Suspect `triangle`, Unreviewed `rect`, Transcribed `diamond`.
 - Chart furniture (baseline bands, out-of-service bands): `#8FA3C8` at low opacity.
 
 **Chart interaction (both modules)**
 - **Navigator:** a `dataZoom` slider under the chart shows the full loaded range. Its window is the current view; while a handle is dragged, it shows the handle's value in a small label above it.
-- **Range controls** (− / + / Reset) sit beside the navigator. Reset is disabled at full range.
+- **Reset** sits to the left of the navigator (no − / + in Figma). Reset is disabled at full range.
 - **Fit Y** is on by default: the y-axis fits the visible data, using the 1st–99th percentile plus padding so single spikes don't flatten the rest. Off locks the full scale. Animate rescales.
 - Hover shows a crosshair and a readout of **every visible series** at that x.
 - Drag on the chart pans; Ctrl/⌘ + wheel zooms at the cursor; plain wheel scrolls the page.
@@ -81,9 +81,9 @@ Each phase brief lists only its own frames.
 **ILL specifics**
 - A focus view holds one tab per open scan plus **All scans**. The zoom range is **shared across all tabs**, All scans included. Reset applies everywhere. A fresh visit starts at the full profile.
 - In a scan tab, every scan stays on the chart. The focused scan is drawn slightly heavier and on top; the others are thinner and slightly faded. The focused scan can't be hidden.
-- Unsaved work shows an **amber dot** on the tab (in place of its close ×). Changed parameter fields get an amber marker.
+- Unsaved work shows a **dot** on the tab (in place of its close ×). Changed parameter fields get a neutral dot marker with the saved value beneath (Figma 1:8968).
 - **Run analysis is the primary button until results exist; after that, Save analysis is primary.**
-- Saved vs unsaved results are shown as Saved / Unsaved / Δ in Scan details. On the chart, the saved ILL is a dashed line and the unsaved ILL is a solid amber line.
+- Saved vs unsaved results show as **two value columns** in Scan details: saved, then unsaved in primary, with no headers and no Δ (Figma). In the scans legend, Saved is solid and Unsaved dashed in the scan's colour (Figma 1:10714).
 - The depth axis is **reversed: 600 in on the left, 0 on the right**. The y-axis is Corrected Counts.
 
 **Prototype mechanics**
@@ -189,3 +189,43 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 - Specs read the CSVs from disk through `core/mock-data/testing/`.
 - `provideTestMockData()` provides the datasets with zero latency.
 - `testing/` folders are excluded from the app build.
+
+### Phase 2 · Shared components
+
+**Decisions** (confirmed with Scarlett, 2026-11-15; Figma wins over the Phase 2 brief)
+- **VNV legend rows** have no checkbox and no elevation; **clicking a row toggles the sensor** and hidden rows dim. The ILL scans legend uses checkboxes.
+- **No amber** anywhere (see "Colour and charts"). The detail row's compare column is primary.
+- **Graph menu (⋯)** on the selection action bar is shown but **inert** (`aria-disabled`) until a frame defines its contents.
+- The **selection action bar** is `VNV | ⋯` only; "N values selected" lives in the VNV form header.
+- The **chart card navigator** has **Reset only**, on its left.
+- The **date range field** is text + ▾ (no calendar icon). Its popover has no frame, so it reuses the Load sensors form's Start date / End date fields.
+- The **quality filter** is plain toggle buttons, not `mat-chip-listbox`: Material's multi-select chips always draw a checkmark, which the design doesn't have.
+- **Buttons** use `corner-extra-small` (2 px) to match Figma (`styles/components/material-component-overrides/_mat-button.scss`).
+- **Dates** use `provideNativeDateAdapter` with MM/DD/YYYY display (`app.config.ts`).
+
+**Global styles** (`styles/components/`)
+- `_popover.scss`: `.app-popover`, the popover surface (`surface-container-high`, `outline-variant` border, `corner-medium`, 16/24 padding, 24 gap); `.app-popover-backdrop`, a transparent backdrop.
+- `_dividers.scss`: `.app-divider-vertical`, a 1 px rule that stretches to its row.
+
+**Components** (all in `ui/components/<name>/` unless noted; standalone, OnPush, signal inputs)
+| Selector | Inputs / models | Outputs | Notes |
+|---|---|---|---|
+| `app-qi-icon` | `qi: Qi`, `size = 16` | | ● ▲ ■ ◆ in currentColor |
+| `app-series-swatch` | `color`, `dash: 'solid' \| number[]`, `marker: 'ring' \| 'none'` | | ring 25×13 (VNV), plain 22×12 (ILL). Ring fill is `--swatch-ring-fill` (defaults to surface-container) |
+| `app-detail-row` | `label`, `value` (formatted string), `compareValue?`, `unit` | | grid; widths from `--detail-value-width` (80px) and `--detail-unit-width` (24px) |
+| `app-panel-section` | `title`, `titleStyle: 'heading' \| 'label'`, `actionLabel` | `action` | divider above every section but the first |
+| `app-side-panel` | | | surface-container, 24 padding and gap, scrolls |
+| `app-view-switcher` | `value` (model `'table' \| 'chart'`); `ContentView` type | | `mat-button-toggle-group`. Toggles report `aria-checked` |
+| `app-quality-filter` | `value` (model `Qi[]`, the shown QIs, kept in QI order) | | toggle buttons with `aria-pressed` |
+| `app-legend-row` | `label`, `swatch?` (`LegendSwatch`), `mode: 'toggle' \| 'checkbox'`, `visible` (model), `locked`, `indeterminate`, `emphasis`, `indent`, `labelTone` | | toggle = VNV; checkbox = ILL scans legend (All scans / focused / Saved / Unsaved rows) |
+| `app-swatch-select` | `options: SwatchOption[]`, `value` (model), `ariaLabel` | | outlined `mat-select`, 44 px |
+| `app-page-header` | `title` | | layout; project content, with `[pageHeaderEnd]` for the right end |
+| `app-vnv-page-header` · `feature/vnv/components/vnv-page-header/` | `loaded: { name, sensorCount } \| null`, `range` (model), `showAllData` (model), `view` (model) | `loadData` (button element, for anchoring), `rangeApplied` | `null` = first visit (title only) |
+| `app-date-range-field` | `range` (model `DateRangeValue { start, end }`, local-midnight ms), `ariaLabel` | `applied` | CDK overlay popover; Apply disabled when end < start; Escape closes; focus returns to the trigger |
+| `app-chart-card` | `showNavigator`, `resetDisabled` | `reset` | slots `[chartToolbar]`, default (chart), `[chartNavigator]` |
+| `app-selection-action-bar` | | `vnv` (button element) | ⋯ inert |
+| `app-vnv-form` | `count`, `noun: 'values' \| 'scans'`, `layout: 'popover' \| 'docked'`, `initial?` | `apply({ qi: 'Good' \| 'Suspect', comment })`, `cancel`, `close` | popover layout applies `.app-popover` itself. Apply is disabled until a QI is chosen. The comment is trimmed |
+
+**Dev pages:** `/dev/gallery` (`feature/dev/component-gallery/`) shows every component in its states, with an Events line that logs outputs.
+
+**Tests:** `ui/components/shared-components.spec.ts`.

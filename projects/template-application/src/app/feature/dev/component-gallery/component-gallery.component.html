@@ -1,0 +1,211 @@
+<div class="gallery">
+  <p class="events" aria-live="polite">Events: {{ events().join(' · ') || '—' }}</p>
+
+  <!-- 1 · Page header -->
+  <section>
+    <h2>Page header (VNV) <small>1:11429 · first visit 1:10989</small></h2>
+    <div class="stage stage--page">
+      <app-vnv-page-header [(range)]="range" />
+    </div>
+    <div class="stage stage--page">
+      <app-vnv-page-header
+        [loaded]="loaded"
+        [(range)]="range"
+        [(showAllData)]="showAll"
+        [(view)]="view"
+        (loadData)="log('loadData')"
+        (rangeApplied)="log('rangeApplied', $event)"
+      />
+    </div>
+    <div class="stage stage--page">
+      <app-vnv-page-header [loaded]="loaded" [(range)]="range" [showAllData]="false" [(view)]="tableView" />
+    </div>
+  </section>
+
+  <!-- 2 · Date range field -->
+  <section>
+    <h2>Date range field <small>1:11440 · popover has no frame</small></h2>
+    <div class="stage">
+      <app-date-range-field [(range)]="range" (applied)="log('applied', $event)" />
+      <span class="note">Open it; set End before Start to see Apply disabled; Escape closes.</span>
+    </div>
+  </section>
+
+  <!-- 3 · View switcher -->
+  <section>
+    <h2>View switcher <small>1:1990</small></h2>
+    <div class="stage">
+      <app-view-switcher [(value)]="tableView" />
+      <app-view-switcher [(value)]="view" />
+    </div>
+  </section>
+
+  <!-- 4 · Quality filter -->
+  <section>
+    <h2>Quality filter <small>1:2001 · 1:11456</small></h2>
+    <div class="stage stage--col">
+      <app-quality-filter [(value)]="qiAll" />
+      <app-quality-filter [(value)]="qiMixed" />
+      <app-quality-filter [(value)]="qiNone" />
+    </div>
+    <div class="stage">
+      @for (qi of qis; track qi) {
+        <span class="inline"><app-qi-icon [qi]="qi" /> {{ qi }}</span>
+      }
+    </div>
+  </section>
+
+  <!-- 5 · Series swatch -->
+  <section>
+    <h2>Series swatch <small>ring 1:11552 · plain 1:11640</small></h2>
+    <div class="stage swatches">
+      @for (i of swatchIndexes; track i) {
+        <span class="inline">
+          <app-series-swatch [color]="style(i).color" [dash]="style(i).dash" />
+          <app-series-swatch [color]="style(i).color" [dash]="style(i).dash" marker="none" />
+          {{ i }}
+        </span>
+      }
+    </div>
+  </section>
+
+  <!-- 6–9 · Side panel: legend rows, sections, swatch selects, detail rows -->
+  <section>
+    <h2>Side panel · legend row · detail row · select with swatch <small>1:11547</small></h2>
+    <div class="stage stage--top">
+      <app-side-panel class="panel">
+        <app-panel-section title="Legend">
+          <div class="legend">
+            @for (row of legend; track row.id) {
+              <app-legend-row [label]="row.id" [swatch]="row.swatch" [(visible)]="row.visible" />
+            }
+          </div>
+        </app-panel-section>
+        <app-panel-section title="Baseline sensor" titleStyle="label">
+          <app-swatch-select [options]="sensorOptions" [(value)]="baselineSensor" ariaLabel="Baseline sensor" />
+          <div class="details">
+            <app-detail-row label="Baseline" value="77.90" unit="°F" />
+            <app-detail-row label="Upper limit offset" value="2.50" unit="°F" />
+            <app-detail-row label="Lower limit offset" value="2.00" unit="°F" />
+            <app-detail-row label="Slope rate" value="0.03" unit="°F" />
+            <app-detail-row label="Baseline start date" value="04/19/2013" />
+          </div>
+        </app-panel-section>
+        <app-panel-section title="Equipment out of service" titleStyle="label">
+          <app-swatch-select [options]="sensorOptions" [(value)]="oosSensor" ariaLabel="Equipment out of service" />
+          <div class="details">
+            <app-detail-row label="Start date" value="03/03/2026" />
+            <app-detail-row label="End date" value="03/17/2026" />
+          </div>
+        </app-panel-section>
+      </app-side-panel>
+
+      <app-side-panel class="panel">
+        <app-panel-section title="Scan details">
+          <div class="details details--wide">
+            <app-detail-row label="Calculated ILL" value="135.214" compareValue="135.289" unit="in" />
+            <app-detail-row label="Depth correction" value="0.075" compareValue="0.150" unit="in" />
+            <app-detail-row label="Std deviation" value="0.594" compareValue="0.594" unit="cps" />
+            <app-detail-row label="In tolerance?" value="Yes" compareValue="Yes" />
+            <app-detail-row label="Outliers" value="2" compareValue="2" />
+            <app-detail-row label="Raw markers" value="284.287" compareValue="284.287" unit="cps" />
+          </div>
+        </app-panel-section>
+        <app-panel-section title="Calculation Baseline" actionLabel="Edit" (action)="log('Edit')">
+          <div class="details">
+            <app-detail-row label="Baseline value" value="135.000" unit="in" />
+            <app-detail-row label="Baseline slope rate" value="0.000" unit="in/yr" />
+            <app-detail-row label="Baseline start date" value="10/29/2022" />
+          </div>
+        </app-panel-section>
+        <app-panel-section title="No analysis yet">
+          <div class="details">
+            <app-detail-row label="Calculated ILL" value="—" unit="in" />
+          </div>
+        </app-panel-section>
+      </app-side-panel>
+
+      <div class="app-popover legend-popover">
+        <app-legend-row mode="checkbox" label="All scans" [visible]="false" [indeterminate]="true" class="all" />
+        @for (s of scans; track $index) {
+          <app-legend-row
+            mode="checkbox"
+            [label]="s.label"
+            [swatch]="style(s.i)"
+            [(visible)]="s.visible"
+            [locked]="!!s.focused"
+            [emphasis]="!!s.focused"
+          />
+          @if (s.focused) {
+            <app-legend-row mode="checkbox" [indent]="true" label="Saved" [swatch]="style(s.i)" [(visible)]="savedVisible" />
+            <app-legend-row
+              mode="checkbox"
+              [indent]="true"
+              label="Unsaved"
+              labelTone="primary"
+              [swatch]="{ color: style(s.i).color, dash: [3, 3] }"
+              [(visible)]="unsavedVisible"
+            />
+          }
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · Chart card -->
+  <section>
+    <h2>Chart card <small>VNV 1:11454 · ILL 1:8968</small></h2>
+    <div class="stage stage--col">
+      <app-chart-card class="card">
+        <div chartToolbar class="toolbar">
+          <app-quality-filter [(value)]="qiMixed" />
+          <button mat-button type="button">Export</button>
+        </div>
+        <div class="chart-placeholder">chart</div>
+      </app-chart-card>
+      <app-chart-card class="card" [showNavigator]="true" [resetDisabled]="false" (reset)="log('reset')">
+        <div chartToolbar class="toolbar"><span class="card-title">10/25/2023 12:07 PM</span></div>
+        <div class="chart-placeholder">chart</div>
+        <div chartNavigator class="chart-placeholder chart-placeholder--nav">navigator</div>
+      </app-chart-card>
+      <app-chart-card class="card" [showNavigator]="true" [resetDisabled]="true">
+        <div class="chart-placeholder">chart · Reset disabled at full range</div>
+        <div chartNavigator class="chart-placeholder chart-placeholder--nav">navigator</div>
+      </app-chart-card>
+    </div>
+  </section>
+
+  <!-- 11–12 · Selection action bar and VNV form -->
+  <section>
+    <h2>Selection action bar · VNV form <small>1:11678 · docked 1:10892</small></h2>
+    <div class="stage stage--top">
+      <div class="col">
+        <span cdkOverlayOrigin #barOrigin="cdkOverlayOrigin">
+          <app-selection-action-bar (vnv)="vnvPopoverOpen.set(true); log('vnv')" />
+        </span>
+        <ng-template
+          cdkConnectedOverlay
+          [cdkConnectedOverlayOrigin]="barOrigin"
+          [cdkConnectedOverlayOpen]="vnvPopoverOpen()"
+          [cdkConnectedOverlayPositions]="popoverPositions"
+          [cdkConnectedOverlayHasBackdrop]="true"
+          cdkConnectedOverlayBackdropClass="app-popover-backdrop"
+          (backdropClick)="vnvPopoverOpen.set(false)"
+          (overlayKeydown)="$event.key === 'Escape' && vnvPopoverOpen.set(false)"
+        >
+          <app-vnv-form
+            [count]="8"
+            (apply)="log('apply', $event); vnvPopoverOpen.set(false)"
+            (cancel)="vnvPopoverOpen.set(false)"
+            (close)="vnvPopoverOpen.set(false)"
+          />
+        </ng-template>
+        <app-vnv-form [count]="8" (apply)="log('apply', $event)" (cancel)="log('cancel')" (close)="log('close')" />
+        <app-vnv-form [count]="3" noun="scans" [initial]="{ qi: 'Good', comment: 'Non pretium' }" (apply)="log('apply', $event)" />
+      </div>
+      <app-side-panel class="panel panel--docked">
+        <app-vnv-form [count]="8" layout="docked" (apply)="log('apply', $event)" (cancel)="log('cancel')" (close)="log('close')" />
+      </app-side-panel>
+    </div>
+  </section>
+</div>
