@@ -4,12 +4,8 @@ An Angular 21 workspace with two projects:
 
 | Project                | Type        | Description                                                                 |
 | ---------------------- | ----------- | --------------------------------------------------------------------------- |
-| `template-application` | application | App shell (header, footer, theming, breadcrumbs) and a component showcase.  |
+| `template-application` | application | The UI shell: header, footer, light/dark theme. No features yet.            |
 | `beta-library`         | library     | UI library: callouts, inline notifications, lozenges, toasts.               |
-
-The only feature is `feature/components`, a showcase of the library plus a
-Material "kitchen sink". Delete it once your own features exist, or keep it as
-a styling reference.
 
 ## Getting started
 
@@ -46,8 +42,8 @@ projects/template-application/src/
           <sub-feature>/
 ```
 
-What's in `core/` today: `routing/` (breadcrumb trail) and `theme/` (light/dark
-theme). `ui/patterns/` has the page frame, breadcrumb and theme button.
+What's there today: `layout/` (header, footer and the shell around the router
+outlet), `core/theme/` (light/dark theme) and `ui/patterns/theme-button/`.
 
 ### Adding a feature
 
@@ -57,9 +53,7 @@ theme). `ui/patterns/` has the page frame, breadcrumb and theme button.
 2. Register it in `app.routes.ts` with `loadChildren()` and a dynamic import.
    A sub-feature goes under `sub-features/` and is registered in its parent's
    routes file the same way.
-3. Set `data: { breadcrumb: 'Label' }` on routes that should appear in the
-   breadcrumb trail.
-4. Keep code inside the feature until a second feature needs it, then move it
+3. Keep code inside the feature until a second feature needs it, then move it
    to `core/` (headless) or `ui/` (presentational).
 
 ## Scripts
