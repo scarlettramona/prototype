@@ -86,13 +86,20 @@ import { VnvStore } from '../vnv-store';
       flex: 1 1 auto;
       min-height: 0;
     }
+    /*
+     * The chart and panel fill the window below the headers (Figma 1:11401:
+     * 864 px at a 1024 px window): 100vh − 60 app header − 76 page header
+     * + 24 so the 24 px bottom padding falls below the fold. The footer
+     * follows the page, so it appears when scrolling down.
+     */
     .body {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 328px;
       gap: var(--spacing-240);
-      flex: 1 1 auto;
-      min-height: 640px;
+      height: calc(100vh - 112px);
+      min-height: 688px;
       padding: var(--spacing-240);
+      box-sizing: border-box;
     }
     .body--docked {
       grid-template-columns: minmax(0, 1fr) 340px;
