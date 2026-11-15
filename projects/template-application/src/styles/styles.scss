@@ -13,7 +13,6 @@
 @use './base/material-system-overrides/corner-overrides' as shape-overrides;
 @use './base/material-system-overrides/palette-overrides' as palette-overrides;
 @use 'index' as beta;
-@use './components/showcase';
 
 @include mat.system-classes();
 
