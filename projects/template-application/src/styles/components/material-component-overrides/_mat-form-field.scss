@@ -1,0 +1,54 @@
+// `mat-form-field.label-above` (added by the appLabelAbove directive): the
+// <mat-label> sits above the container instead of inside it, for both the
+// `fill` and `outline` appearances. The directive keeps the label floated, so
+// only Material's floated state is restyled here.
+
+.mat-mdc-form-field.label-above {
+  --label-above-line-height: 20px;
+  --label-above-gap: var(--spacing-40);
+
+  // Room for the label above the container.
+  .mat-mdc-text-field-wrapper {
+    margin-top: calc(var(--label-above-line-height) + var(--label-above-gap));
+  }
+
+  // Pin the label to the container's top-left edge, just above it. Material
+  // floats the outlined label with a long selector chain, hence the
+  // specificity here.
+  .mat-mdc-text-field-wrapper .mat-mdc-floating-label.mdc-floating-label.mdc-floating-label--float-above {
+    position: absolute;
+    top: calc(-1 * (var(--label-above-line-height) + var(--label-above-gap)));
+    left: 0;
+    right: auto;
+    max-width: 100%;
+    transform: none;
+    --mat-mdc-form-field-label-transform: none; // used when the field has a prefix
+    font: var(--mat-sys-body-medium);
+    line-height: var(--label-above-line-height);
+  }
+
+  // Fill: the container clips its children and the label is positioned within
+  // the input area, so let it overflow and position against the container.
+  .mdc-text-field--filled {
+    overflow: visible;
+
+    .mat-mdc-form-field-focus-overlay {
+      border-radius: inherit;
+    }
+
+    // Center the input now that the label no longer takes space inside.
+    .mat-mdc-form-field-infix {
+      position: static;
+      padding-top: var(--mat-form-field-container-vertical-padding, 16px);
+      padding-bottom: var(--mat-form-field-container-vertical-padding, 16px);
+    }
+  }
+
+  // Outline: close the gap Material cuts into the top border for the label,
+  // and stop clipping the label to the notch.
+  .mdc-text-field--outlined .mdc-notched-outline__notch {
+    border-top-style: solid;
+    padding: 0;
+    clip-path: none;
+  }
+}

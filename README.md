@@ -43,7 +43,23 @@ projects/template-application/src/
 ```
 
 What's there today: `layout/` (header, footer and the shell around the router
-outlet), `core/theme/` (light/dark theme) and `ui/patterns/theme-button/`.
+outlet), `core/theme/` (light/dark theme), `ui/patterns/theme-button/` and
+`ui/components/label-above/`.
+
+### Form field with the label above
+
+Add `appLabelAbove` (from `ui/components/label-above/`) to a `mat-form-field`
+to put its `<mat-label>` above the container instead of inside it. It works
+with both `fill` and `outline`:
+
+```html
+<mat-form-field appearance="outline" appLabelAbove>
+  <mat-label>Scan comment</mat-label>
+  <input matInput placeholder="Placeholder" />
+</mat-form-field>
+```
+
+The styles are in `styles/components/material-component-overrides/_mat-form-field.scss`.
 
 ### Adding a feature
 

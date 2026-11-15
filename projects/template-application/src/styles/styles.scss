@@ -4,6 +4,7 @@
 @use 'sass:map';
 @use 'material-symbols/rounded.css';
 @use './components/material-component-overrides/mat-button';
+@use './components/material-component-overrides/mat-form-field';
 @use './components/material-component-overrides/mat-shape-overrides';
 @use './components/material-component-overrides/mat-palette-overrides';
 @use './base/spacing';
