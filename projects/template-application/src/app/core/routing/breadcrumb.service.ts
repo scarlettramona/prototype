@@ -1,80 +1,33 @@
 import { inject, Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
-import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
-import { Observable } from 'rxjs';
-import { encodePathSegment } from './routes';
-import { Breadcrumb } from './breadcrumb.model';
+import { toSignal } from '@angular/core/rxjs-interop';
+import type { ActivatedRouteSnapshot } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, map } from 'rxjs/operators';
 
-/**
- * Builds a breadcrumb trail reactively on every navigation.
- *
- * Labels resolve in priority order: route `data['breadcrumb']` (static or via
- * a resolver), then a humanized fallback of the URL segment.
- */
+export type Breadcrumb = { label: string; route: string };
+
+/** Breadcrumb trail for the current route, labelled by route `data['breadcrumb']`. */
 @Injectable({ providedIn: 'root' })
 export class BreadcrumbService {
   private readonly router = inject(Router);
 
-  readonly breadcrumbs$: Observable<Breadcrumb[]>;
-
-  constructor() {
-    this.breadcrumbs$ = this.router.events.pipe(
+  readonly breadcrumbs = toSignal(
+    this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd),
-      startWith(null),
-      map(() => this.buildTrail(this.router.routerState.snapshot.root)),
-      distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
-    );
-  }
+      map(() => this.buildTrail()),
+    ),
+    { initialValue: this.buildTrail() },
+  );
 
-  private buildTrail(route: ActivatedRouteSnapshot): Breadcrumb[] {
+  private buildTrail(): Breadcrumb[] {
     const crumbs: Breadcrumb[] = [];
-    let accumulatedPath = '';
-
-    const chain = this.flattenRoute(route);
-
-    for (const segment of chain) {
-      if (!segment.routeConfig?.path) {
-        continue;
-      }
-
-      const resolvedPath = segment.url.map((s) => s.path).join('/');
-      const encodedPath = segment.url.map((s) => encodePathSegment(s.path)).join('/');
-      accumulatedPath += `/${encodedPath}`;
-
-      const label = this.resolveLabel(segment, resolvedPath);
-
-      crumbs.push({
-        label,
-        route: accumulatedPath,
-      });
+    let path = '';
+    for (let route: ActivatedRouteSnapshot | null = this.router.routerState.snapshot.root; route; route = route.firstChild) {
+      if (!route.routeConfig?.path) continue;
+      path += '/' + route.url.map((s) => s.path).join('/');
+      const label = route.data['breadcrumb'];
+      crumbs.push({ label: typeof label === 'string' ? label : route.url.map((s) => s.path).join('/'), route: path });
     }
-
     return crumbs;
-  }
-
-  private resolveLabel(segment: ActivatedRouteSnapshot, rawSegment: string): string {
-    const dataLabel = segment.data['breadcrumb'];
-    if (typeof dataLabel === 'string' && dataLabel) {
-      return dataLabel;
-    }
-    return this.humanize(rawSegment);
-  }
-
-  private flattenRoute(route: ActivatedRouteSnapshot): ActivatedRouteSnapshot[] {
-    const chain: ActivatedRouteSnapshot[] = [];
-    let current: ActivatedRouteSnapshot | null = route;
-    while (current) {
-      chain.push(current);
-      current = current.firstChild;
-    }
-    return chain;
-  }
-
-  /** e.g. 'not-found' → 'Not Found' */
-  private humanize(segment: string): string {
-    return segment
-      .split('-')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
   }
 }

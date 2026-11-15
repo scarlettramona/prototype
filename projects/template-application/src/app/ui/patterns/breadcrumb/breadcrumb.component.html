@@ -1,4 +1,4 @@
-@if (breadcrumbs$ | async; as crumbs) {
+@if (breadcrumbs(); as crumbs) {
   @if (crumbs.length > 0) {
     <nav aria-label="Breadcrumb">
       <ol>

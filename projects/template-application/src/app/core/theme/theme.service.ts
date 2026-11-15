@@ -1,43 +1,50 @@
 import { DOCUMENT, inject, Injectable, signal } from '@angular/core';
-import { LOCAL_STORAGE } from '../storage/local-storage.token';
 
-// keep these constants in sync with index.html
-const DARK_THEME_CLASS_NAME = 'theme-dark';
-const LIGHT_THEME_CLASS_NAME = 'theme-light';
-const THEME_SELECTED_LOCAL_STORAGE_KEY = 'theme';
+export type ThemeMode = 'dark' | 'light';
 
-export enum ThemeMode {
-  DARK = 'dark',
-  LIGHT = 'light',
-}
+const STORAGE_KEY = 'theme';
 
+/** Light/dark theme, applied as a `theme-dark`/`theme-light` class on <html> and remembered in localStorage. */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly document = inject(DOCUMENT);
-  private readonly localStorage: Storage | null = inject(LOCAL_STORAGE);
-  private readonly _themeSelected = signal<ThemeMode>(ThemeMode.DARK);
+  private readonly _theme = signal<ThemeMode>('dark');
 
-  readonly themeSelected = this._themeSelected.asReadonly();
+  readonly theme = this._theme.asReadonly();
 
   constructor() {
-    const themeFromLocalStorage = this.localStorage?.getItem(THEME_SELECTED_LOCAL_STORAGE_KEY) as ThemeMode | null;
-    if (themeFromLocalStorage) {
-      this.setTheme(themeFromLocalStorage);
+    const stored = readStorage();
+    if (stored === 'dark' || stored === 'light') {
+      this.setTheme(stored);
     }
   }
+
+  toggle(): void {
+    this.setTheme(this._theme() === 'dark' ? 'light' : 'dark');
+  }
+
   setTheme(theme: ThemeMode): void {
-    this._themeSelected.set(theme);
-    this.localStorage?.setItem(THEME_SELECTED_LOCAL_STORAGE_KEY, this.themeSelected());
-    this.setBodyClasses();
+    this._theme.set(theme);
+    writeStorage(theme);
+    const classes = this.document.documentElement.classList;
+    classes.toggle('theme-dark', theme === 'dark');
+    classes.toggle('theme-light', theme === 'light');
   }
-  private setBodyClasses(): void {
-    const documentClassList = this.document.documentElement.classList;
-    if (this.themeSelected() === ThemeMode.DARK) {
-      documentClassList.add(DARK_THEME_CLASS_NAME);
-      documentClassList.remove(LIGHT_THEME_CLASS_NAME);
-    } else {
-      documentClassList.add(LIGHT_THEME_CLASS_NAME);
-      documentClassList.remove(DARK_THEME_CLASS_NAME);
-    }
+}
+
+// localStorage can throw when storage is blocked or full; the theme just won't persist.
+function readStorage(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(value: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, value);
+  } catch {
+    /* ignore */
   }
 }

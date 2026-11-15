@@ -1,46 +1,46 @@
 import type { Route } from '@angular/router';
 
-import { APP_PATHS } from '../../../../core/routing/app-paths';
+import { COMPONENTS_PATHS } from '../../components.constants';
 
 export const KITCHEN_SINK_ROUTES: Route[] = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: APP_PATHS.components.kitchenSink.formControls,
+    redirectTo: COMPONENTS_PATHS.kitchenSink.formControls,
   },
   {
-    path: APP_PATHS.components.kitchenSink.formControls,
+    path: COMPONENTS_PATHS.kitchenSink.formControls,
     data: { breadcrumb: 'Form controls' },
     loadComponent: () =>
-      import('./pages/form-controls/form-controls-page.component').then((m) => m.FormControlsPageComponent),
+      import('./form-controls/form-controls-page.component').then((m) => m.FormControlsPageComponent),
   },
   {
-    path: APP_PATHS.components.kitchenSink.selectionControls,
+    path: COMPONENTS_PATHS.kitchenSink.selectionControls,
     data: { breadcrumb: 'Selection controls' },
     loadComponent: () =>
-      import('./pages/selection-controls/selection-controls-page.component').then(
+      import('./selection-controls/selection-controls-page.component').then(
         (m) => m.SelectionControlsPageComponent,
       ),
   },
   {
-    path: APP_PATHS.components.kitchenSink.pickers,
+    path: COMPONENTS_PATHS.kitchenSink.pickers,
     data: { breadcrumb: 'Pickers' },
-    loadComponent: () => import('./pages/pickers/pickers-page.component').then((m) => m.PickersPageComponent),
+    loadComponent: () => import('./pickers/pickers-page.component').then((m) => m.PickersPageComponent),
   },
   {
-    path: APP_PATHS.components.kitchenSink.cardsChips,
+    path: COMPONENTS_PATHS.kitchenSink.cardsChips,
     data: { breadcrumb: 'Cards & chips' },
     loadComponent: () =>
-      import('./pages/cards-chips/cards-chips-page.component').then((m) => m.CardsChipsPageComponent),
+      import('./cards-chips/cards-chips-page.component').then((m) => m.CardsChipsPageComponent),
   },
   {
-    path: APP_PATHS.components.kitchenSink.layoutNav,
+    path: COMPONENTS_PATHS.kitchenSink.layoutNav,
     data: { breadcrumb: 'Layout & navigation' },
-    loadComponent: () => import('./pages/layout-nav/layout-nav-page.component').then((m) => m.LayoutNavPageComponent),
+    loadComponent: () => import('./layout-nav/layout-nav-page.component').then((m) => m.LayoutNavPageComponent),
   },
   {
-    path: APP_PATHS.components.kitchenSink.overlays,
+    path: COMPONENTS_PATHS.kitchenSink.overlays,
     data: { breadcrumb: 'Overlays' },
-    loadComponent: () => import('./pages/overlays/overlays-page.component').then((m) => m.OverlaysPageComponent),
+    loadComponent: () => import('./overlays/overlays-page.component').then((m) => m.OverlaysPageComponent),
   },
 ];

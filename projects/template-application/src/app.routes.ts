@@ -1,19 +1,12 @@
 import type { Route } from '@angular/router';
 
-import { APP_PATHS } from './app/core/routing/app-paths';
+import { COMPONENTS_PATHS } from './app/feature/components/components.constants';
 
-/**
- * Top-level routes. Every first-level feature is lazy and is reached through
- * `loadChildren()`; the shell around them is rendered by the root component.
- */
+/** Top-level routes. Every first-level feature is lazy. */
 export const appRoutes: Route[] = [
+  { path: '', pathMatch: 'full', redirectTo: COMPONENTS_PATHS.base },
   {
-    path: '',
-    pathMatch: 'full',
-    redirectTo: APP_PATHS.components.base,
-  },
-  {
-    path: APP_PATHS.components.base,
+    path: COMPONENTS_PATHS.base,
     data: { breadcrumb: 'Components' },
     loadChildren: () => import('./app/feature/components/components.routes').then((m) => m.COMPONENTS_ROUTES),
   },
