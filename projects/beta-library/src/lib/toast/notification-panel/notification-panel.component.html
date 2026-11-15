@@ -1,0 +1,56 @@
+<!-- Presentational click-catcher for closing on an outside click. Keyboard
+     users close the panel with Escape, handled on the panel itself. -->
+<div aria-hidden="true" class="panel-overlay" (click)="onOverlayClick()"></div>
+
+<aside aria-label="Notifications" class="panel" role="complementary" (keydown)="onPanelKeydown($event)">
+  <header class="panel__header">
+    <h2 class="panel__title">Notifications</h2>
+    @if (allToasts$ | async; as toasts) {
+      <div class="panel__header-actions">
+        <span class="panel__count">{{ toasts.length }} this session</span>
+        <button matButton type="button" [disabled]="toasts.length === 0" (click)="clearAll()">Clear all</button>
+      </div>
+    }
+  </header>
+
+  <div class="panel__list">
+    @for (toast of allToasts$ | async; track toast.id) {
+      <div
+        class="panel__entry"
+        [class.panel__entry--error]="toast.status === 'error'"
+        [class.panel__entry--info]="toast.status === 'info'"
+        [class.panel__entry--read]="toast.read"
+        [class.panel__entry--success]="toast.status === 'success'"
+        [class.panel__entry--unread]="!toast.read"
+        [class.panel__entry--warning]="toast.status === 'warning'"
+      >
+        <div class="panel__entry-header">
+          <span class="panel__status-dot"></span>
+          <span class="panel__status-label">
+            {{ toast.status | uppercase }}
+          </span>
+          @if (!toast.dismissed) {
+            <button
+              aria-label="Dismiss notification"
+              class="panel__dismiss"
+              mat-icon-button
+              type="button"
+              (click)="dismiss(toast.id)"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+        <p class="panel__message">{{ toast.message }}</p>
+        <div class="panel__meta">
+          <span class="panel__timestamp">{{ formatFullTime(toast.timestamp) }}</span>
+          @if (toast.dismissed) {
+            <span class="panel__dismissed-label">dismissed</span>
+          }
+        </div>
+      </div>
+    } @empty {
+      <div class="panel__empty">No notifications yet</div>
+    }
+  </div>
+</aside>

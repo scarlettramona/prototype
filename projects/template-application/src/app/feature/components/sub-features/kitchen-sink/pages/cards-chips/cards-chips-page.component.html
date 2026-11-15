@@ -1,0 +1,49 @@
+<app-page [showBreadcrumbs]="true">
+  <h1 pageTitle>Cards &amp; chips</h1>
+  <p pageDescription>Card and chip variants for visual reference only.</p>
+
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Card</h2>
+    <mat-card appearance="outlined" class="ks-card">
+      <mat-card-header>
+        <div class="ks-card-avatar" mat-card-avatar></div>
+        <mat-card-title>Card with media</mat-card-title>
+        <mat-card-subtitle>Subtitle</mat-card-subtitle>
+      </mat-card-header>
+      <img alt="Placeholder artwork" height="240" mat-card-image ngSrc="placeholder-card.svg" width="400" />
+      <mat-card-content>
+        <p>
+          Supporting copy sits in the card content block. Swap this for the summary text your feature needs — the card
+          grows to fit.
+        </p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button matButton type="button">LIKE</button>
+        <button matButton type="button">SHARE</button>
+      </mat-card-actions>
+    </mat-card>
+  </section>
+
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Stacked chips</h2>
+    <mat-chip-listbox aria-label="Cutest dog breeds" class="ks-stacked-chips">
+      @for (dog of bestBoys; track dog) {
+        <mat-chip-option selected>{{ dog }}</mat-chip-option>
+      }
+    </mat-chip-listbox>
+  </section>
+
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Chips drag &amp; drop</h2>
+    <mat-chip-set
+      cdkDropList
+      cdkDropListOrientation="horizontal"
+      class="ks-dnd-chips"
+      (cdkDropListDropped)="drop($event)"
+    >
+      @for (vegetable of vegetables(); track vegetable.name) {
+        <mat-chip cdkDrag class="ks-dnd-chip">{{ vegetable.name }}</mat-chip>
+      }
+    </mat-chip-set>
+  </section>
+</app-page>

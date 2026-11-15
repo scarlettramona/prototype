@@ -1,0 +1,32 @@
+@use '@angular/material' as mat;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.shell__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.shell__sidenav {
+  padding: var(--spacing-80);
+  @include mat.sidenav-overrides(
+    (
+      container-shape: var(--mat-sys-corner-none),
+      container-divider-color: var(--mat-sys-outline-variant),
+      container-width: 312px,
+      container-background-color: var(--mat-sys-surface-container),
+    )
+  );
+}
+
+.shell__footer {
+  flex-shrink: 0;
+}

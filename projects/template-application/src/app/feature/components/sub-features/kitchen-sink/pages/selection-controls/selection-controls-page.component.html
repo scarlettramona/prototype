@@ -1,0 +1,79 @@
+<app-page [showBreadcrumbs]="true">
+  <h1 pageTitle>Selection controls</h1>
+  <p pageDescription>Checkboxes, slide-toggles and button-toggles for visual reference only.</p>
+
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Checkbox</h2>
+    <div class="showcase-row">
+      <mat-checkbox>Check me!</mat-checkbox>
+      <mat-checkbox [disabled]="true">Disabled</mat-checkbox>
+    </div>
+    <div class="ks-checkbox-tree">
+      <mat-checkbox
+        [checked]="task().completed"
+        [indeterminate]="partiallyComplete()"
+        (change)="update($event.checked)"
+      >
+        {{ task().name }}
+      </mat-checkbox>
+      <ul>
+        @for (subtask of task().subtasks; track subtask.name; let i = $index) {
+          <li>
+            <mat-checkbox [checked]="subtask.completed" (change)="update($event.checked, i)">
+              {{ subtask.name }}
+            </mat-checkbox>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Slide toggle</h2>
+    <div class="showcase-stack">
+      <mat-slide-toggle>Slide me!</mat-slide-toggle>
+      <mat-slide-toggle labelPosition="before">...and slide me too!</mat-slide-toggle>
+    </div>
+  </section>
+
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Button toggle</h2>
+    <div class="showcase-row">
+      <mat-checkbox [checked]="hideSingleSelectionIndicator()" (change)="toggleSingleSelectionIndicator()">
+        Hide single selection indicator
+      </mat-checkbox>
+      <mat-checkbox [checked]="hideMultipleSelectionIndicator()" (change)="toggleMultipleSelectionIndicator()">
+        Hide multiple selection indicator
+      </mat-checkbox>
+    </div>
+
+    <div class="showcase-stack">
+      <div>
+        <span class="showcase-label">Single selection</span>
+        <mat-button-toggle-group
+          aria-label="Favorite color"
+          name="favoriteColor"
+          [hideSingleSelectionIndicator]="hideSingleSelectionIndicator()"
+        >
+          <mat-button-toggle value="red">Red</mat-button-toggle>
+          <mat-button-toggle value="green">Green</mat-button-toggle>
+          <mat-button-toggle value="blue">Blue</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <div>
+        <span class="showcase-label">Multiple selection</span>
+        <mat-button-toggle-group
+          aria-label="Ingredients"
+          multiple
+          name="ingredients"
+          [hideMultipleSelectionIndicator]="hideMultipleSelectionIndicator()"
+        >
+          <mat-button-toggle value="flour">Flour</mat-button-toggle>
+          <mat-button-toggle value="eggs">Eggs</mat-button-toggle>
+          <mat-button-toggle value="sugar">Sugar</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+    </div>
+  </section>
+</app-page>

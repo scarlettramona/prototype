@@ -1,0 +1,13 @@
+<div class="detail-panel">
+  <div class="detail-section-header">
+    <h2>{{ title() }} ({{ count() }})</h2>
+    <button matButton="outlined" type="button" [disabled]="addDisabled()" (click)="add.emit()">
+      {{ addLabel() }}
+    </button>
+  </div>
+  @if (count() === 0) {
+    <p class="detail-empty">{{ emptyMessage() }}</p>
+  } @else {
+    <ng-content />
+  }
+</div>

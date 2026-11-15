@@ -1,0 +1,14 @@
+// spacing scale consumed by the library components
+
+@mixin spacing-tokens {
+  :root {
+    --spacing-sm: 4px;
+    --spacing-md: 8px;
+    --spacing-lg: 12px;
+    --spacing-xl: 16px;
+    --spacing-xxl: 24px;
+    --spacing-3xl: 32px;
+    --spacing-4xl: 40px;
+    --spacing-5xl: 48px;
+  }
+}

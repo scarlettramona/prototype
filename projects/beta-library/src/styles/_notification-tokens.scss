@@ -1,0 +1,45 @@
+// design tokens for the notification family. apps get all of them
+// via the `beta-library-tokens` include.
+//
+// color-bearing tokens defer to Material system colors (`--mat-sys-*`) so they
+// follow the app theme automatically.
+
+@mixin notification-tokens {
+  :root {
+    // surface / layout
+    --notification-surface-radius: 8px;
+    --notification-accent-width: 4px;
+    --notification-padding: 16px;
+    --notification-content-gap: 12px;
+    --notification-icon-size: 20px;
+    --notification-close-icon-size: 18px;
+    --notification-close-radius: 8px;
+    --notification-spacing-outer: 8px;
+    --notification-spacing-inline-stack: 8px;
+    --notification-spacing-stack: 12px;
+
+    // typography — size/weight/line-height come from the Material type scale
+    // (`font: var(--mat-sys-<level>)`) per text role; these tokens expose only
+    // the themeable text colors.
+    --notification-title-color: var(--mat-sys-on-surface);
+    --notification-body-color: var(--mat-sys-on-surface);
+    --notification-meta-color: light-dark(
+      rgb(from var(--mat-sys-on-surface) r g b / 0.6),
+      rgb(from var(--mat-sys-on-surface) r g b / 0.7)
+    );
+
+    // elevation
+    --shadow-toast: 0 4px 12px rgb(0 0 0 / 0.15);
+    --shadow-panel: -4px 0 16px rgb(0 0 0 / 0.12);
+
+    // stacking
+    --z-toast: 300;
+    --z-panel: 200;
+
+    // motion
+    --transition-fast: 120ms;
+    --transition-normal: 200ms;
+    --transition-normal-slow: 300ms;
+    --transition-slow: 350ms;
+  }
+}

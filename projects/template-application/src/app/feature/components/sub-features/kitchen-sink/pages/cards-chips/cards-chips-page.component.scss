@@ -1,0 +1,20 @@
+.ks-card {
+  max-width: 400px;
+}
+
+.ks-card-avatar {
+  background: var(--mat-sys-primary-container);
+  background-size: cover;
+}
+
+.ks-stacked-chips {
+  max-width: 220px;
+}
+
+.ks-dnd-chip.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.ks-dnd-chips.cdk-drop-list-dragging .ks-dnd-chip:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

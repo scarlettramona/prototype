@@ -1,0 +1,53 @@
+@use '@angular/material' as mat;
+
+.header {
+  @include mat.toolbar-overrides(
+    (
+      container-background-color: var(--app-shell-background),
+    )
+  );
+}
+.header__hamburger {
+  @include mat.icon-button-overrides(
+    (
+      icon-color: var(--app-shell-on-background),
+    )
+  );
+}
+.header__branding {
+  padding: inherit;
+  display: flex;
+}
+.header__logo {
+  color: var(--mat-sys-on-primary-container);
+}
+
+.header__title {
+  margin-left: var(--spacing-80);
+  color: var(--app-shell-on-background);
+}
+
+.header__spacer {
+  flex: 1 1 auto;
+}
+
+.header__actions {
+  display: flex;
+  align-items: center;
+}
+
+.header__user-name {
+  margin-right: var(--spacing-160);
+  font: var(--mat-sys-body-medium);
+  pointer-events: none;
+  opacity: 0.9;
+  color: var(--app-shell-on-background);
+}
+
+.header__actions {
+  @include mat.icon-button-overrides(
+    (
+      icon-color: var(--app-shell-on-background),
+    )
+  );
+}

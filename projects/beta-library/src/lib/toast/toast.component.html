@@ -1,0 +1,31 @@
+<div
+  class="toast"
+  [attr.aria-live]="toast().status === 'error' ? 'assertive' : 'polite'"
+  [attr.role]="toast().status === 'error' ? 'alert' : 'status'"
+  [class.toast--entering]="animationState() === 'entering'"
+  [class.toast--error]="toast().status === 'error'"
+  [class.toast--exiting]="animationState() === 'exiting'"
+  [class.toast--info]="toast().status === 'info'"
+  [class.toast--success]="toast().status === 'success'"
+  [class.toast--visible]="animationState() === 'visible'"
+  [class.toast--warning]="toast().status === 'warning'"
+  (mouseenter)="onMouseEnter()"
+  (mouseleave)="onMouseLeave()"
+>
+  <div class="toast__body">
+    <div class="toast__icon">
+      <mat-icon>{{ statusIcon }}</mat-icon>
+    </div>
+
+    <div class="toast__content">
+      <p class="toast__message">{{ toast().message }}</p>
+      @if (showTimestamps()) {
+        <span class="toast__timestamp">{{ formatTime(toast().timestamp) }}</span>
+      }
+    </div>
+
+    <button aria-label="Dismiss notification" class="toast__close" type="button" (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+</div>

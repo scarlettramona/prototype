@@ -1,0 +1,21 @@
+<div
+  class="callout"
+  role="note"
+  [class.callout--info]="status() === 'info'"
+  [class.callout--warning]="status() === 'warning'"
+>
+  <div class="callout__accent"></div>
+
+  <div class="callout__body">
+    <div class="callout__icon">
+      <mat-icon>{{ statusIcon }}</mat-icon>
+    </div>
+
+    <div class="callout__content">
+      @if (title()) {
+        <p class="callout__title">{{ title() }}</p>
+      }
+      <p class="callout__message">{{ message() }}</p>
+    </div>
+  </div>
+</div>

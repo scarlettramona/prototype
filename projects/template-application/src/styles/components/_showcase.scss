@@ -1,0 +1,53 @@
+/* Shared layout for component showcase/demo pages (components section).
+   Used by notifications-demo and lozenges-demo so example galleries stay
+   visually consistent. */
+
+.showcase-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-120);
+  padding: var(--spacing-240) 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+}
+
+.showcase-section__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface);
+}
+
+.showcase-section__description {
+  margin: 0;
+  max-width: 70ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+/* Horizontal gallery of examples that wraps on small screens. */
+.showcase-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-120);
+}
+
+/* Vertical stack (e.g. full-width inline notifications / callouts). */
+.showcase-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-120);
+  max-width: 640px;
+}
+
+/* Small caption above a single example. */
+.showcase-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mat-sys-on-surface-variant);
+}

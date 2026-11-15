@@ -1,0 +1,98 @@
+// Canonical status tonal palettes — the single source of status color for every
+// component (lozenges + the notification family).
+//
+// These are concrete, hand-authored ramps (no runtime lightness math), so they
+// can be exported and used by applications directly:
+//   - SCSS:  @use 'beta-library/styles/status-palette' as palette; $palettes …
+//   - CSS:   var(--status-<name>-<step>)   (emitted by `status-palette-tokens`)
+//
+// There is no shared role/override layer. Each component spells out, per status,
+// the `light-dark(var(--status-<name>-<step>), …)` it uses (see the component
+// SCSS) — less DRY, but every value is visible and independently tweakable.
+// Notification status names map onto these canonical names: info -> information,
+// error -> danger.
+
+$palettes: (
+  neutral: (
+    0: #000000,
+    10: #17181d,
+    20: #212328,
+    30: #2a2d33,
+    40: #34373e,
+    50: #43474f,
+    60: #7a7c84,
+    70: #9fa0a7,
+    80: #c3c4ca,
+    90: #e8e7ed,
+    95: #cddbee,
+    100: #ffffff,
+  ),
+  success: (
+    0: #000000,
+    10: #1d231a,
+    20: #344420,
+    30: #4a6426,
+    40: #60842d,
+    50: #82b536,
+    60: #a6c972,
+    70: #bed79a,
+    80: #d6e5c2,
+    90: #eef2ea,
+    95: #e6f0d7,
+    100: #ffffff,
+  ),
+  warning: (
+    0: #000000,
+    10: #2a2115,
+    20: #593d10,
+    30: #88590b,
+    40: #b87607,
+    50: #ffa000,
+    60: #fdbb4c,
+    70: #fdcd7f,
+    80: #fcdeb2,
+    90: #fbf0e5,
+    95: #ffeccc,
+    100: #ffffff,
+  ),
+  danger: (
+    0: #000000,
+    10: #231417,
+    20: #441518,
+    30: #661618,
+    40: #881819,
+    50: #ba1a1a,
+    60: #cd5d5e,
+    70: #da8a8c,
+    80: #e7b6ba,
+    90: #f4e3e7,
+    95: #f1d1d1,
+    100: #ffffff,
+  ),
+  information: (
+    0: #000000,
+    10: #111926,
+    20: #0e2444,
+    30: #0b3061,
+    40: #083c7f,
+    50: #044dac,
+    60: #4e81c5,
+    70: #7fa3d5,
+    80: #b0c5e5,
+    90: #e1e8f6,
+    95: #d9e4f3,
+    100: #ffffff,
+  ),
+);
+
+// Emit `--status-<name>-<step>` custom properties so apps (and the components)
+// reference the palette by step. Apps override any value to retheme.
+@mixin status-palette-tokens {
+  :root {
+    @each $name, $ramp in $palettes {
+      @each $step, $color in $ramp {
+        --status-#{$name}-#{$step}: #{$color};
+      }
+    }
+  }
+}

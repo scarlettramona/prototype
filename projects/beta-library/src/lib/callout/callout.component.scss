@@ -1,0 +1,68 @@
+@use '../../styles/notification-mixins' as notif;
+
+.callout {
+  position: relative;
+  border-radius: var(--notification-surface-radius);
+  overflow: hidden;
+  margin: var(--notification-spacing-outer) 0;
+  border: 1px solid;
+}
+
+.callout__body {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--notification-padding);
+  padding-left: calc(var(--notification-accent-width) + var(--notification-padding));
+  gap: var(--notification-content-gap);
+}
+
+.callout__icon {
+  @include notif.notification-icon;
+}
+
+.callout__content {
+  @include notif.notification-content;
+}
+
+.callout__title {
+  margin: 0 0 2px;
+  font: var(--mat-sys-title-small);
+  letter-spacing: var(--mat-sys-title-small-tracking);
+  color: var(--notification-title-color);
+}
+
+.callout__message {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  letter-spacing: var(--mat-sys-body-medium-tracking);
+  color: var(--notification-body-color);
+}
+
+// status colors — surface 95/20, border 70/40, accent (bold) 40/70, icon 50/60.
+.callout--info {
+  background-color: light-dark(var(--status-information-95), var(--status-information-20));
+  border-color: light-dark(var(--status-information-70), var(--status-information-40));
+
+  .callout__accent {
+    background-color: light-dark(var(--status-information-40), var(--status-information-70));
+  }
+  .callout__icon {
+    background-color: light-dark(var(--status-information-95), var(--status-information-20));
+    border-color: light-dark(var(--status-information-70), var(--status-information-40));
+    color: light-dark(var(--status-information-50), var(--status-information-60));
+  }
+}
+
+.callout--warning {
+  background-color: light-dark(var(--status-warning-95), var(--status-warning-20));
+  border-color: light-dark(var(--status-warning-70), var(--status-warning-40));
+
+  .callout__accent {
+    background-color: light-dark(var(--status-warning-40), var(--status-warning-70));
+  }
+  .callout__icon {
+    background-color: light-dark(var(--status-warning-95), var(--status-warning-20));
+    border-color: light-dark(var(--status-warning-70), var(--status-warning-40));
+    color: light-dark(var(--status-warning-50), var(--status-warning-60));
+  }
+}

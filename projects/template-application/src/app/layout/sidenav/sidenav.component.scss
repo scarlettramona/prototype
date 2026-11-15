@@ -1,0 +1,77 @@
+:host {
+  display: block;
+  padding: var(--spacing-md);
+}
+
+/* reset */
+[ngTree] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+[ngTreeItem] {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-80);
+  padding: var(--spacing-40) var(--spacing-160);
+  border-radius: var(--mat-sys-corner-extra-small);
+  cursor: pointer;
+  text-decoration: none;
+  caret-color: transparent;
+  color: inherit;
+  // font: var(--mat-sys-body-medium);
+  // letter-spacing: var(--mat-sys-body-medium-tracking);
+}
+
+[ngTreeItem]:hover {
+  background-color: rgb(from var(--mat-sys-primary) r g b / 0.08);
+}
+
+[ngTreeItem]:focus {
+  outline: none;
+  background-color: rgb(from var(--mat-sys-primary) r g b / 0.1);
+}
+
+[ngTreeItem][aria-current] {
+  background-color: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+[ngTreeItem][aria-disabled='true'] {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.nav-icon {
+  font-size: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+.nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expand-icon {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+[ngTreeItem][aria-expanded='true'] .expand-icon {
+  transform: rotate(180deg);
+}
+
+a[aria-expanded='false'] + ul[role='group'] {
+  display: none;
+}
+
+/* indent nested children */
+ul[role='group'] {
+  list-style: none;
+  padding-left: var(--spacing-160);
+}

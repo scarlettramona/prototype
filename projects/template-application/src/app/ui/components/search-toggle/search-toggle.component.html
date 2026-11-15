@@ -1,0 +1,22 @@
+<button
+  aria-label="Filter"
+  class="search-toggle__trigger"
+  matIconButton
+  type="button"
+  [attr.inert]="isOpen() ? '' : null"
+  (click)="open()"
+>
+  <mat-icon class="material-symbols-rounded">search</mat-icon>
+</button>
+<mat-form-field
+  appearance="outline"
+  class="search-toggle__field"
+  subscriptSizing="dynamic"
+  [attr.inert]="isOpen() ? null : ''"
+>
+  <input #searchInput matInput placeholder="Filter" [value]="value()" (blur)="onBlur()" (input)="onInput($event)" />
+  <mat-icon class="material-symbols-rounded" matSuffix>search</mat-icon>
+  <!--<button type="button" matIconButton matSuffix aria-label="Clear filter" (click)="close()">
+    <mat-icon class="material-symbols-rounded">close</mat-icon>
+  </button>-->
+</mat-form-field>

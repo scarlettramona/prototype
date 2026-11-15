@@ -1,0 +1,38 @@
+@if (visible()) {
+  <div
+    class="inline-notification"
+    [attr.role]="status() === 'error' ? 'alert' : 'status'"
+    [class.inline-notification--error]="status() === 'error'"
+    [class.inline-notification--exiting]="animatingOut()"
+    [class.inline-notification--info]="status() === 'info'"
+    [class.inline-notification--success]="status() === 'success'"
+    [class.inline-notification--warning]="status() === 'warning'"
+  >
+    <div class="inline-notification__accent"></div>
+
+    <div class="inline-notification__body">
+      <div class="inline-notification__icon">
+        <mat-icon>{{ statusIcon }}</mat-icon>
+      </div>
+
+      <div class="inline-notification__content">
+        @if (title()) {
+          <p class="inline-notification__title">{{ title() }}</p>
+        }
+        <p class="inline-notification__message">{{ message() }}</p>
+      </div>
+
+      @if (actionLabel()) {
+        <button class="inline-notification__action" type="button" (click)="onAction()">
+          {{ actionLabel() }}
+        </button>
+      }
+
+      @if (dismissible()) {
+        <button aria-label="Dismiss notification" class="inline-notification__close" type="button" (click)="dismiss()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  </div>
+}

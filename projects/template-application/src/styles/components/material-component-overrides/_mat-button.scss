@@ -1,0 +1,27 @@
+@use '@angular/material' as mat;
+
+// component token overrides
+:root {
+  @include mat.fab-overrides(
+    (
+      container-shape: var(--mat-sys-corner-medium),
+      small-container-shape: var(--mat-sys-corner-small),
+      extended-container-shape: var(--mat-sys-corner-medium),
+    )
+  );
+
+  @include mat.button-overrides(
+    (
+      filled-container-shape: var(--mat-sys-corner-small),
+      outlined-container-shape: var(--mat-sys-corner-small),
+      protected-container-shape: var(--mat-sys-corner-small),
+      tonal-container-shape: var(--mat-sys-corner-small),
+      text-container-shape: var(--mat-sys-corner-small),
+    )
+  );
+  @include mat.icon-button-overrides(
+    (
+      container-shape: var(--mat-sys-corner-full),
+    )
+  );
+}

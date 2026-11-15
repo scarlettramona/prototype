@@ -1,0 +1,35 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin: var(--spacing-80) var(--spacing-240) var(--spacing-80) var(--spacing-240);
+}
+
+.page__breadcrumbs {
+  margin-bottom: var(--spacing-80);
+}
+
+.page__header {
+  padding-bottom: var(--spacing-80);
+  display: flex;
+}
+
+.page__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.page__heading {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* title + description stay top-aligned */
+}
+
+.page__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-end; /* ← bottom-align actions */
+}

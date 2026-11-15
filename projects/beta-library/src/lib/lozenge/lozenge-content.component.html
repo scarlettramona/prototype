@@ -1,0 +1,22 @@
+<span
+  class="lozenge__content"
+  [class.lozenge__content--loading]="isLoading()"
+  [style.max-width]="textMaxWidthIsPercent() ? '100%' : null"
+>
+  <span class="lozenge__icon">
+    <ng-content select="[lozengeIcon]" />
+  </span>
+  <span
+    class="lozenge__text"
+    [attr.data-testid]="textTestId() || null"
+    [style.color]="styleOverride()?.color || null"
+    [style.max-width]="textMaxWidth()"
+  >
+    <ng-content />
+  </span>
+  @if (showChevron()) {
+    <span aria-hidden="true" class="lozenge__chevron" [attr.data-testid]="chevronTestId() || null">
+      <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+    </span>
+  }
+</span>

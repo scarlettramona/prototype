@@ -1,0 +1,9 @@
+# Hooks run from the git root; resolve the message file before switching dirs.
+case "$1" in
+  /*) msg="$1" ;;
+  *) msg="$PWD/$1" ;;
+esac
+
+cd "$(dirname "$0")/.." || exit 1
+
+npx --no -- commitlint --edit "$msg"

@@ -1,0 +1,14 @@
+.app-footer {
+  display: flex;
+  background-color: var(--app-shell-background);
+  padding: 0 var(--spacing-240);
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: 52px;
+}
+
+.footer-logo {
+  width: 180px;
+  background-color: var(--mat-sys-on-background);
+  mask: url('/logos/H2C-logo_long.svg') no-repeat center / contain;
+}

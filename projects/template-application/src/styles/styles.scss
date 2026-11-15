@@ -1,0 +1,60 @@
+@use '@angular/material' as mat;
+@use './base/theme-palette.scss' as template-palette;
+@use './components/icons';
+@use 'sass:map';
+@use 'material-symbols/rounded.css';
+@use './components/material-component-overrides/mat-button';
+@use './components/material-component-overrides/mat-shape-overrides';
+@use './components/material-component-overrides/mat-palette-overrides';
+@use './base/spacing';
+@use './base/fonts';
+@use './base/typography';
+@use './base/component-palette';
+@use './base/material-system-overrides/corner-overrides' as shape-overrides;
+@use './base/material-system-overrides/palette-overrides' as palette-overrides;
+@use 'index' as beta;
+@use './components/tables';
+@use './components/list-table';
+@use './components/detail-page';
+@use './components/inline-edit-table';
+@use './components/showcase';
+
+@include mat.system-classes();
+
+@include beta.beta-library-tokens;
+
+html,
+body {
+  height: 100%;
+}
+
+html {
+  color-scheme: light dark;
+  @include mat.theme(
+    (
+      color: (
+        primary: template-palette.$primary-palette,
+        tertiary: template-palette.$tertiary-palette,
+      ),
+      typography: Roboto,
+      density: -1,
+    ),
+    $overrides: (shape-overrides.$corner-overrides)
+  );
+
+  &.theme-light {
+    color-scheme: light;
+    @include mat.theme-overrides(palette-overrides.$light-palette-overrides);
+  }
+
+  &.theme-dark {
+    color-scheme: dark;
+    @include mat.theme-overrides(palette-overrides.$dark-palette-overrides);
+  }
+}
+
+body {
+  margin: 0;
+  color: var(--mat-sys-on-surface);
+  background-color: var(--mat-sys-surface);
+}

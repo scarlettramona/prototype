@@ -1,0 +1,183 @@
+@use '../../styles/notification-mixins' as notif;
+
+.inline-notification {
+  position: relative;
+  border-radius: var(--notification-surface-radius);
+  overflow: hidden;
+  animation: inline-enter var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  margin: var(--notification-spacing-outer) 0;
+  border: 1px solid;
+  border-left: none;
+
+  &--exiting {
+    animation: inline-exit-fade 200ms ease-in forwards;
+  }
+}
+
+// status colors — each status spells out its own light-dark() from the status
+// palette: surface 95/20, border 70/40, accent + action (bold) 40/70, icon 50/60.
+.inline-notification--info {
+  background-color: light-dark(var(--status-information-95), var(--status-information-20));
+  border-color: light-dark(var(--status-information-70), var(--status-information-40));
+  .inline-notification__accent {
+    background-color: light-dark(var(--status-information-40), var(--status-information-70));
+  }
+  .inline-notification__icon {
+    background-color: light-dark(var(--status-information-95), var(--status-information-20));
+    border-color: light-dark(var(--status-information-70), var(--status-information-40));
+    color: light-dark(var(--status-information-50), var(--status-information-60));
+  }
+  .inline-notification__action {
+    color: light-dark(var(--status-information-40), var(--status-information-70));
+    border-color: light-dark(var(--status-information-40), var(--status-information-70));
+    &:hover {
+      background-color: light-dark(var(--status-information-95), var(--status-information-20));
+    }
+  }
+}
+
+.inline-notification--success {
+  background-color: light-dark(var(--status-success-95), var(--status-success-20));
+  border-color: light-dark(var(--status-success-70), var(--status-success-40));
+  .inline-notification__accent {
+    background-color: light-dark(var(--status-success-40), var(--status-success-70));
+  }
+  .inline-notification__icon {
+    background-color: light-dark(var(--status-success-95), var(--status-success-20));
+    border-color: light-dark(var(--status-success-70), var(--status-success-40));
+    color: light-dark(var(--status-success-50), var(--status-success-60));
+  }
+  .inline-notification__action {
+    color: light-dark(var(--status-success-40), var(--status-success-70));
+    border-color: light-dark(var(--status-success-40), var(--status-success-70));
+    &:hover {
+      background-color: light-dark(var(--status-success-95), var(--status-success-20));
+    }
+  }
+}
+
+.inline-notification--warning {
+  background-color: light-dark(var(--status-warning-95), var(--status-warning-20));
+  border-color: light-dark(var(--status-warning-70), var(--status-warning-40));
+  .inline-notification__accent {
+    background-color: light-dark(var(--status-warning-40), var(--status-warning-70));
+  }
+  .inline-notification__icon {
+    background-color: light-dark(var(--status-warning-95), var(--status-warning-20));
+    border-color: light-dark(var(--status-warning-70), var(--status-warning-40));
+    color: light-dark(var(--status-warning-50), var(--status-warning-60));
+  }
+  .inline-notification__action {
+    color: light-dark(var(--status-warning-40), var(--status-warning-70));
+    border-color: light-dark(var(--status-warning-40), var(--status-warning-70));
+    &:hover {
+      background-color: light-dark(var(--status-warning-95), var(--status-warning-20));
+    }
+  }
+}
+
+.inline-notification--error {
+  background-color: light-dark(var(--status-danger-95), var(--status-danger-20));
+  border-color: light-dark(var(--status-danger-70), var(--status-danger-40));
+  .inline-notification__accent {
+    background-color: light-dark(var(--status-danger-40), var(--status-danger-70));
+  }
+  .inline-notification__icon {
+    background-color: light-dark(var(--status-danger-95), var(--status-danger-20));
+    border-color: light-dark(var(--status-danger-70), var(--status-danger-40));
+    color: light-dark(var(--status-danger-50), var(--status-danger-60));
+  }
+  .inline-notification__action {
+    color: light-dark(var(--status-danger-40), var(--status-danger-70));
+    border-color: light-dark(var(--status-danger-40), var(--status-danger-70));
+    &:hover {
+      background-color: light-dark(var(--status-danger-95), var(--status-danger-20));
+    }
+  }
+}
+
+@keyframes inline-enter {
+  from {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+  }
+}
+
+@keyframes inline-exit-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.inline-notification__accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--notification-accent-width);
+}
+
+.inline-notification__body {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--notification-padding);
+  padding-left: calc(var(--notification-accent-width) + var(--notification-padding));
+  gap: var(--notification-content-gap);
+}
+
+.inline-notification__icon {
+  @include notif.notification-icon;
+}
+
+.inline-notification__content {
+  @include notif.notification-content;
+}
+
+.inline-notification__title {
+  margin: 0 0 2px;
+  font: var(--mat-sys-title-small);
+  letter-spacing: var(--mat-sys-title-small-tracking);
+  color: var(--notification-title-color);
+}
+
+.inline-notification__message {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  letter-spacing: var(--mat-sys-body-medium-tracking);
+  color: var(--notification-body-color);
+}
+
+.inline-notification__action {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 6px 16px;
+  border: 1px solid;
+  background: transparent;
+  border-radius: var(--notification-close-radius);
+  font: var(--mat-sys-label-large);
+  letter-spacing: var(--mat-sys-label-large-tracking);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast) ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 1px;
+  }
+}
+
+.inline-notification__close {
+  @include notif.notification-close;
+}
+
+:host + :host .inline-notification {
+  margin-top: var(--notification-spacing-inline-stack);
+}

@@ -1,0 +1,155 @@
+<app-page [showBreadcrumbs]="true">
+  <h1 pageTitle>Lozenges</h1>
+  <p pageDescription>
+    Compact status indicators. Semantic colors track the app's light/dark theme; accent colors are fixed brand tones.
+    The interactive trigger pairs a lozenge with a menu for inline status editing.
+  </p>
+
+  <!-- Semantic appearances -->
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Semantic appearances</h2>
+    <p class="showcase-section__description">
+      Use these to communicate state. They derive from the shared status palette and adapt to the active theme.
+    </p>
+    <div class="showcase-row">
+      @for (color of semanticColors; track color) {
+        <lib-lozenge [appearance]="color">{{ color }}</lib-lozenge>
+      }
+    </div>
+  </section>
+
+  <!-- Accent appearances -->
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Accent appearances</h2>
+    <p class="showcase-section__description">
+      Fixed brand colors for categorical labelling where semantic meaning isn't implied.
+    </p>
+    <div class="showcase-row">
+      @for (color of accentColors; track color) {
+        <lib-lozenge [appearance]="color">{{ color.replace('accent-', '') }}</lib-lozenge>
+      }
+    </div>
+  </section>
+
+  <!-- Spacing -->
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Spacing</h2>
+    <div class="showcase-row">
+      <lib-lozenge appearance="information" spacing="default">Default</lib-lozenge>
+      <lib-lozenge appearance="information" spacing="spacious">Spacious</lib-lozenge>
+    </div>
+  </section>
+
+  <!-- Projected icon -->
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">With icon</h2>
+    <p class="showcase-section__description">Project a leading icon through the <code>[lozengeIcon]</code> slot.</p>
+    <div class="showcase-row">
+      <lib-lozenge appearance="success">
+        <mat-icon lozengeIcon>check_circle</mat-icon>
+        Complete
+      </lib-lozenge>
+      <lib-lozenge appearance="warning">
+        <mat-icon lozengeIcon>warning</mat-icon>
+        At risk
+      </lib-lozenge>
+      <lib-lozenge appearance="information">
+        <mat-icon lozengeIcon>sync</mat-icon>
+        Syncing
+      </lib-lozenge>
+    </div>
+  </section>
+
+  <!-- Truncation & style override -->
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Width &amp; overrides</h2>
+    <p class="showcase-section__description">
+      Long labels truncate at <code>maxWidth</code>. <code>styleOverride</code>
+      sets a custom background/text color when a palette value won't do.
+    </p>
+    <div class="showcase-row">
+      <lib-lozenge appearance="neutral" [maxWidth]="160"> A very long status label that will be truncated </lib-lozenge>
+      <lib-lozenge appearance="neutral" [styleOverride]="{ backgroundColor: '#512da8', color: '#ffffff' }">
+        Custom
+      </lib-lozenge>
+    </div>
+  </section>
+
+  <!-- Interactive dropdown trigger -->
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">Interactive trigger</h2>
+    <p class="showcase-section__description">
+      <code>lib-lozenge-dropdown-trigger</code> renders as a button that opens a menu. Toggle loading to see the busy
+      state suppress interaction.
+    </p>
+    <div class="showcase-row">
+      <lib-lozenge-dropdown-trigger
+        aria-haspopup="menu"
+        [appearance]="pickedStatus()"
+        [isLoading]="loading()"
+        [isSelected]="standaloneMenuOpen()"
+        [matMenuTriggerFor]="pickMenu"
+        (menuClosed)="standaloneMenuOpen.set(false)"
+        (menuOpened)="standaloneMenuOpen.set(true)"
+      >
+        {{ labelFor(pickedStatus()) }}
+      </lib-lozenge-dropdown-trigger>
+
+      <mat-checkbox [checked]="loading()" (change)="loading.set($event.checked)"> Loading </mat-checkbox>
+    </div>
+
+    <mat-menu #pickMenu="matMenu">
+      @for (opt of statusOptions; track opt) {
+        <button mat-menu-item type="button" (click)="pickedStatus.set(opt)">
+          <lib-lozenge [appearance]="opt">{{ labelFor(opt) }}</lib-lozenge>
+        </button>
+      }
+    </mat-menu>
+  </section>
+
+  <!-- Realistic: editable status table -->
+  <section class="showcase-section">
+    <h2 class="showcase-section__title">In context: editable status table</h2>
+    <p class="showcase-section__description">
+      Each row's status is an interactive trigger. Pick a new status from the menu to update the row.
+    </p>
+    <table class="showcase-table">
+      <thead>
+        <tr>
+          <th>Record</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr>
+            <td>{{ row.name }}</td>
+            <td>
+              <lib-lozenge-dropdown-trigger
+                aria-haspopup="menu"
+                [appearance]="row.status"
+                [isSelected]="menuOpenFor() === row.id"
+                [matMenuTriggerData]="{ row }"
+                [matMenuTriggerFor]="rowMenu"
+                (menuClosed)="menuOpenFor.set(null)"
+                (menuOpened)="menuOpenFor.set(row.id)"
+              >
+                {{ labelFor(row.status) }}
+              </lib-lozenge-dropdown-trigger>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <mat-menu #rowMenu="matMenu">
+      <ng-template let-row="row" matMenuContent>
+        @for (opt of statusOptions; track opt) {
+          <button mat-menu-item type="button" (click)="setRowStatus(row.id, opt)">
+            <lib-lozenge [appearance]="opt">{{ labelFor(opt) }}</lib-lozenge>
+          </button>
+        }
+      </ng-template>
+    </mat-menu>
+  </section>
+</app-page>

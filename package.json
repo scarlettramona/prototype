@@ -1,0 +1,62 @@
+{
+  "name": "prototype",
+  "version": "0.0.0",
+  "scripts": {
+    "prepare": "husky",
+    "ng": "ng",
+    "start": "npm run build:lib && ng serve template-application",
+    "watch": "npm run build:lib && ng build template-application --watch --configuration development",
+    "build": "npm run build:lib && ng build template-application",
+    "build:lib": "ng build beta-library",
+    "test": "npm run build:lib && ng test template-application --no-watch && ng test beta-library --no-watch",
+    "test:watch": "npm run build:lib && ng test template-application",
+    "lint": "ng lint template-application && ng lint beta-library",
+    "lint:fix": "ng lint template-application --fix && ng lint beta-library --fix",
+    "format:check": "prettier --check \"**/*.{ts,js,json,html,css,scss,md,mdx}\"",
+    "format:fix": "prettier --write \"**/*.{ts,js,json,html,css,scss,md,mdx}\"",
+    "verify": "npm run format:check && npm run lint && npm run lint:arch && npm run test && npm run build",
+    "lint:arch": "node scripts/check-architecture.mjs"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^21.1.1",
+    "@angular/aria": "^21.2.1",
+    "@angular/cdk": "^21.2.1",
+    "@angular/common": "^21.0.0",
+    "@angular/compiler": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/forms": "^21.0.0",
+    "@angular/material": "^21.2.1",
+    "@angular/platform-browser": "^21.0.0",
+    "@angular/router": "^21.0.0",
+    "material-symbols": "^0.40.2",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular-eslint/builder": "20.6.0",
+    "@angular/build": "^21.1.1",
+    "@angular/cli": "^21.0.5",
+    "@angular/compiler-cli": "^21.0.0",
+    "@commitlint/cli": "20.1.0",
+    "@commitlint/config-conventional": "20.0.0",
+    "@typescript-eslint/eslint-plugin": "8.47.0",
+    "angular-eslint": "21.1.0",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-boundaries": "^7.1.0",
+    "eslint-plugin-prettier": "5.5.4",
+    "husky": "9.1.7",
+    "jsdom": "^27.1.0",
+    "lint-staged": "^16.4.0",
+    "ng-packagr": "^21.1.0",
+    "prettier": "3.6.2",
+    "prettier-eslint": "16.4.2",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.8"
+  },
+  "engines": {
+    "node": ">=22.19 <24",
+    "npm": ">=9.0.0"
+  }
+}
