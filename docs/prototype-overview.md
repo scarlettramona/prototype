@@ -239,7 +239,7 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 - **Export opens a menu: "Chart image (PNG)" / "Data (CSV)"**, both real downloads. **Wording is mine; to be confirmed.**
 - **Right panel follows Figma's order:** Legend, then Baseline sensor, then Equipment out of service. The whole panel scrolls with 40 sensors.
 - **Baseline and out of service** are drawn for the sensor selected in each panel select. The baseline is a solid `FURNITURE` line in a faint `FURNITURE` limit band; out of service is a shaded `markArea`.
-- **Markers** draw only when the window is **≤ 60 days** (`MARKER_MAX_DAYS`). Wider views show lines only, because 40 sensors of markers become a solid mass.
+- **Markers** draw when *visible sensors × window days* ≤ **2,400** (`MARKER_SENSOR_DAYS`); wider views show lines only. That keeps 40 sensors readable at 60 days while the usual 1–12 get markers over much wider windows: 12 → 200 days, 6 → 400 days, 1 → always.
 
 **Route and pieces**
 - `/vnv` → `feature/vnv/vnv-page/` (`VnvPageComponent`). It provides `VnvStore` and reacts to `PrototypeStateService.state()`: a VNV state is applied, and `null` means first visit (title only).
@@ -268,3 +268,45 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 - **Measured** in the dev build, 40 sensors: a pan is 150–230 ms per frame, a rebuild ~340 ms, and the full range ~300 ms.
 
 **Tests:** `vnv-chart-options.spec.ts`, `vnv-store.spec.ts`.
+
+### Phase 4 · VNV table view and assigning QI
+
+**Decisions** (Scarlett, 2026-11-15, or Figma-wins)
+- **Chart selection is Shift + drag** (ECharts brush, rectangle). Plain drag still pans.
+- **The quality filter chips are in the table toolbar too.** It's one shared filter, and it also hides table rows.
+- **Group by sensor** follows the Scan library's grouped pattern: a group row with chevron, checkbox, sensor name and "N values". The button switches to **"Ungroup sensors"**. **That wording is mine; to be confirmed.**
+- **Table columns follow Figma:** checkbox · Sensor · Value (right-aligned, 2 decimals) · Quality (text) · Date · Comment (one line) · Reviewer. Empty cells show `--`, as in the frame.
+- There's **no search field** (none in the frame). Rows are **virtual-scrolled**, 48 px each. The default sort is newest date first; every header sorts, and the active one shows an arrow.
+- **Table Export** downloads a CSV of the visible rows straight away.
+- **Right panel in Table view:** with a selection, the docked VNV form (340 px) replaces the reference panel; otherwise the reference panel stays.
+- **Cancel and × clear the selection.** Apply records `Scarlett Reagan` as reviewer and clears the selection.
+- **The VNV form pre-fills the QI** when every selected reading shares Good or Suspect.
+- **Fixtures with a selection** open with the chart zoomed to about 3 weeks around it.
+
+**Store additions** (`vnv-store.ts`)
+- **Signals:** `selectedIds`, `vnvPopoverOpen`, `applying`, `tableSort`, `grouped`, `collapsedGroups`.
+- **Computed:** `visibleReadings` (visible sensors × shown QIs), `selectedReadings`, `formInitial`.
+- **Methods:** `setSelection`, `toggleSelected`, `selectAll(ids, on)`, `clearSelection`, `toggleGroup`, and `applyReview({ qi, comment })`, which updates `result` in place.
+- Reload and `clear()` also clear the selection.
+
+**Chart additions** (`vnv-chart/`)
+- **Brush:** a `brush` option, plus `takeGlobalCursor` while Shift is held over the chart. `brushEnd` calls `selectInRect`.
+- **Selection rings:** a `selection` scatter series (hollow `on-surface` rings), merged with the window so the sensor series don't rebuild.
+- **Action bar and popover:** `app-selection-action-bar` floats above the selection's top-left. VNV opens `app-vnv-form` in a `cdkConnectedOverlay` popover.
+- **New pure helpers** in `vnv-chart-options.ts`: `selectInRect`, `selectionPoints`, `selectionSeries`, `readingsToCsv`.
+
+**Table** (`components/vnv-table/`)
+- `VnvTableComponent` (`app-vnv-table`) sits inside `app-chart-card`, with a CSS-grid header and a `cdk-virtual-scroll-viewport` with 49 px items.
+- The header checkbox is indeterminate when partial; group checkboxes select their sensor; clicking a row toggles it.
+- `vnv-table-rows.ts` holds `buildTableRows`, `sortReadings`, `TableSort` and `DEFAULT_TABLE_SORT`.
+
+**Measured (dev build, 68k rows):** a column sort takes 50–140 ms and grouping ~140 ms.
+
+**Tests:** `vnv-table-rows.spec.ts`, plus additions to `vnv-chart-options.spec.ts` and `vnv-store.spec.ts`.
+
+### Sensor counts (Scarlett, 2026-11-15)
+
+- The VNV graph shows **at most 40 sensors**, and **usually 1–12**.
+- **Default states:** every VNV `?state=` now loads the typical case, **241-AN-TMAC-103-TI with 6 sensors** (as in the Figma header). One of its sensors has no data after 03/31/2025, which is realistic and useful for the picker.
+- **Stress case:** **`vnv-chart-40-sensors`** loads 241-AN-WSTA-102-TI (40 sensors, including the 5 real ones).
+- **Out of service:** `AN103-TMAC-TI-U2-RJA` has an out-of-service window (09/14–09/30/2026), so the default panel shows one.

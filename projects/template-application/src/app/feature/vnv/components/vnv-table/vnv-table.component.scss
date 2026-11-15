@@ -1,0 +1,137 @@
+// Figma 1:10946: 48 px cells, 16 px padding, outline dividers between rows.
+:host {
+  display: block;
+  min-height: 0;
+  --columns: 68px minmax(160px, 1.4fr) 96px 128px 200px minmax(200px, 2fr) 180px;
+}
+
+.card {
+  height: 100%;
+}
+
+.toolbar,
+.toolbar__end {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-160);
+}
+
+.toolbar {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.table {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.row {
+  height: 48px;
+  border-bottom: 1px solid var(--mat-sys-outline);
+}
+
+.row--head,
+.row--reading,
+.row--group {
+  display: grid;
+  grid-template-columns: var(--columns);
+  align-items: center;
+  height: 48px;
+}
+
+.row--head {
+  flex-shrink: 0;
+  font: var(--mat-sys-label-large);
+}
+
+.row--reading {
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--mat-sys-on-surface) 4%, transparent);
+  }
+}
+
+.row--selected {
+  background: color-mix(in srgb, var(--mat-sys-primary) 8%, transparent);
+}
+
+.row--group {
+  grid-template-columns: 68px auto 1fr;
+  background: var(--mat-sys-surface-container-high);
+  font: var(--mat-sys-title-small);
+}
+
+.cell {
+  min-width: 0;
+  padding: 0 var(--spacing-160);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell--check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.row--group .cell--check {
+  justify-content: flex-start;
+}
+
+.cell--indent {
+  padding-left: var(--spacing-240);
+}
+
+.cell--end {
+  text-align: right;
+}
+
+.cell--muted {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-40);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+
+.sort--end {
+  justify-content: flex-end;
+}
+
+.sort__icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.chevron {
+  margin-left: var(--spacing-40);
+}

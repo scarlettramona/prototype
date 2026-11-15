@@ -7,7 +7,8 @@
  * only downloaded the first time a chart renders.
  *
  * `DataZoomComponent` covers both the slider (navigator) and inside (drag/wheel)
- * zoom. `BrushComponent` is driven programmatically (no toolbox).
+ * zoom. `BrushComponent` is driven programmatically, but needs `ToolboxComponent`
+ * registered (ECharts errors otherwise); no toolbox is shown.
  */
 import * as echarts from 'echarts/core';
 import { BarChart, LineChart, PieChart, ScatterChart } from 'echarts/charts';
@@ -20,6 +21,7 @@ import {
   MarkAreaComponent,
   MarkLineComponent,
   TitleComponent,
+  ToolboxComponent,
   TooltipComponent,
 } from 'echarts/components';
 import { LabelLayout, UniversalTransition } from 'echarts/features';
@@ -38,6 +40,7 @@ echarts.use([
   MarkAreaComponent,
   MarkLineComponent,
   TitleComponent,
+  ToolboxComponent,
   TooltipComponent,
   LabelLayout,
   UniversalTransition,

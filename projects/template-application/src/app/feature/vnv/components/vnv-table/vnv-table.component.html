@@ -1,0 +1,78 @@
+<app-chart-card class="card">
+  <div chartToolbar class="toolbar">
+    <app-quality-filter [value]="store.visibleQi()" (valueChange)="store.visibleQi.set($event)" />
+    <div class="toolbar__end">
+      <button mat-button type="button" (click)="store.grouped.set(!store.grouped())">
+        <mat-icon>{{ store.grouped() ? 'reorder' : 'sort' }}</mat-icon>
+        {{ store.grouped() ? 'Ungroup sensors' : 'Group by sensor' }}
+      </button>
+      <button mat-button type="button" (click)="exportCsv()">Export</button>
+    </div>
+  </div>
+
+  <div class="table" role="grid" [attr.aria-rowcount]="rows().length + 1">
+    <div class="row row--head" role="row">
+      <div class="cell cell--check" role="columnheader">
+        <mat-checkbox
+          aria-label="Select all"
+          [checked]="headerState().all"
+          [indeterminate]="headerState().some"
+          [disabled]="!store.visibleReadings().length"
+          (change)="toggleAll($event.checked)"
+        />
+      </div>
+      @for (col of columns; track col.id) {
+        <div class="cell" role="columnheader" [attr.aria-sort]="ariaSort(col.id)">
+          <button type="button" class="sort" [class.sort--end]="col.align === 'end'" (click)="sortBy(col.id)">
+            {{ col.label }}
+            @if (store.tableSort().column === col.id) {
+              <mat-icon class="sort__icon">{{ store.tableSort().dir === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            }
+          </button>
+        </div>
+      }
+    </div>
+
+    <cdk-virtual-scroll-viewport class="body" [itemSize]="rowHeight" minBufferPx="600" maxBufferPx="1200">
+      <div *cdkVirtualFor="let row of rows(); trackBy: trackRow" class="row" role="row">
+        @if (row.kind === 'group') {
+          <div class="row--group">
+            <div class="cell cell--check">
+              <button
+                mat-icon-button
+                type="button"
+                class="chevron"
+                [attr.aria-expanded]="!store.collapsedGroups().has(row.sensorId)"
+                [attr.aria-label]="(store.collapsedGroups().has(row.sensorId) ? 'Expand ' : 'Collapse ') + row.sensorId"
+                (click)="store.toggleGroup(row.sensorId)"
+              >
+                <mat-icon>{{ store.collapsedGroups().has(row.sensorId) ? 'chevron_right' : 'expand_more' }}</mat-icon>
+              </button>
+              <mat-checkbox
+                [aria-label]="'Select ' + row.sensorId"
+                [checked]="groupState(row).all"
+                [indeterminate]="groupState(row).some"
+                (change)="store.selectAll(row.readingIds, $event.checked)"
+              />
+            </div>
+            <div class="cell cell--group-name" role="gridcell">{{ row.sensorId }}</div>
+            <div class="cell cell--muted" role="gridcell">{{ row.readingIds.length }} values</div>
+          </div>
+        } @else {
+          @let r = row.reading;
+          <div class="row--reading" [class.row--selected]="store.selectedIds().has(r.id)" (click)="onRowClick($event, r.id)">
+            <div class="cell cell--check" [class.cell--indent]="store.grouped()">
+              <mat-checkbox [aria-label]="'Select ' + r.sensorId + ' ' + date(r.timestamp)" [checked]="store.selectedIds().has(r.id)" (change)="store.toggleSelected(r.id)" />
+            </div>
+            <div class="cell" role="gridcell">{{ r.sensorId }}</div>
+            <div class="cell cell--end" role="gridcell">{{ r.value.toFixed(2) }}</div>
+            <div class="cell" role="gridcell">{{ r.qi }}</div>
+            <div class="cell" role="gridcell">{{ date(r.timestamp) }}</div>
+            <div class="cell cell--clip" role="gridcell" [attr.title]="r.comment ?? null">{{ r.comment ?? '--' }}</div>
+            <div class="cell" role="gridcell">{{ r.reviewer ?? '--' }}</div>
+          </div>
+        }
+      </div>
+    </cdk-virtual-scroll-viewport>
+  </div>
+</app-chart-card>

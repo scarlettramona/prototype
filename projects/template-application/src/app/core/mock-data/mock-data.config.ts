@@ -91,6 +91,7 @@ export const MOCK_DATA_CONFIG = {
       { sensorId: 'AN102-WSTA-TI-060', start: '3/3/2026', end: '3/17/2026' },
       { sensorId: 'AN102-WSTA-TI-077', start: '8/4/2025', end: '8/11/2025' },
       { sensorId: 'AN102-WSTA-TI-045', start: '9/21/2026', end: '9/28/2026' },
+      { sensorId: 'AN103-TMAC-TI-U2-RJA', start: '9/14/2026', end: '9/30/2026' },
     ],
   },
 

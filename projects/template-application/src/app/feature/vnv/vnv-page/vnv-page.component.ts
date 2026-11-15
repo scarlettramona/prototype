@@ -1,19 +1,32 @@
 import { CdkConnectedOverlay, type ConnectedPosition } from '@angular/cdk/overlay';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
-import { afterNextRender, ChangeDetectionStrategy, Component, effect, ElementRef, inject, Injector, signal, untracked } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, Injector, signal, untracked } from '@angular/core';
 import { PrototypeStateService } from '../../../core/prototype-state/prototype-state.service';
 import { VnvChartComponent } from '../components/vnv-chart/vnv-chart.component';
 import { VnvPageHeaderComponent } from '../components/vnv-page-header/vnv-page-header.component';
 import { VnvReferencePanelComponent } from '../components/vnv-reference-panel/vnv-reference-panel.component';
+import { VnvTableComponent } from '../components/vnv-table/vnv-table.component';
+import { SidePanelComponent } from '../../../ui/components/side-panel/side-panel.component';
+import { VnvFormComponent } from '../../../ui/components/vnv-form/vnv-form.component';
 import { VnvStore } from '../vnv-store';
 
 /**
- * The VNV screen. Chart view (Phase 3): page header, chart card, right panel.
- * Table view arrives in Phase 4; the load form's contents in Phase 5.
+ * The VNV screen: page header, Chart or Table view, and the right panel.
+ * In Table view a selection docks the VNV form in place of the reference panel
+ * (Figma 1:10892). The load form's contents arrive in Phase 5.
  */
 @Component({
   selector: 'app-vnv-page',
-  imports: [CdkConnectedOverlay, CdkTrapFocus, VnvChartComponent, VnvPageHeaderComponent, VnvReferencePanelComponent],
+  imports: [
+    CdkConnectedOverlay,
+    CdkTrapFocus,
+    SidePanelComponent,
+    VnvChartComponent,
+    VnvFormComponent,
+    VnvPageHeaderComponent,
+    VnvReferencePanelComponent,
+    VnvTableComponent,
+  ],
   providers: [VnvStore],
   template: `
     <app-vnv-page-header
@@ -29,13 +42,26 @@ import { VnvStore } from '../vnv-store';
     />
 
     @if (store.location()) {
-      <div class="body">
+      <div class="body" [class.body--docked]="docked()">
         @if (store.view() === 'chart') {
           <app-vnv-chart class="chart" />
         } @else {
-          <div class="chart"></div>
+          <app-vnv-table class="chart" />
         }
-        <app-vnv-reference-panel class="panel" />
+        @if (docked()) {
+          <app-side-panel class="panel">
+            <app-vnv-form
+              layout="docked"
+              [count]="store.selectedReadings().length"
+              [initial]="store.formInitial()"
+              (apply)="store.applyReview($event)"
+              (cancel)="store.clearSelection()"
+              (close)="store.clearSelection()"
+            />
+          </app-side-panel>
+        } @else {
+          <app-vnv-reference-panel class="panel" />
+        }
       </div>
     }
 
@@ -68,6 +94,9 @@ import { VnvStore } from '../vnv-store';
       min-height: 640px;
       padding: var(--spacing-240);
     }
+    .body--docked {
+      grid-template-columns: minmax(0, 1fr) 340px;
+    }
     .chart,
     .panel {
       min-height: 0;
@@ -85,6 +114,9 @@ export class VnvPageComponent {
   protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
   private readonly prototypeState = inject(PrototypeStateService);
+
+  /** Table view with a selection: the VNV form docks in the right panel. */
+  protected readonly docked = computed(() => this.store.view() === 'table' && this.store.selectedIds().size > 0);
 
   /** The Load data button, which the load form popover hangs from. */
   protected readonly loadFormAnchor = signal<HTMLElement | null>(null);

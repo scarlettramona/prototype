@@ -5,12 +5,13 @@ import { VnvMockService } from '../../core/vnv/vnv-mock.service';
 import type { VnvLoadResult, VnvLocation } from '../../core/vnv/vnv.models';
 import type { DateRangeValue } from '../../ui/components/date-range-field/date-range-field.component';
 import type { ContentView } from '../../ui/components/view-switcher/view-switcher.component';
-import { endOfDay, startOfDay } from '../../core/mock-data/dates';
+import { DAY_MS, endOfDay, startOfDay } from '../../core/mock-data/dates';
 import { groupBySensor, type SensorSeries, type XRange } from './components/vnv-chart/vnv-chart-options';
+import { DEFAULT_TABLE_SORT, type TableSort } from './components/vnv-table/vnv-table-rows';
 
 /**
  * VNV screen state. Provided by `VnvPageComponent`, so it lives as long as the
- * page. Chart and table (Phase 4) read the same data from here.
+ * page. Chart and table read the same data, and share one selection.
  */
 @Injectable()
 export class VnvStore {
@@ -37,6 +38,15 @@ export class VnvStore {
   readonly fitY = signal(true);
   readonly loadFormOpen = signal(false);
 
+  // Review (Phase 4). The selection is shared by chart and table.
+  readonly selectedIds = signal<ReadonlySet<string>>(new Set());
+  /** The chart's VNV form popover. (The table docks the form whenever there's a selection.) */
+  readonly vnvPopoverOpen = signal(false);
+  readonly applying = signal(false);
+  readonly tableSort = signal<TableSort>(DEFAULT_TABLE_SORT);
+  readonly grouped = signal(false);
+  readonly collapsedGroups = signal<ReadonlySet<string>>(new Set());
+
   readonly headerSummary = computed(() => {
     const l = this.location();
     return l ? { name: l.id, sensorCount: l.sensorIds.length } : null;
@@ -57,6 +67,27 @@ export class VnvStore {
   });
   readonly baseline = computed(() => this.result()?.baselines.find((b) => b.sensorId === this.baselineSensorId()) ?? null);
   readonly outOfService = computed(() => this.result()?.outOfService.filter((o) => o.sensorId === this.oosSensorId()) ?? []);
+
+  /** Readings of visible sensors whose QI passes the quality filter: the table's rows. */
+  readonly visibleReadings = computed(() => {
+    const r = this.result();
+    if (!r) return [];
+    const hidden = this.hiddenSensorIds();
+    const qi = new Set(this.visibleQi());
+    return r.readings.filter((x) => !hidden.has(x.sensorId) && qi.has(x.qi));
+  });
+
+  readonly selectedReadings = computed(() => {
+    const ids = this.selectedIds();
+    return ids.size ? (this.result()?.readings.filter((r) => ids.has(r.id)) ?? []) : [];
+  });
+
+  /** Pre-fill for the VNV form: the QI every selected reading already shares, if it's assignable. */
+  readonly formInitial = computed(() => {
+    const sel = this.selectedReadings();
+    const qi = sel[0]?.qi;
+    return qi && (qi === 'Good' || qi === 'Suspect') && sel.every((r) => r.qi === qi) ? { qi } : null;
+  });
 
   /** Loads a location's sensors for a range (replaces what's loaded). */
   async load(locationId: string, range: DateRangeValue): Promise<void> {
@@ -89,6 +120,11 @@ export class VnvStore {
     this.location.set(location);
     this.hiddenSensorIds.set(new Set(state.hiddenSensorIds));
     await this.fetch({ start: startOfDay(state.loaded.start), end: startOfDay(state.loaded.end) });
+    this.selectedIds.set(new Set(state.selectedReadingIds));
+    this.vnvPopoverOpen.set(state.popover === 'vnv-form');
+    // Show a selection where it can be seen: about three weeks around it.
+    const times = this.selectedReadings().map((r) => r.timestamp);
+    if (times.length) this.setWindow({ start: Math.min(...times) - 18 * DAY_MS, end: Math.max(...times) + 2 * DAY_MS });
   }
 
   /** Nothing loaded: the first-visit page. */
@@ -101,6 +137,55 @@ export class VnvStore {
     this.hiddenSensorIds.set(new Set());
     this.baselineSensorId.set(null);
     this.oosSensorId.set(null);
+    this.clearSelection();
+  }
+
+  setSelection(ids: Iterable<string>): void {
+    this.selectedIds.set(new Set(ids));
+  }
+
+  toggleSelected(id: string): void {
+    const next = new Set(this.selectedIds());
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    this.selectedIds.set(next);
+  }
+
+  /** Adds or removes many ids (header and group checkboxes). */
+  selectAll(ids: Iterable<string>, on: boolean): void {
+    const next = new Set(this.selectedIds());
+    for (const id of ids) {
+      if (on) next.add(id);
+      else next.delete(id);
+    }
+    this.selectedIds.set(next);
+  }
+
+  clearSelection(): void {
+    this.selectedIds.set(new Set());
+    this.vnvPopoverOpen.set(false);
+  }
+
+  toggleGroup(sensorId: string): void {
+    const next = new Set(this.collapsedGroups());
+    if (next.has(sensorId)) next.delete(sensorId);
+    else next.add(sensorId);
+    this.collapsedGroups.set(next);
+  }
+
+  /** Assigns QI and comment to the selection (mock service, in memory), then clears it. */
+  async applyReview(value: { qi: Qi; comment: string }): Promise<void> {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) return;
+    this.applying.set(true);
+    try {
+      const updated = await this.service.applyReview({ readingIds: ids, qi: value.qi, comment: value.comment });
+      const byId = new Map(updated.map((r) => [r.id, r]));
+      this.result.update((res) => (res ? { ...res, readings: res.readings.map((r) => byId.get(r.id) ?? r) } : res));
+      this.clearSelection();
+    } finally {
+      this.applying.set(false);
+    }
   }
 
   toggleSensor(id: string): void {
@@ -127,6 +212,7 @@ export class VnvStore {
     const token = ++this.loadToken;
     this.range.set(range);
     this.window.set(null);
+    this.clearSelection();
     this.loading.set(true);
     try {
       const result = await this.service.load({ sensorIds: location.sensorIds, start: range.start, end: endOfDay(range.end) });

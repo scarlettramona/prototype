@@ -5,6 +5,8 @@ import {
   groupBySensor,
   nearest,
   readoutFormatter,
+  selectInRect,
+  selectionPoints,
   SENSOR_SERIES_PREFIX,
   showMarkers,
   toCsv,
@@ -61,11 +63,16 @@ describe('VNV chart options', () => {
     expect(a.symbol!(null, { dataIndex: 95 })).toBe('none');
   });
 
-  it('shows markers only in narrow windows', () => {
-    expect(showMarkers({ start: T0, end: T0 + 30 * D })).toBe(true);
-    expect(showMarkers({ start: T0, end: T0 + 100 * D })).toBe(false);
+  it('scales the marker cutoff with the number of visible sensors', () => {
+    const days = (n: number) => ({ start: T0, end: T0 + n * D });
+    expect(showMarkers(days(60), 40)).toBe(true);
+    expect(showMarkers(days(61), 40)).toBe(false);
+    expect(showMarkers(days(200), 12)).toBe(true);
+    expect(showMarkers(days(400), 6)).toBe(true);
+    expect(showMarkers(days(681), 1)).toBe(true); // a single sensor: always
+    // Two visible sensors over 100 days → markers on.
     const s = seriesOf(buildVnvChartOptions(data(), window, [70, 90])).find((x) => x.id === 'sensor:A')!;
-    expect(s.showSymbol).toBe(false);
+    expect(s.showSymbol).toBe(true);
   });
 
   it('Fit Y ignores a single spike; off covers everything', () => {
@@ -103,6 +110,27 @@ describe('VNV chart options', () => {
     expect(html).toContain('>A<');
     expect(html).toContain('>B<');
     expect(nearest(visible[0].readings, T0 + 5.6 * D)!.timestamp).toBe(T0 + 6 * D);
+  });
+
+  it('selects readings inside a brushed rectangle, skipping hidden sensors and filtered QIs', () => {
+    const all = selectInRect(data(), [T0 + 89 * D, T0 + 92 * D], [70, 90]);
+    expect(all).toEqual(expect.arrayContaining(['A|' + (T0 + 89 * D), 'A|' + (T0 + 90 * D), 'B|' + (T0 + 92 * D)]));
+    expect(all.length).toBe(8);
+    // Reversed bounds work too; a value window excludes B (≈76).
+    expect(selectInRect(data(), [T0 + 92 * D, T0 + 89 * D], [79, 77]).every((id) => id.startsWith('A|'))).toBe(true);
+    expect(selectInRect(data({ hidden: new Set(['A']) }), [T0 + 89 * D, T0 + 92 * D], [70, 90]).every((id) => id.startsWith('B|'))).toBe(true);
+    // A's readings from day 90 are Unreviewed; filtering that QI drops them.
+    expect(selectInRect(data({ visibleQi: ['Good'] }), [T0 + 89 * D, T0 + 92 * D], [70, 90])).not.toContain('A|' + (T0 + 90 * D));
+  });
+
+  it('rings only selected readings that are visible', () => {
+    const selected = new Set(['A|' + T0, 'B|' + T0]);
+    expect(selectionPoints(data(), selected)).toEqual([
+      [T0, 78],
+      [T0, 76],
+    ]);
+    expect(selectionPoints(data({ hidden: new Set(['B']) }), selected)).toEqual([[T0, 78]]);
+    expect(selectionPoints(data(), new Set())).toEqual([]);
   });
 
   it('exports the visible readings in the window as CSV', () => {

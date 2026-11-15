@@ -15,19 +15,25 @@ describe('VnvStore', () => {
     store = TestBed.inject(VnvStore);
   });
 
-  it('applies vnv-chart: 40 sensors, chart view, all QIs, baseline and OOS selected', async () => {
+  it('applies vnv-chart: the typical 6-sensor component, chart view, baseline and OOS selected', async () => {
     await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
-    expect(store.headerSummary()).toEqual({ name: '241-AN-WSTA-102-TI', sensorCount: 40 });
-    expect(store.result()!.sensors.length).toBe(40);
+    expect(store.headerSummary()).toEqual({ name: '241-AN-TMAC-103-TI', sensorCount: 6 });
+    expect(store.result()!.sensors.length).toBe(6);
     expect(store.view()).toBe('chart');
     expect(store.baselineSensorId()).toBe(store.result()!.sensors[0].id);
     expect(store.outOfService().length).toBeGreaterThan(0);
     expect(store.atFullRange()).toBe(true);
   });
 
+  it('applies vnv-chart-40-sensors: the maximum the graph shows', async () => {
+    await store.applyState(resolvePrototypeState('vnv-chart-40-sensors', data) as ResolvedVnvState);
+    expect(store.headerSummary()).toEqual({ name: '241-AN-WSTA-102-TI', sensorCount: 40 });
+    expect(store.result()!.sensors.length).toBe(40);
+  });
+
   it('applies vnv-chart-sensors-hidden', async () => {
     await store.applyState(resolvePrototypeState('vnv-chart-sensors-hidden', data) as ResolvedVnvState);
-    expect(store.hiddenSensorIds().size).toBe(30);
+    expect(store.hiddenSensorIds().size).toBe(2);
   });
 
   it('applies vnv-first-visit as nothing loaded', async () => {
@@ -47,16 +53,67 @@ describe('VnvStore', () => {
     expect(store.loading()).toBe(true);
     await pending;
     expect(store.loading()).toBe(false);
-    expect(store.result()!.sensors.length).toBe(40);
+    expect(store.result()!.sensors.length).toBe(6);
     expect(store.result()!.readings.every((r) => r.timestamp >= range.start && r.timestamp < range.end + D)).toBe(true);
     expect(store.atFullRange()).toBe(true);
   });
 
+  it('applies vnv-chart-selection: 8 selected, popover open, window around the selection', async () => {
+    await store.applyState(resolvePrototypeState('vnv-chart-selection', data) as ResolvedVnvState);
+    expect(store.selectedIds().size).toBe(8);
+    expect(store.selectedReadings().length).toBe(8);
+    expect(store.vnvPopoverOpen()).toBe(true);
+    const w = store.effectiveWindow();
+    expect(store.selectedReadings().every((r) => r.timestamp >= w.start && r.timestamp <= w.end)).toBe(true);
+    expect(store.atFullRange()).toBe(false);
+  });
+
+  it('applies a review to exactly the selection, then clears it', async () => {
+    await store.applyState(resolvePrototypeState('vnv-table-selection', data) as ResolvedVnvState);
+    const ids = [...store.selectedIds()];
+    const untouched = store.result()!.readings.find((r) => !ids.includes(r.id))!;
+    store.view.set('chart');
+    expect(store.selectedIds().size).toBe(8); // survives a view switch
+
+    const pending = store.applyReview({ qi: 'Suspect', comment: 'Non pretium' });
+    expect(store.applying()).toBe(true);
+    await pending;
+
+    const updated = store.result()!.readings.filter((r) => ids.includes(r.id));
+    expect(updated.every((r) => r.qi === 'Suspect' && r.comment === 'Non pretium' && r.reviewer === 'Scarlett Reagan')).toBe(true);
+    expect(store.result()!.readings.find((r) => r.id === untouched.id)).toEqual(untouched);
+    expect(store.selectedIds().size).toBe(0);
+    expect(store.vnvPopoverOpen()).toBe(false);
+    expect(store.applying()).toBe(false);
+  });
+
+  it('pre-fills the form with a QI every selected reading shares', async () => {
+    await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
+    const good = store.result()!.readings.filter((r) => r.qi === 'Good').slice(0, 3);
+    store.setSelection(good.map((r) => r.id));
+    expect(store.formInitial()).toEqual({ qi: 'Good' });
+    const mixed = [...good, store.result()!.readings.find((r) => r.qi === 'Suspect')!];
+    store.setSelection(mixed.map((r) => r.id));
+    expect(store.formInitial()).toBeNull();
+  });
+
+  it('selects all and none, and the quality filter hides rows', async () => {
+    await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
+    const all = store.visibleReadings().length;
+    store.visibleQi.set(['Good']);
+    expect(store.visibleReadings().every((r) => r.qi === 'Good')).toBe(true);
+    expect(store.visibleReadings().length).toBeLessThan(all);
+    store.selectAll(store.visibleReadings().map((r) => r.id), true);
+    expect(store.selectedIds().size).toBe(store.visibleReadings().length);
+    store.selectAll(store.visibleReadings().map((r) => r.id), false);
+    expect(store.selectedIds().size).toBe(0);
+  });
+
   it('toggles sensors and clamps the window to the loaded range', async () => {
     await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
-    store.toggleSensor('AN102-WSTA-TI-054');
-    expect(store.hiddenSensorIds().has('AN102-WSTA-TI-054')).toBe(true);
-    store.toggleSensor('AN102-WSTA-TI-054');
+    store.toggleSensor('AN103-TMAC-TI-U1-RJA');
+    expect(store.hiddenSensorIds().has('AN103-TMAC-TI-U1-RJA')).toBe(true);
+    store.toggleSensor('AN103-TMAC-TI-U1-RJA');
     expect(store.hiddenSensorIds().size).toBe(0);
 
     const x = store.xRange();

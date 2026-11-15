@@ -62,12 +62,16 @@ export interface IllFocusFixture {
 
 export type PrototypeFixture = VnvFixture | IllLibraryFixture | IllFocusFixture;
 
+/** The typical case: one component with 6 sensors (Figma header: 241-AN-TMAC-103-TI · 6 sensors). */
 const VNV_LOADED = {
-  locationId: '241-AN-WSTA-102-TI',
+  locationId: '241-AN-TMAC-103-TI',
   start: '1/1/2025',
   end: '11/12/2026',
   showAllData: true,
 } as const;
+
+/** The most sensors the VNV graph will ever show (40): the stress case. */
+const VNV_LOADED_MAX = { ...VNV_LOADED, locationId: '241-AN-WSTA-102-TI' } as const;
 
 const LOAD_FORM_DATES = { start: '7/19/2026', end: '10/19/2026' } as const;
 
@@ -93,7 +97,8 @@ export const PROTOTYPE_STATES = {
     popover: 'load-form',
     loadForm: { ...LOAD_FORM_DATES, search: 'U3', filters: ['TI', 'WST'] },
   },
-  'vnv-chart-sensors-hidden': { module: 'vnv', loaded: VNV_LOADED, view: 'chart', hiddenSensorCount: 30 },
+  'vnv-chart-40-sensors': { module: 'vnv', loaded: VNV_LOADED_MAX, view: 'chart' },
+  'vnv-chart-sensors-hidden': { module: 'vnv', loaded: VNV_LOADED, view: 'chart', hiddenSensorCount: 2 },
   'vnv-chart-selection': {
     module: 'vnv',
     frame: '1:11678',
