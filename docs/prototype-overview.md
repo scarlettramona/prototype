@@ -355,7 +355,7 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 ### Phase 6 · ILL Scan library
 
 **Decisions** (Scarlett, 2026-11-15, or Figma-wins)
-- **The expanded row's chart shows this scan only:** a depth profile (Corrected Counts against "From Bottom of Tank (inches)", 600 → 0), with the Calculated ILL as a mark line. Saved is dashed `on-surface-variant`; unsaved is solid primary. There's no reference scan. *(Superseded 2026-11-16: the row now draws the well's reference scan too; see "ILL reference and raw scans".)*
+- **The expanded row's chart shows this scan only:** a depth profile (Corrected Counts against "From Bottom of Tank (inches)", 600 → 0), with the Calculated ILL as a mark line. Saved is dashed `on-surface-variant`; unsaved is solid primary. There's no reference scan. *(Superseded 2026-11-16: the row now draws the well's reference scan too; see "ILL reference scans".)*
 - **Perform analysis / Save analysis act on the selected scans.** Perform runs the Default preset and creates unsaved results; Save saves them. Both are disabled with nothing selected, and Save also needs something unsaved.
 - **Row ⋮ menu:** "Open in focus view" and "Export smooth data" (CSV). **This wording is mine and needs Scarlett's confirmation.**
 - **Value cells:**
@@ -559,44 +559,30 @@ These replace the earlier decisions marked *Superseded* above.
 - **Every tree row shows its count of sensors with data** in the date range, on the right: equipment, tank and component rows alike. Component rows no longer show the selected count; the footer still does.
 - Search results show "group › tank › component" paths, and Show in tree opens the group and the tank.
 
-### ILL reference and raw scans (Scarlett, 2026-11-16)
+### ILL reference scans (Scarlett, 2026-11-16)
 
 **Model** (`core/ill/`)
-- **Reference scan.** Each well has one: `Well.referenceScanId`.
+- **Each well has a reference scan:** `Well.referenceScanId`. It's the point of comparison for the well's other scans.
   - It defaults to the well's oldest scan with a saved analysis, else its oldest scan.
   - The mock service flags it on every read (`Scan.reference`).
   - New service calls: `getReferenceScan(wellId)` and `setReferenceScan(scanId)` (in memory).
-- **Raw and calculated scans** (`ill-profiles.ts`):
-  - **Raw:** the stored points as exported.
-  - **Calculated:** the raw counts smoothed (a centred 9-point moving average) and shifted by the latest analysis's correction (`calculatedIll − rawIll`). A scan with no analysis has only its raw profile.
-  - `primaryPoints()` returns the calculated profile, else the raw one. The navigator, the readout and Export smooth data use it.
+- **A scan has one profile.** There is no separate raw or calculated version of a scan. "Raw" and "calculated" only describe the ILL *values* (Raw ILL, Calculated ILL). An earlier raw/calculated-profile build was removed (Scarlett, 2026-11-16).
 
 **Charts** (`depth-chart-options.ts`, shared by the focus view and the library row)
-- **Line styles:**
-  - Calculated lines are solid.
-  - Raw lines are dotted (`RAW_DASH`).
-  - The reference is dashed (`REFERENCE_DASH`, as in Figma 1:2094) and never faded.
-- **The focused scan** stays heavier and on top. Other scans stay faded in a scan tab (Scarlett's choice).
-- **Raw visibility** (`rawIds`):
-  - **Defaults on:** the focused scan in a scan tab, and every scan when at most one visible scan has a saved analysis.
-  - **Defaults off:** everything else (several analysed scans).
-  - A scan without analysis always draws its raw line.
-  - Legend overrides reset when the tab changes.
+- One line per visible scan.
+- The reference scan is dashed (`REFERENCE_DASH`, as in Figma 1:2094) and never faded.
+- In a scan tab the focused scan is heavier and on top, and the others stay faded.
 
 **Focus view**
 - **The reference is always open** (auto-added), its tab has **no close ×**, and "Add scans" never lists it.
-- **Legend:** each analysed scan has an indented **Raw** row with a dotted swatch. The reference row is tagged **Reference** and has a dashed swatch.
-- **Reference tag** on its tab, in the chart title and in the Scan details header.
+- **The Reference tag** appears on its tab, its legend row (which also has a dashed swatch), the chart title and the Scan details header.
 - **Scan details** has **Set as reference scan**; it's hidden on the reference itself.
 
 **Library**
 - The Date cell marks the reference row with a small primary dot after the date. It has a "Reference scan" tooltip and label, is focusable, and keeps the date on one line.
 - The row ⋮ menu has **Set as reference scan** (disabled on the reference).
-- **The expanded row draws this scan plus the well's reference:**
-  - Legend: "This scan · time", then "Reference scan · time", each with a **Raw** checkbox.
-  - Raw is off by default when both scans have a saved analysis, otherwise on for this scan.
-  - When the row *is* the reference, it shows alone with the Reference tag.
+- **The expanded row draws this scan plus the well's reference.** Its legend shows "This scan · time" and "Reference scan · time". When the row *is* the reference, it shows alone with the Reference tag.
 
 **Shared:** the `.app-tag` style (`styles/components/_tag.scss`) and a `tag` input on `app-legend-row`.
 
-**Copy that's mine (not in Figma), to confirm:** "Reference" (tag), "Raw" (legend row) and "Set as reference scan". "This scan" and "Reference scan" come from Figma 1:2094.
+**Copy that's mine (not in Figma), to confirm:** "Reference" (tag) and "Set as reference scan". "This scan" and "Reference scan" come from Figma 1:2094.

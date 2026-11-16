@@ -7,11 +7,10 @@ import type { ECharts, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { seriesStyle } from '../../../../../core/charts/chart-palette';
 import { PlutoChartThemeService, withAlpha } from '../../../../../core/charts/pluto-chart-theme';
-import { primaryPoints } from '../../../../../core/ill/ill-profiles';
 import { formatDateTime } from '../../../../../core/mock-data/dates';
 import { ChartCardComponent } from '../../../../../ui/components/chart-card/chart-card.component';
 import { ChartNavigatorComponent, type NavigatorSeries, type NavigatorWindow } from '../../../../../ui/components/chart-navigator/chart-navigator.component';
-import { buildDepthChartOptions, depthWindowOption, drawnProfiles } from '../../depth-chart-options';
+import { buildDepthChartOptions, depthWindowOption } from '../../depth-chart-options';
 import { DEPTH_MAX, DEPTH_MIN, depthYRange } from '../../focus-model';
 import { IllFocusStore } from '../../ill-focus-store';
 import { ScansLegendComponent } from '../scans-legend/scans-legend.component';
@@ -166,10 +165,9 @@ export class FocusChartComponent {
     focusedId: this.store.focused()?.id ?? null,
     lines: this.store.lines(),
     referenceId: this.store.referenceId(),
-    raw: this.store.rawIds(),
   }));
 
-  private readonly yRange = computed(() => depthYRange(drawnProfiles(this.data()), this.store.window(), this.store.fitY()));
+  private readonly yRange = computed(() => depthYRange(this.store.visibleScans(), this.store.window(), this.store.fitY()));
 
   /** Rebuilt only when the scans, focus or lines change; window moves arrive via `windowMerge`. */
   protected readonly options = computed<EChartsCoreOption>(() => {
@@ -183,7 +181,7 @@ export class FocusChartComponent {
   protected readonly navigatorSeries = computed<NavigatorSeries[]>(() =>
     this.store.visibleScans().map((s) => {
       const style = seriesStyle(s.colorIndex);
-      return { id: s.id, color: style.color, dash: 'solid', points: primaryPoints(s).map((p) => [p.depthIn, p.counts] as const) };
+      return { id: s.id, color: style.color, dash: 'solid', points: s.points.map((p) => [p.depthIn, p.counts] as const) };
     }),
   );
 

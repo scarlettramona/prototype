@@ -146,23 +146,6 @@ describe('IllFocusStore', () => {
     expect(store.closedScans().some((s) => s.id === ref)).toBe(false);
   });
 
-  it('shows raw lines by default only where few analysed scans are on show', async () => {
-    await store.applyState(state('ill-all-scans'));
-    const analysed = store.visibleScans().filter((s) => s.analysis.saved);
-    expect(analysed.length).toBeGreaterThan(1);
-    // All scans: raw off for analysed scans; scans without analysis always draw raw.
-    for (const s of store.visibleScans()) expect(store.rawIds().has(s.id)).toBe(!s.analysis.saved && !s.analysis.unsaved);
-    // A scan tab: the focused scan's raw is on, the others' off.
-    const focus = analysed[1].id;
-    store.select(focus);
-    expect(store.rawIds().has(focus)).toBe(true);
-    expect(store.rawIds().has(analysed[0].id)).toBe(false);
-    store.setRaw(analysed[0].id, true);
-    store.setRaw(focus, false);
-    expect(store.rawIds().has(analysed[0].id)).toBe(true);
-    expect(store.rawIds().has(focus)).toBe(false);
-  });
-
   it('sets another scan as the reference', async () => {
     await store.applyState(state('ill-scan-saved'));
     const old = store.referenceId()!;

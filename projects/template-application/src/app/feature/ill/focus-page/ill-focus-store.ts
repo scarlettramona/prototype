@@ -1,6 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { defaultParameters } from '../../../core/ill/ill-analysis';
-import { calculatedPoints } from '../../../core/ill/ill-profiles';
 import { IllMockService } from '../../../core/ill/ill-mock.service';
 import type { AnalysisParameters, ParameterPreset, Scan } from '../../../core/ill/ill.models';
 import type { ResolvedIllFocusState } from '../../../core/prototype-state/resolve-prototype-state';
@@ -50,8 +49,6 @@ export class IllFocusStore {
   readonly hidden = signal<ReadonlySet<string>>(new Set());
   /** The focused scan's Calculated ILL lines (scans legend Saved / Unsaved). */
   readonly lines = signal({ saved: true, unsaved: true });
-  /** Raw lines turned on or off in the legend (per tab visit); other scans follow `rawDefault`. */
-  private readonly rawOverrides = signal<ReadonlyMap<string, boolean>>(new Map());
   readonly legendOpen = signal(false);
   readonly paramsOpen = signal(true);
 
@@ -91,8 +88,6 @@ export class IllFocusStore {
   readonly focused = computed(() => (this.active() === ALL_TAB ? null : (this.scanById().get(this.active()) ?? null)));
   /** The well's reference scan: always open, on every chart, and its tab can't be closed. */
   readonly referenceId = computed(() => this.allScans().find((s) => s.reference)?.id ?? null);
-  /** Scans that have a calculated profile (an analysis); the others only have their raw one. */
-  private readonly calculatedIds = computed(() => new Set(this.allScans().filter((s) => calculatedPoints(s)).map((s) => s.id)));
   /** On the chart: open scans not hidden. The focused scan can't be hidden. */
   readonly visibleScans = computed(() => {
     const hidden = this.hidden();
@@ -100,29 +95,6 @@ export class IllFocusStore {
     return this.openScans().filter((s) => s.id === focus || !hidden.has(s.id));
   });
   readonly atFullRange = computed(() => this.window() === null);
-
-  /**
-   * Scans whose raw (dotted) line is drawn. By default: the focused scan in a scan
-   * tab, and every scan when at most one visible scan has a saved analysis; off
-   * otherwise. A scan with no analysis always draws its raw line (it has no other).
-   */
-  readonly rawIds = computed<ReadonlySet<string>>(() => {
-    const overrides = this.rawOverrides();
-    const visible = this.visibleScans();
-    const fewSaved = visible.filter((s) => s.analysis.saved).length <= 1;
-    const focus = this.focused()?.id ?? null;
-    const calculated = this.calculatedIds();
-    return new Set(
-      visible
-        .filter((s) => !calculated.has(s.id) || (overrides.get(s.id) ?? (s.id === focus || fewSaved)))
-        .map((s) => s.id),
-    );
-  });
-
-  /** Has a raw line that can be toggled (it also has a calculated one). */
-  hasCalculated(id: string): boolean {
-    return this.calculatedIds().has(id);
-  }
 
   // ── The focused scan's drafts ──
   readonly reference = computed(() => {
@@ -222,7 +194,6 @@ export class IllFocusStore {
     this.drafts.set(new Map());
     this.reviews.set(new Map());
     this.references.set(new Map());
-    this.rawOverrides.set(new Map());
     this.editingGroups.set(new Set());
   }
 
@@ -233,7 +204,6 @@ export class IllFocusStore {
     this.active.set(tab);
     this.editingGroups.set(new Set());
     this.lines.set({ saved: true, unsaved: true });
-    this.rawOverrides.set(new Map());
   }
 
   /** Reopens a closed scan (Add scans) and switches to it. Keeps oldest-first order. */
@@ -279,11 +249,6 @@ export class IllFocusStore {
     if (hidden) next.add(id);
     else next.delete(id);
     this.hidden.set(next);
-  }
-
-  /** Legend Raw rows: show or hide a scan's raw (dotted) line. */
-  setRaw(id: string, on: boolean): void {
-    this.rawOverrides.update((m) => new Map(m).set(id, on));
   }
 
   /** Makes `id` the well's reference scan (it moves the Reference tag and the dashed line). */
