@@ -124,6 +124,8 @@ export interface Well {
   /** Riser id, e.g. `B105 R05 N 20571`. */
   id: string;
   scanIds: string[];
+  /** The well's reference scan: on every chart for the well, the point of comparison for its other scans. */
+  referenceScanId: string;
 }
 
 export interface Scan {
@@ -142,6 +144,8 @@ export interface Scan {
   analysis: Analysis;
   /** True for the scan from the real export. */
   real: boolean;
+  /** True for the well's reference scan. Set by the mock service on every read. */
+  reference?: boolean;
 }
 
 /** A scan without its depth points: what the Scan library lists. */

@@ -26,6 +26,9 @@ export interface LegendSwatch {
           <app-series-swatch [color]="s.color" [dash]="s.dash" marker="ring" />
         }
         <span class="name">{{ label() }}</span>
+        @if (tag()) {
+          <span class="app-tag">{{ tag() }}</span>
+        }
       </button>
     } @else {
       <div class="check" [class.check--indent]="indent()" [class.check--locked]="locked()">
@@ -41,6 +44,9 @@ export interface LegendSwatch {
           <app-series-swatch [color]="s.color" [dash]="s.dash" marker="none" />
         }
         <span class="name" [class.name--bold]="emphasis()" [class.name--primary]="labelTone() === 'primary'">{{ label() }}</span>
+        @if (tag()) {
+          <span class="app-tag">{{ tag() }}</span>
+        }
       </div>
     }
   `,
@@ -117,6 +123,8 @@ export class LegendRowComponent {
   /** Checkbox mode: nested under the row above (Saved / Unsaved). */
   readonly indent = input(false);
   readonly labelTone = input<'default' | 'primary'>('default');
+  /** A small tag after the label, e.g. "Reference". Empty for none. */
+  readonly tag = input('');
 
   protected flip(): void {
     if (!this.locked()) this.visible.set(!this.visible());

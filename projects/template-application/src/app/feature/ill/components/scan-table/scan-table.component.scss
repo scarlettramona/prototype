@@ -87,6 +87,33 @@
   padding: 0;
 }
 
+// The reference row: a small primary dot after the date, with a "Reference scan" tooltip.
+.cell--date {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-80);
+}
+
+.cell__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ref-badge {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+
+  // The tooltip directive adds a mat- class, which the global ring skips.
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+
 .cell--indent {
   padding-left: var(--spacing-160);
 }

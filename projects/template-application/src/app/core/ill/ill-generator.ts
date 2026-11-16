@@ -56,7 +56,9 @@ export function buildIllDataset(source: IllSourceScan[], config: MockDataConfig)
   for (const id of [...byWell.keys()].sort()) {
     const list = byWell.get(id)!.sort((a, b) => a.datetime - b.datetime);
     list.forEach((s, i) => (s.colorIndex = i));
-    wells.set(id, { id, scanIds: list.map((s) => s.id) });
+    // The reference: the oldest scan with a saved analysis, else the oldest scan.
+    const reference = list.find((s) => s.analysis.saved) ?? list[0];
+    wells.set(id, { id, scanIds: list.map((s) => s.id), referenceScanId: reference.id });
   }
 
   return { wells, scans: new Map(scans.map((s) => [s.id, s])) };

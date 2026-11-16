@@ -10,7 +10,8 @@ import { PlutoChartThemeService } from '../../../../core/charts/pluto-chart-them
 import type { ParameterPreset, Scan, ScanQi } from '../../../../core/ill/ill.models';
 import { formatDate, formatDateTime } from '../../../../core/mock-data/dates';
 import { DetailRowComponent } from '../../../../ui/components/detail-row/detail-row.component';
-import { buildDepthChartOptions } from '../../focus-page/depth-chart-options';
+import { SeriesSwatchComponent } from '../../../../ui/components/series-swatch/series-swatch.component';
+import { buildDepthChartOptions, REFERENCE_DASH, type DepthChartData } from '../../focus-page/depth-chart-options';
 import { depthYRange } from '../../focus-page/focus-model';
 import type { ScanReview } from '../../ill-library-store';
 
@@ -23,7 +24,7 @@ let nextId = 0;
  */
 @Component({
   selector: 'app-scan-detail',
-  imports: [MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, NgxEchartsDirective, DetailRowComponent],
+  imports: [MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, NgxEchartsDirective, DetailRowComponent, SeriesSwatchComponent],
   templateUrl: './scan-detail.component.html',
   styleUrl: './scan-detail.component.scss',
   host: { class: 'app-filled-fields' },
@@ -34,6 +35,8 @@ export class ScanDetailComponent {
   protected readonly chartTheme = inject(PlutoChartThemeService);
 
   readonly scan = input.required<Scan>();
+  /** The well's reference scan, drawn beside this one; `null` when this scan is the reference. */
+  readonly reference = input<Scan | null>(null);
   /** The parameter preset the analysis used (Default when there's none): its saved on / by always show. */
   readonly preset = input<ParameterPreset | null>(null);
   readonly busy = input(false);
@@ -44,6 +47,7 @@ export class ScanDetailComponent {
   protected readonly qi = signal<ScanQi>(null);
   protected readonly scanComment = signal('');
   protected readonly vnvComment = signal('');
+  protected readonly referenceDash = REFERENCE_DASH;
 
   constructor() {
     effect(() => {
@@ -77,12 +81,30 @@ export class ScanDetailComponent {
   protected readonly date = formatDate;
   protected readonly color = computed(() => seriesStyle(this.scan().colorIndex).color);
 
-  /** The focus view's depth chart for this one scan, without zoom (shared builder). */
+  private readonly scans = computed(() => {
+    const ref = this.reference();
+    return ref ? [this.scan(), ref] : [this.scan()];
+  });
+
+  /** The focus view's depth chart for this scan and its well's reference, without zoom (shared builder). */
   protected readonly options = computed<EChartsCoreOption>(() => {
     const scan = this.scan();
-    const data = { scans: [scan], focusedId: scan.id, lines: { saved: true, unsaved: true } };
-    return buildDepthChartOptions(data, null, depthYRange([scan], null, false), this.chartTheme.tokens().surfaceContainerLowest, { zoom: false });
+    const data: DepthChartData = {
+      scans: this.scans(),
+      focusedId: scan.id,
+      lines: { saved: true, unsaved: true },
+      referenceId: this.reference()?.id ?? (scan.reference ? scan.id : null),
+    };
+    return buildDepthChartOptions(data, null, depthYRange(data.scans, null, false), this.chartTheme.tokens().surfaceContainerLowest, { zoom: false });
   });
+
+  protected colorOf(scan: Scan): string {
+    return seriesStyle(scan.colorIndex).color;
+  }
+
+  protected timeOf(scan: Scan): string {
+    return formatDateTime(scan.datetime);
+  }
 
   protected submit(): void {
     this.save.emit({ qi: this.qi(), scanComment: this.scanComment().trim(), vnvComment: this.vnvComment().trim() });

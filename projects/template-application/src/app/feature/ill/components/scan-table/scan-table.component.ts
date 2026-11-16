@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import type { ScanSummary } from '../../../../core/ill/ill.models';
 import { formatDateTime } from '../../../../core/mock-data/dates';
 import { IllLibraryStore, type ScanReview } from '../../ill-library-store';
@@ -29,6 +30,7 @@ import { ScanDetailComponent } from '../scan-detail/scan-detail.component';
     MatInputModule,
     MatMenuModule,
     MatProgressBarModule,
+    MatTooltipModule,
     ScanDetailComponent,
   ],
   templateUrl: './scan-table.component.html',

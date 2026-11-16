@@ -86,6 +86,8 @@ export class IllFocusStore {
     ).map((id) => byId.get(id)!);
   });
   readonly focused = computed(() => (this.active() === ALL_TAB ? null : (this.scanById().get(this.active()) ?? null)));
+  /** The well's reference scan: always open, on every chart, and its tab can't be closed. */
+  readonly referenceId = computed(() => this.allScans().find((s) => s.reference)?.id ?? null);
   /** On the chart: open scans not hidden. The focused scan can't be hidden. */
   readonly visibleScans = computed(() => {
     const hidden = this.hidden();
@@ -142,7 +144,7 @@ export class IllFocusStore {
       if (token !== this.loadToken) return;
       this.presets.set(presets);
       this.reset(scans);
-      this.openIds.set(scans.map((s) => s.id));
+      this.openIds.set(this.withReference(scans.map((s) => s.id)));
       this.active.set(tab && scans.some((s) => s.id === tab) ? tab : ALL_TAB);
     } finally {
       if (token === this.loadToken) this.loading.set(false);
@@ -159,7 +161,7 @@ export class IllFocusStore {
       if (token !== this.loadToken) return;
       this.presets.set(presets);
       this.reset(scans);
-      this.openIds.set(state.scanIds);
+      this.openIds.set(this.withReference(state.scanIds));
       this.active.set(state.activeTab);
       this.window.set(state.zoom ? { start: Math.min(...state.zoom), end: Math.max(...state.zoom) } : null);
       this.legendOpen.set(state.popover === 'scans-legend');
@@ -214,8 +216,9 @@ export class IllFocusStore {
     this.select(id);
   }
 
-  /** Closes a tab, dropping its drafts. Call `discard`/`save` first if it's dirty. */
+  /** Closes a tab, dropping its drafts. Call `discard`/`save` first if it's dirty. The reference can't be closed. */
   close(id: string): void {
+    if (id === this.referenceId()) return;
     const ids = this.openIds();
     const i = ids.indexOf(id);
     if (i < 0) return;
@@ -246,6 +249,21 @@ export class IllFocusStore {
     if (hidden) next.add(id);
     else next.delete(id);
     this.hidden.set(next);
+  }
+
+  /** Makes `id` the well's reference scan (it moves the Reference tag and the dashed line). */
+  async setReference(id: string): Promise<void> {
+    if (this.busy() || id === this.referenceId()) return;
+    this.busy.set(true);
+    try {
+      const fresh = await this.service.setReferenceScan(id);
+      const byId = new Map(fresh.map((s) => [s.id, s]));
+      this.allScans.update((list) => list.map((s) => (byId.has(s.id) ? { ...s, reference: byId.get(s.id)!.reference } : s)));
+      this.openIds.set(this.withReference(this.openIds()));
+      await this.library?.refresh(fresh.map((s) => s.id));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   /** The All scans row: show all, or hide all but the focused scan. */
@@ -366,6 +384,14 @@ export class IllFocusStore {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /** Open ids with the reference added (it's always open), in the well's oldest-first order. */
+  private withReference(ids: readonly string[]): string[] {
+    const ref = this.referenceId();
+    if (!ref || ids.includes(ref)) return [...ids];
+    const next = new Set([...ids, ref]);
+    return this.allScans().map((s) => s.id).filter((x) => next.has(x));
   }
 
   private draftFor(scan: Scan): AnalysisParameters {

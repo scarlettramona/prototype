@@ -1,0 +1,12 @@
+// A small status tag after a label, e.g. "Reference" on the well's reference scan.
+.app-tag {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: var(--spacing-20) var(--spacing-60);
+  border-radius: var(--mat-sys-corner-extra-small);
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  font: var(--mat-sys-label-small);
+  white-space: nowrap;
+}

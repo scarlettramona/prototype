@@ -30,6 +30,14 @@ describe('ILL generator', () => {
     expect([...ds.scans.values()].some((s) => s.analysis.unsaved)).toBe(false);
   });
 
+  it('gives every well a reference scan: its oldest scan with a saved analysis', () => {
+    for (const well of ds.wells.values()) {
+      const scans = well.scanIds.map((id) => ds.scans.get(id)!);
+      const expected = scans.find((s) => s.analysis.saved) ?? scans[0];
+      expect(well.referenceScanId).toBe(expected.id);
+    }
+  });
+
   it('places the calculated ILL near the rise (~134–136 in)', () => {
     for (const scan of ds.scans.values()) {
       const r = scan.analysis.saved?.results ?? scan.analysis.unsaved?.results;

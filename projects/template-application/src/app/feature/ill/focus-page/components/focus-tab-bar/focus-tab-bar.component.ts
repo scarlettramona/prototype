@@ -40,12 +40,18 @@ import { ALL_TAB, IllFocusStore } from '../../ill-focus-store';
             <button type="button" role="tab" class="tab__main" [attr.aria-selected]="active" (click)="store.select(scan.id)">
               <span class="dot"></span>
               {{ label(scan.datetime) }}
+              @if (scan.reference) {
+                <span class="app-tag">Reference</span>
+              }
             </button>
-            @if (dirty) {
+            <!-- The reference scan is always open: no close ×. -->
+            @if (dirty && scan.reference) {
+              <span class="tab__close" aria-label="Unsaved analysis"><span class="unsaved-dot"></span></span>
+            } @else if (dirty) {
               <button type="button" class="tab__close" aria-label="Close scan (unsaved analysis)" (click)="close.emit(scan.id)">
                 <span class="unsaved-dot"></span>
               </button>
-            } @else if (active) {
+            } @else if (active && !scan.reference) {
               <button type="button" class="tab__close" aria-label="Close scan" (click)="close.emit(scan.id)">
                 <mat-icon>close_small</mat-icon>
               </button>

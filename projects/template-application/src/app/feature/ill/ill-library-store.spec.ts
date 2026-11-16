@@ -86,6 +86,22 @@ describe('IllLibraryStore', () => {
     expect(store.expandedScan()?.qi).toBe('Suspect');
   });
 
+  it('draws the well reference beside an expanded row, and moves it with Set as reference scan', async () => {
+    await store.loadScans({ ...defaultScanQuery(), analysis: 'Any' });
+    const row = store.results().find((s) => !s.reference)!;
+    await store.expand(row.id);
+    const ref = store.expandedReference()!;
+    expect(ref.wellId).toBe(row.wellId);
+    expect(ref.reference).toBe(true);
+    expect(ref.points.length).toBeGreaterThan(0);
+
+    await store.setReference(row.id);
+    expect(store.results().find((s) => s.id === row.id)!.reference).toBe(true);
+    expect(store.results().filter((s) => s.wellId === row.wellId && s.reference)).toHaveLength(1);
+    // The open row is now the reference itself: nothing to draw beside it.
+    expect(store.expandedReference()).toBeNull();
+  });
+
   it('resets the form to its defaults', async () => {
     store.query.set({ ...defaultScanQuery(), qi: 'Suspect', wellIds: ['B105 R05 N 20571'] });
     store.reset();

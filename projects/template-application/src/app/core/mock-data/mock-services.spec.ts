@@ -92,6 +92,17 @@ describe('Mock services', () => {
       expect(analysisState(reloaded.analysis)).toBe('saved');
     });
 
+    it('flags the reference scan on reads and moves it with setReferenceScan', async () => {
+      const service = TestBed.inject(IllMockService);
+      const wellId = MOCK_DATA_CONFIG.ill.focusWell.id;
+      const scans = await service.getWellScans(wellId);
+      expect(scans.filter((s) => s.reference)).toHaveLength(1);
+      const next = scans.find((s) => !s.reference)!;
+      const after = await service.setReferenceScan(next.id);
+      expect(after.filter((s) => s.reference).map((s) => s.id)).toEqual([next.id]);
+      expect((await service.getReferenceScan(wellId))!.id).toBe(next.id);
+    });
+
     it('saves a preset as the new default, with a new saved on / by', async () => {
       const service = TestBed.inject(IllMockService);
       const [before] = await service.getPresets();

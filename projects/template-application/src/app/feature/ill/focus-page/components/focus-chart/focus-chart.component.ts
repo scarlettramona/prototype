@@ -47,6 +47,9 @@ interface ZoomEvent {
           @if (store.focused(); as scan) {
             <span class="dot" [style.background]="color(scan.colorIndex)"></span>
             {{ label(scan.datetime) }}
+            @if (scan.reference) {
+              <span class="app-tag">Reference</span>
+            }
           } @else {
             All scans
           }
@@ -161,6 +164,7 @@ export class FocusChartComponent {
     scans: this.store.visibleScans(),
     focusedId: this.store.focused()?.id ?? null,
     lines: this.store.lines(),
+    referenceId: this.store.referenceId(),
   }));
 
   private readonly yRange = computed(() => depthYRange(this.store.visibleScans(), this.store.window(), this.store.fitY()));

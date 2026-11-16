@@ -7,6 +7,9 @@ import { countsAt, DEPTH_MAX, DEPTH_MIN, type DepthWindow } from './focus-model'
 export const SCAN_SERIES_PREFIX = 'scan:';
 const ILL_SERIES_ID = 'ill-lines';
 
+/** The reference scan is drawn dashed (Figma 1:2094); every other scan is solid. */
+export const REFERENCE_DASH = [7, 3];
+
 export interface DepthChartData {
   /** Visible scans, in tab order. */
   scans: readonly Scan[];
@@ -14,14 +17,17 @@ export interface DepthChartData {
   focusedId: string | null;
   /** Which Calculated ILL lines of the focused scan to draw. */
   lines: { saved: boolean; unsaved: boolean };
+  /** The well's reference scan, if it is on the chart. */
+  referenceId: string | null;
 }
 
 /**
  * The ILL depth chart (Figma 1:8968 / 1:9514 / 1:10048), also used for a single
- * scan in the library's expanded row (1:2094) with `zoom: false`. One line per
- * visible scan; in a scan tab the focused scan is heavier and on top, the
- * others thinner and faded. The focused scan's Calculated ILL is drawn as
- * vertical lines: saved solid, unsaved dashed (as the scans legend draws them).
+ * scan and its reference in the library's expanded row (1:2094) with `zoom: false`.
+ * One line per visible scan. The well's reference scan is dashed and never faded.
+ * In a scan tab the focused scan is heavier and on top, the others thinner and
+ * faded. The focused scan's Calculated ILL is drawn as vertical lines: saved
+ * solid, unsaved dashed (as the legend draws them).
  */
 export function buildDepthChartOptions(
   data: DepthChartData,
@@ -34,17 +40,18 @@ export function buildDepthChartOptions(
   const series = data.scans.map((scan) => {
     const color = seriesStyle(scan.colorIndex).color;
     const isFocus = scan.id === data.focusedId;
-    const faded = !!focused && !isFocus;
+    const isReference = scan.id === data.referenceId;
+    const faded = !!focused && !isFocus && !isReference;
     return {
       id: SCAN_SERIES_PREFIX + scan.id,
       name: formatDateTime(scan.datetime),
       type: 'line',
       color,
-      z: isFocus ? 3 : 2,
+      z: isFocus ? 4 : isReference ? 3 : 2,
       showSymbol: false,
       sampling: 'lttb',
       emphasis: { disabled: true },
-      lineStyle: { width: isFocus ? 2 : 1, opacity: faded ? 0.5 : 1 },
+      lineStyle: { width: isFocus ? 2 : isReference ? 1.5 : 1, type: isReference ? REFERENCE_DASH : 'solid', opacity: faded ? 0.5 : 1 },
       data: scan.points.map((p) => [p.depthIn, p.counts]),
     };
   });
@@ -78,7 +85,7 @@ export function buildDepthChartOptions(
       trigger: 'axis',
       axisPointer: { type: 'line', snap: false },
       confine: true,
-      formatter: readoutFormatter(data.scans),
+      formatter: readoutFormatter(data.scans, data.referenceId),
     },
     // Without zoom (the library row has no navigator or Reset), drag does nothing.
     dataZoom: zoom
@@ -149,7 +156,7 @@ interface ReadoutParam {
 }
 
 /** Hover readout: the depth, then every visible scan's counts at that depth. */
-export function readoutFormatter(scans: readonly Scan[]): (params: ReadoutParam | ReadoutParam[]) => string {
+export function readoutFormatter(scans: readonly Scan[], referenceId: string | null = null): (params: ReadoutParam | ReadoutParam[]) => string {
   return (params) => {
     const first = Array.isArray(params) ? params[0] : params;
     const depth = first?.axisValue ?? first?.value?.[0];
@@ -159,7 +166,7 @@ export function readoutFormatter(scans: readonly Scan[]): (params: ReadoutParam 
         const c = countsAt(s.points, depth);
         return (
           `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${seriesStyle(s.colorIndex).color}"></span>` +
-          `<span>${formatDateTime(s.datetime)}</span><b style="text-align:right">${c === null ? '—' : c.toFixed(1)}</b>`
+          `<span>${formatDateTime(s.datetime)}${s.id === referenceId ? ' (reference)' : ''}</span><b style="text-align:right">${c === null ? '—' : c.toFixed(1)}</b>`
         );
       })
       .join('');
