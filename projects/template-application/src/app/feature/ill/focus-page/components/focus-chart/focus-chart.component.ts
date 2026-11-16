@@ -80,7 +80,7 @@ interface ZoomEvent {
         [options]="options()"
         [merge]="windowMerge()"
         [theme]="chartTheme.theme()"
-        [loading]="store.loading()"
+        [loading]="store.loading() || store.busy()"
         [loadingOpts]="loadingOpts()"
         (chartInit)="chart = $event"
         (chartDataZoom)="onZoom($event)"
@@ -99,8 +99,6 @@ interface ZoomEvent {
     </app-chart-card>
   `,
   styles: `
-    @use '@angular/material' as mat;
-
     :host {
       display: block;
       min-height: 0;
@@ -134,15 +132,6 @@ interface ZoomEvent {
       width: 10px;
       height: 10px;
       border-radius: 50%;
-    }
-    .fit-y {
-      @include mat.slide-toggle-overrides(
-        (
-          label-text-font: var(--mat-sys-label-large-font),
-          label-text-size: var(--mat-sys-label-large-size),
-          label-text-weight: var(--mat-sys-label-large-weight),
-        )
-      );
     }
     .chart {
       position: absolute;

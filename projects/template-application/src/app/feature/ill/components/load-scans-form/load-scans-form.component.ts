@@ -95,8 +95,6 @@ import { wellLabel } from '../../library-model';
     </div>
   `,
   styles: `
-    @use '@angular/material' as mat;
-
     :host {
       display: flex;
       flex-direction: column;
@@ -148,19 +146,6 @@ import { wellLabel } from '../../library-model';
     }
     .toggle__label {
       font: var(--mat-sys-body-medium);
-    }
-    .toggles {
-      @include mat.button-toggle-overrides(
-        (
-          background-color: transparent,
-          text-color: var(--mat-sys-on-surface),
-          selected-state-background-color: var(--mat-sys-secondary-container),
-          selected-state-text-color: var(--mat-sys-on-secondary-container),
-          divider-color: var(--mat-sys-outline),
-          shape: var(--mat-sys-corner-small),
-          height: 34px,
-        )
-      );
     }
     .actions {
       display: flex;

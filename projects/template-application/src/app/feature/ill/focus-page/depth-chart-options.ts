@@ -17,12 +17,19 @@ export interface DepthChartData {
 }
 
 /**
- * The focus-view depth chart (Figma 1:8968 / 1:9514 / 1:10048). One line per
+ * The ILL depth chart (Figma 1:8968 / 1:9514 / 1:10048), also used for a single
+ * scan in the library's expanded row (1:2094) with `zoom: false`. One line per
  * visible scan; in a scan tab the focused scan is heavier and on top, the
  * others thinner and faded. The focused scan's Calculated ILL is drawn as
  * vertical lines: saved solid, unsaved dashed (as the scans legend draws them).
  */
-export function buildDepthChartOptions(data: DepthChartData, window: DepthWindow | null, yRange: [number, number], tagText: string): EChartsCoreOption {
+export function buildDepthChartOptions(
+  data: DepthChartData,
+  window: DepthWindow | null,
+  yRange: [number, number],
+  tagText: string,
+  { zoom = true }: { zoom?: boolean } = {},
+): EChartsCoreOption {
   const focused = data.scans.find((s) => s.id === data.focusedId) ?? null;
   const series = data.scans.map((scan) => {
     const color = seriesStyle(scan.colorIndex).color;
@@ -73,19 +80,22 @@ export function buildDepthChartOptions(data: DepthChartData, window: DepthWindow
       confine: true,
       formatter: readoutFormatter(data.scans),
     },
-    dataZoom: [
-      {
-        type: 'inside',
-        id: 'inside',
-        xAxisIndex: 0,
-        filterMode: 'filter',
-        zoomOnMouseWheel: 'ctrl',
-        moveOnMouseWheel: false,
-        moveOnMouseMove: true,
-        startValue: window?.start ?? DEPTH_MIN,
-        endValue: window?.end ?? DEPTH_MAX,
-      },
-    ],
+    // Without zoom (the library row has no navigator or Reset), drag does nothing.
+    dataZoom: zoom
+      ? [
+          {
+            type: 'inside',
+            id: 'inside',
+            xAxisIndex: 0,
+            filterMode: 'filter',
+            zoomOnMouseWheel: 'ctrl',
+            moveOnMouseWheel: false,
+            moveOnMouseMove: true,
+            startValue: window?.start ?? DEPTH_MIN,
+            endValue: window?.end ?? DEPTH_MAX,
+          },
+        ]
+      : [],
     series: [...series, illLines(focused, data.lines, tagText)],
   };
 }

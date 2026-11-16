@@ -64,6 +64,7 @@ import { VnvStore } from '../../vnv-store';
       display: flex;
       flex-direction: column;
       gap: var(--spacing-80);
+      margin-top: var(--spacing-40); // 16 px under the select (Figma 1:11575)
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

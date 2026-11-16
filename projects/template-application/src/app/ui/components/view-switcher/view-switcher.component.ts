@@ -26,21 +26,13 @@ export type ContentView = 'table' | 'chart';
       @include mat.button-toggle-overrides(
         (
           background-color: var(--mat-sys-surface-container),
-          text-color: var(--mat-sys-on-surface),
           selected-state-background-color: var(--mat-sys-inverse-surface),
           selected-state-text-color: var(--mat-sys-inverse-on-surface),
-          divider-color: var(--mat-sys-outline),
-          shape: var(--mat-sys-corner-small),
-          height: 36px,
-          label-text-font: var(--mat-sys-title-small-font),
-          label-text-weight: var(--mat-sys-title-small-weight),
-          label-text-size: var(--mat-sys-title-small-size),
-          label-text-tracking: var(--mat-sys-title-small-tracking),
         )
       );
     }
     .option {
-      width: 113px;
+      width: 112px; // 2 × 112 + the 2 px border = Figma's 226 (1:10938)
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

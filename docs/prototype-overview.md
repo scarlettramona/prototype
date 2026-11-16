@@ -435,3 +435,44 @@ Paths are relative to `projects/template-application/src/app/` unless they start
   - `scan-details`, `analysis-parameters`, `unsaved-dialog` (the first `MatDialog` in the app).
 
 **Tests:** `focus-model.spec.ts`, `ill-focus-store.spec.ts`.
+
+### Polish pass (after Phase 7)
+
+Checked every frame in dark mode at 1912×1024 against its `?state=` fixture. Fixed the 9 held mismatches and 13 more found in the pass.
+
+**Decisions**
+- **One focus ring everywhere:** 2 px primary. Material controls use `mat.strong-focus-indicators`. Our own buttons, links and `[tabindex]` elements get a global outline (`styles/components/_focus.scss`). Set `--app-focus-offset` to change the outline's offset; inset rings in tab bars and tree rows keep their own rule.
+- **Loading is a top progress bar or the chart mask, nothing else:**
+  - **Tables and pages:** `mat-progress-bar.app-loading-bar`, absolutely positioned on the top edge of its container (`styles/components/_loading-bar.scss`). It shows on:
+    - the VNV table while loading or applying;
+    - the ILL scan table while loading or busy;
+    - VNV first visit while the picker loads.
+  - **Charts:** the ECharts mask. It shows on:
+    - the VNV chart while loading or applying;
+    - the focus chart while loading or busy (run, save, discard).
+- **The library's expanded-row chart now uses the focus view's depth chart** (`buildDepthChartOptions(..., { zoom: false })`). Its Calculated ILL lines therefore follow the focus view: the scan's colour, saved solid, unsaved dashed, each with a value tag. This replaces Phase 6's dashed on-surface-variant (saved) and solid primary (unsaved) lines.
+- **The locked focused scan** in the scans legend is a normal checked box. It's `disabledInteractive`, `aria-disabled`, and its colours are overridden to the enabled ones.
+
+**Global styles** (`styles/components/`)
+- `material-component-overrides/_mat-button-toggle.scss`: every segmented toggle is 36 px including its border, `corner-small`, label-large, selected in secondary-container. Components no longer repeat these overrides; the view switcher overrides colours only.
+- `material-component-overrides/_mat-slide-toggle.scss`: switches are 50 × 32 with a label-large label.
+- `_data-table.scss`: `.app-data-table` (body-medium, tabular figures) and `.app-data-table__head` (Roboto Bold 14/20). Both tables use them.
+
+**Component changes**
+- **`app-chart-card`:** new `variant: 'chart' | 'table'`. `table` uses 24 px padding with the table straight under a 40 px toolbar (1:10947).
+- **VNV:**
+  - The table columns are Figma's 68 · 410 · 69 · 109 · 175 · 456 · 165; Sensor and Comment flex in that ratio.
+  - The chart's Export button is 97 px wide.
+  - The selection bar is 94 × 42.
+  - Quality chip icons are 18 / 18 / 12 / 16.
+  - In label-style panel sections, the label sits 12 px above its content; in the reference panel, the detail rows sit 16 px under the select.
+- **ILL library:**
+  - The header is 106 px and the tabs 48.
+  - With the filter summary showing, there's 16 px either side of the divider.
+  - The scan table uses Figma's column widths, 48 px rows, 16 px cell padding, a 431 × 52 search field and a 40 px Group by Well button.
+  - The expanded row is inset 32 px with cards at 1092 : 670 and the chart and legend at 721 : 312, and its chart is 466 px tall.
+- **ILL focus, Analysis parameters:**
+  - Group columns are 577 : 611 : 611.
+  - Inputs are 240 px.
+  - Group headers are 36 px, so titles align whether or not a group has Edit or Revert.
+  - The section title row is 28 px.

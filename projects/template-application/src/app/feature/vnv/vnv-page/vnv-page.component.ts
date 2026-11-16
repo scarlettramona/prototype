@@ -1,6 +1,7 @@
 import { CdkConnectedOverlay, type ConnectedPosition } from '@angular/cdk/overlay';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, Injector, signal, untracked } from '@angular/core';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { PrototypeStateService } from '../../../core/prototype-state/prototype-state.service';
 import { SidePanelComponent } from '../../../ui/components/side-panel/side-panel.component';
 import { VnvFormComponent } from '../../../ui/components/vnv-form/vnv-form.component';
@@ -28,6 +29,7 @@ import { VnvStore } from '../vnv-store';
     CdkConnectedOverlay,
     CdkTrapFocus,
     LoadSensorsFormComponent,
+    MatProgressBarModule,
     SidePanelComponent,
     VnvChartComponent,
     VnvFormComponent,
@@ -85,6 +87,9 @@ import { VnvStore } from '../vnv-store';
           (load)="onLoad($event)"
         />
       </div>
+    } @else {
+      <!-- The sensor picker is still loading. -->
+      <div class="first-visit"><mat-progress-bar mode="indeterminate" /></div>
     }
 
     <ng-template

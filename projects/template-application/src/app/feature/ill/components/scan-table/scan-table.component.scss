@@ -1,67 +1,62 @@
 @use '@angular/material' as mat;
 
-// Figma 1:2094: toolbar, then rows with outline dividers; grouped rows on
-// surface-container-high (1:2334); unsaved values in primary, saved under (1:2883).
+// Figma 1:2094: a 52 px toolbar, the table straight under it, 48 px rows with
+// outline dividers; grouped rows on surface-container-high (1:2334); unsaved
+// values in primary, saved under (1:2883).
+// Columns are Figma's widths; the two comment columns share what is left.
 :host {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-160);
   min-width: 0;
-  --cols: 40px 48px 180px 48px 180px repeat(8, minmax(96px, 1fr)) 150px 150px 150px 48px;
+  --lead: 56px 68px;
+  --results: 123px 139px 87px 116px 119px 83px 116px 83px;
+  --tail: 165px minmax(125px, 167fr) minmax(100px, 125fr) 48px;
+  --cols: var(--lead) 165px 46px 175px var(--results) var(--tail);
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  gap: var(--spacing-160);
+  gap: var(--spacing-120);
+  min-height: 52px;
 }
 
 .search {
-  width: 360px;
-  @include mat.form-field-density(-3);
+  width: 431px;
+  @include mat.form-field-density(-1);
+}
+
+.group-by {
+  @include mat.button-overrides((text-container-height: 40px));
 }
 
 .spacer {
   flex: 1 1 auto;
 }
 
-.progress {
-  margin-bottom: calc(-1 * var(--spacing-160));
-}
-
 .scroll {
+  position: relative;
   overflow-x: auto;
 }
 
 .table {
-  min-width: 1760px;
-  font: var(--mat-sys-body-medium);
+  min-width: 1814px;
 }
 
 .table--grouped {
-  --cols: 40px 48px 48px 180px repeat(8, minmax(96px, 1fr)) 150px 150px 150px 48px;
+  --cols: var(--lead) 46px 175px var(--results) var(--tail);
 }
 
 .row {
   display: grid;
   grid-template-columns: var(--cols);
   align-items: center;
-  min-height: 40px;
+  min-height: 48px;
   border-bottom: 1px solid var(--mat-sys-outline);
 }
 
-.row--head {
-  font: var(--mat-sys-label-large);
-  border-bottom-width: 2px;
-
-  // Long headers in narrow numeric columns wrap instead of being clipped.
-  .cell {
-    white-space: normal;
-  }
-}
-
 .row--group {
-  grid-template-columns: 40px 48px 1fr auto;
+  grid-template-columns: var(--lead) 1fr auto;
   background: var(--mat-sys-surface-container-high);
   border-bottom: 0;
   font: var(--mat-sys-title-small);
@@ -73,7 +68,7 @@
 
 .cell {
   min-width: 0;
-  padding: 0 var(--spacing-80);
+  padding: 0 var(--spacing-160);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -84,6 +79,13 @@
   flex-direction: column;
   align-items: flex-end;
   text-align: right;
+}
+
+// Expand and checkbox columns centre their 40 px control.
+.cell--icon {
+  display: flex;
+  justify-content: center;
+  padding: 0;
 }
 
 .cell--indent {

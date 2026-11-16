@@ -1,0 +1,16 @@
+@use '@angular/material' as mat;
+
+// Keyboard focus is a 2 px primary ring on every control.
+// Material components draw it through their strong focus indicator;
+// our own buttons, links and focusable elements get the same ring as an outline.
+@include mat.strong-focus-indicators(
+  (
+    border-color: var(--mat-sys-primary),
+    border-width: 2px,
+  )
+);
+
+:where(button, a[href], [tabindex]:not([tabindex='-1'])):not([class*='mat-'], [class*='mdc-']):focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: var(--app-focus-offset, 2px);
+}

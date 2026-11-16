@@ -95,6 +95,9 @@ There is **no linter**; ESLint and Prettier were removed from the template. Keep
 - **Big charts:** build the full ECharts option only when the data changes, and send window and y-range changes through ngx-echarts `[merge]`. Read the window `untracked` in the full-option computed. Use `[x, y]` arrays plus a `symbol` callback, not an object per point. See the "Chart performance rules" in the overview.
 - **Zoom windows** are shared through a `window` model (`{ start, end } | null`, where `null` is the full range). Use `app-chart-navigator` for navigators.
 - Check shared components in `/dev/gallery`, and add new shared pieces there with their states.
+- **Focus rings are global** (`_focus.scss`): 2 px primary on every control. Don't add per-component `:focus-visible` outlines unless the ring has to sit inset.
+- **Loading:** non-chart surfaces show `<mat-progress-bar mode="indeterminate" class="app-loading-bar" />` along their top edge (the host needs `position: relative`). Charts use the ECharts `[loading]` mask. Cover every mock call.
+- **Toggles, switches and tables are styled globally** (`_mat-button-toggle.scss`, `_mat-slide-toggle.scss`, `_data-table.scss`). Don't repeat their overrides per component.
 
 ## Prototype mechanics
 

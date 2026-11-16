@@ -105,19 +105,6 @@ let nextId = 0;
       font: var(--mat-sys-label-large);
       color: var(--mat-sys-on-surface-variant);
     }
-    .qi {
-      @include mat.button-toggle-overrides(
-        (
-          background-color: transparent,
-          text-color: var(--mat-sys-on-surface),
-          selected-state-background-color: var(--mat-sys-secondary-container),
-          selected-state-text-color: var(--mat-sys-on-secondary-container),
-          divider-color: var(--mat-sys-outline),
-          shape: var(--mat-sys-corner-small),
-          height: 36px,
-        )
-      );
-    }
     .comment {
       width: 100%;
       @include mat.form-field-density(-3);

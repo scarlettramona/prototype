@@ -1,8 +1,10 @@
-// Figma 1:10946: 48 px cells, 16 px padding, outline dividers between rows.
+// Figma 1:10947: 48 px cells, 16 px padding, outline dividers between rows.
+// Columns are Figma's 68 · 410 · 69 · 109 · 175 · 456 · 165 (1452 px); Sensor and
+// Comment share the spare width in that 410 : 456 ratio.
 :host {
   display: block;
   min-height: 0;
-  --columns: 68px minmax(160px, 1.4fr) 96px 128px 200px minmax(200px, 2fr) 180px;
+  --columns: 68px minmax(160px, 410fr) 69px 109px 175px minmax(200px, 456fr) 165px;
 }
 
 .card {
@@ -26,8 +28,6 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  font: var(--mat-sys-body-medium);
-  color: var(--mat-sys-on-surface);
 }
 
 .body {
@@ -51,7 +51,6 @@
 
 .row--head {
   flex-shrink: 0;
-  font: var(--mat-sys-label-large);
 }
 
 .row--reading {
@@ -115,11 +114,6 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid var(--mat-sys-primary);
-    outline-offset: 2px;
-  }
 }
 
 .sort--end {

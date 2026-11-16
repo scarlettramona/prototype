@@ -11,6 +11,8 @@ import type { Scan, ScanQi } from '../../../../core/ill/ill.models';
 import { formatDate, formatDateTime } from '../../../../core/mock-data/dates';
 import { DetailRowComponent } from '../../../../ui/components/detail-row/detail-row.component';
 import { LabelAboveDirective } from '../../../../ui/components/label-above/label-above.directive';
+import { buildDepthChartOptions } from '../../focus-page/depth-chart-options';
+import { depthYRange } from '../../focus-page/focus-model';
 import type { ScanReview } from '../../ill-library-store';
 
 /**
@@ -71,33 +73,11 @@ export class ScanDetailComponent {
   protected readonly date = formatDate;
   protected readonly color = computed(() => seriesStyle(this.scan().colorIndex).color);
 
+  /** The focus view's depth chart for this one scan, without zoom (shared builder). */
   protected readonly options = computed<EChartsCoreOption>(() => {
     const scan = this.scan();
-    const t = this.chartTheme.tokens();
-    const a = scan.analysis;
-    const lines: object[] = [];
-    if (a.saved) {
-      lines.push({ xAxis: a.saved.results.calculatedIll, lineStyle: { color: t.onSurfaceVariant, type: 'dashed', width: 1.5 } });
-    }
-    if (a.unsaved) lines.push({ xAxis: a.unsaved.results.calculatedIll, lineStyle: { color: t.primary, type: 'solid', width: 1.5 } });
-    return {
-      animation: false,
-      grid: { left: 52, right: 12, top: 12, bottom: 44 },
-      tooltip: { trigger: 'axis', valueFormatter: (v: number) => v.toFixed(1) },
-      xAxis: { type: 'value', min: 0, max: 600, inverse: true, name: 'From Bottom of Tank (inches)', nameLocation: 'middle', nameGap: 26 },
-      yAxis: { type: 'value', name: 'Corrected Counts', nameLocation: 'middle', nameGap: 40, splitLine: { show: true } },
-      series: [
-        {
-          type: 'line',
-          name: formatDateTime(scan.datetime),
-          showSymbol: false,
-          color: this.color(),
-          lineStyle: { width: 1.5 },
-          data: scan.points.map((p) => [p.depthIn, p.counts]),
-          markLine: { silent: true, symbol: 'none', label: { show: false }, data: lines },
-        },
-      ],
-    };
+    const data = { scans: [scan], focusedId: scan.id, lines: { saved: true, unsaved: true } };
+    return buildDepthChartOptions(data, null, depthYRange([scan], null, false), this.chartTheme.tokens().surfaceContainerLowest, { zoom: false });
   });
 
   protected submit(): void {

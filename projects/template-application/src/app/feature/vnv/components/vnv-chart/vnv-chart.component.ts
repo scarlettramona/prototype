@@ -56,7 +56,7 @@ interface BrushEndEvent {
             Fit Y
           </mat-slide-toggle>
           <span class="app-divider-vertical"></span>
-          <button mat-button type="button" [matMenuTriggerFor]="exportMenu">Export</button>
+          <button mat-button type="button" class="export" [matMenuTriggerFor]="exportMenu">Export</button>
           <mat-menu #exportMenu="matMenu" xPosition="before">
             <button mat-menu-item type="button" (click)="exportImage()">Chart image (PNG)</button>
             <button mat-menu-item type="button" (click)="exportCsv()">Data (CSV)</button>
@@ -70,7 +70,7 @@ interface BrushEndEvent {
         [options]="options()"
         [merge]="windowMerge()"
         [theme]="chartTheme.theme()"
-        [loading]="store.loading()"
+        [loading]="store.loading() || store.applying()"
         [loadingOpts]="loadingOpts()"
         (chartInit)="chart = $event"
         (chartDataZoom)="onZoom($event)"
@@ -117,8 +117,6 @@ interface BrushEndEvent {
     </app-chart-card>
   `,
   styles: `
-    @use '@angular/material' as mat;
-
     :host {
       display: block;
       min-height: 0;
@@ -139,14 +137,8 @@ interface BrushEndEvent {
     .toolbar__end {
       align-self: stretch;
     }
-    .fit-y {
-      @include mat.slide-toggle-overrides(
-        (
-          label-text-font: var(--mat-sys-label-large-font),
-          label-text-size: var(--mat-sys-label-large-size),
-          label-text-weight: var(--mat-sys-label-large-weight),
-        )
-      );
+    .export {
+      min-width: 97px; // Figma 1:11479
     }
     .chart {
       position: absolute;

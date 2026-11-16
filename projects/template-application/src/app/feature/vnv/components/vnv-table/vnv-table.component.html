@@ -1,4 +1,7 @@
-<app-chart-card class="card">
+<app-chart-card class="card" variant="table">
+  @if (store.loading() || store.applying()) {
+    <mat-progress-bar mode="indeterminate" class="app-loading-bar" />
+  }
   <div chartToolbar class="toolbar">
     <app-quality-filter [value]="store.visibleQi()" (valueChange)="store.visibleQi.set($event)" />
     <div class="toolbar__end">
@@ -10,8 +13,8 @@
     </div>
   </div>
 
-  <div class="table" role="grid" [attr.aria-rowcount]="rows().length + 1">
-    <div class="row row--head" role="row">
+  <div class="table app-data-table" role="grid" [attr.aria-rowcount]="rows().length + 1">
+    <div class="row row--head app-data-table__head" role="row">
       <div class="cell cell--check" role="columnheader">
         <mat-checkbox
           aria-label="Select all"

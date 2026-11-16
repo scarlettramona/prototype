@@ -33,6 +33,9 @@ import { MatButtonModule } from '@angular/material/button';
     :host(.label) {
       gap: var(--spacing-120);
     }
+    :host(.label) .head {
+      min-height: 20px; // a 20 px label sits 12 px above its content (Figma 1:11564)
+    }
     :host(:not(:first-child)) {
       border-top: 1px solid var(--mat-sys-outline-variant);
       padding-top: var(--spacing-240);

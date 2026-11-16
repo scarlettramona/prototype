@@ -36,6 +36,14 @@ import { MatButtonModule } from '@angular/material/button';
       min-height: 0;
       box-sizing: border-box;
     }
+    // Table cards (Figma 1:10947): 24 px all round, the table directly under a 40 px toolbar.
+    :host(.chart-card--table) {
+      gap: 0;
+      padding: var(--spacing-240);
+      .toolbar {
+        min-height: 40px;
+      }
+    }
     .toolbar {
       display: flex;
       align-items: center;
@@ -64,9 +72,12 @@ import { MatButtonModule } from '@angular/material/button';
       height: 100%;
     }
   `,
+  host: { '[class.chart-card--table]': "variant() === 'table'" },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChartCardComponent {
+  /** `table` uses the table card spacing (24 px padding, no gap under the toolbar). */
+  readonly variant = input<'chart' | 'table'>('chart');
   readonly showNavigator = input(false);
   /** Disabled at full range. */
   readonly resetDisabled = input(true);

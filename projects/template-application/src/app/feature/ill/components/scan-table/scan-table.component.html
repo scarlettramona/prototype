@@ -3,7 +3,7 @@
     <mat-icon matIconPrefix>search</mat-icon>
     <input matInput placeholder="Search" aria-label="Search scans" [value]="store.search()" (input)="store.search.set($any($event.target).value)" />
   </mat-form-field>
-  <button mat-button type="button" (click)="store.grouped.set(!store.grouped())">
+  <button mat-button type="button" class="group-by" (click)="store.grouped.set(!store.grouped())">
     <mat-icon>{{ store.grouped() ? 'reorder' : 'sort' }}</mat-icon>
     {{ store.grouped() ? 'Ungroup scans' : 'Group by Well' }}
   </button>
@@ -12,15 +12,14 @@
   <button mat-stroked-button type="button" [disabled]="!store.canSave()" (click)="store.saveAnalysis()">Save analysis</button>
 </div>
 
-@if (store.loading() || store.busy()) {
-  <mat-progress-bar mode="indeterminate" class="progress" />
-}
-
 <div class="scroll">
-  <div class="table" [class.table--grouped]="store.grouped()" role="table" aria-label="Scans">
-    <div class="row row--head" role="row">
-      <span class="cell" role="columnheader"></span>
-      <span class="cell" role="columnheader">
+  @if (store.loading() || store.busy()) {
+    <mat-progress-bar mode="indeterminate" class="app-loading-bar" />
+  }
+  <div class="table app-data-table" [class.table--grouped]="store.grouped()" role="table" aria-label="Scans">
+    <div class="row row--head app-data-table__head" role="row">
+      <span class="cell cell--icon" role="columnheader"></span>
+      <span class="cell cell--icon" role="columnheader">
         <mat-checkbox
           aria-label="Select all scans"
           [checked]="store.headerCheck().checked"
@@ -46,7 +45,7 @@
     @if (store.grouped()) {
       @for (g of store.groups(); track g.wellId) {
         <div class="row row--group" role="row">
-          <span class="cell">
+          <span class="cell cell--icon">
             <button
               mat-icon-button
               type="button"
@@ -57,7 +56,7 @@
               <mat-icon>{{ collapsedWells().has(g.wellId) ? 'chevron_right' : 'expand_more' }}</mat-icon>
             </button>
           </span>
-          <span class="cell">
+          <span class="cell cell--icon">
             <mat-checkbox
               [aria-label]="'Select ' + g.wellId"
               [checked]="store.groupCheck(ids(g.scans)).checked"
@@ -84,7 +83,7 @@
 
 <ng-template #scanRow let-s let-indent="indent">
   <div class="row" role="row" [class.row--open]="store.expandedId() === s.id">
-    <span class="cell" [class.cell--indent]="indent">
+    <span class="cell cell--icon" [class.cell--indent]="indent">
       <button
         mat-icon-button
         type="button"
@@ -95,7 +94,7 @@
         <mat-icon>{{ store.expandedId() === s.id ? 'expand_more' : 'chevron_right' }}</mat-icon>
       </button>
     </span>
-    <span class="cell" [class.cell--indent]="indent">
+    <span class="cell cell--icon" [class.cell--indent]="indent">
       <mat-checkbox [aria-label]="'Select ' + s.wellId + ' ' + date(s.datetime)" [checked]="store.selectedIds().has(s.id)" (change)="store.toggleSelected(s.id)" />
     </span>
     @if (!store.grouped()) {
@@ -115,7 +114,7 @@
     <span class="cell" role="cell">{{ s.analysis.analyst ?? '--' }}</span>
     <span class="cell cell--clip" role="cell" [attr.title]="s.scanComment ?? null">{{ s.scanComment ?? '--' }}</span>
     <span class="cell cell--clip" role="cell" [attr.title]="s.vnvComment ?? null">{{ s.vnvComment ?? '--' }}</span>
-    <span class="cell">
+    <span class="cell cell--icon">
       <button mat-icon-button type="button" [attr.aria-label]="'More for ' + s.wellId + ' ' + date(s.datetime)" [matMenuTriggerFor]="rowMenu">
         <mat-icon>more_vert</mat-icon>
       </button>

@@ -1,0 +1,12 @@
+// Shared type for the VNV readings table and the ILL scan table (Figma 1:10892, 1:2094).
+// Headers are Roboto Bold 14/20; body cells are body-medium with tabular figures.
+.app-data-table {
+  font: var(--mat-sys-body-medium);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--mat-sys-on-surface);
+}
+
+.app-data-table__head {
+  font: var(--mat-sys-label-large);
+  font-weight: 700;
+}

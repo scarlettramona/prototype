@@ -20,23 +20,27 @@ import { MatIconModule } from '@angular/material/icon';
   styles: `
     @use '@angular/material' as mat;
 
+    // Figma 1:11704: 94 × 42 outside the 1 px border.
     :host {
       display: inline-flex;
       align-items: center;
       gap: 1px;
-      height: 40px;
+      width: 94px;
+      height: 42px;
       background: var(--mat-sys-surface-container-high);
       border: 1px solid var(--mat-sys-outline-variant);
       border-radius: var(--mat-sys-corner-extra-small);
       box-sizing: border-box;
     }
     .vnv {
-      @include mat.button-overrides((text-horizontal-padding: var(--spacing-120)));
+      flex: 1 1 auto;
+      min-width: 0;
+      @include mat.button-overrides((text-horizontal-padding: var(--spacing-120), text-container-height: 40px));
     }
     .more {
       @include mat.icon-button-overrides(
         (
-          state-layer-size: 38px,
+          state-layer-size: 40px,
           container-shape: var(--mat-sys-corner-extra-small),
           icon-color: var(--mat-sys-on-surface),
         )

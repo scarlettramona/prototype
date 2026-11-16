@@ -43,8 +43,6 @@ export interface LoadedComponentSummary {
     </app-page-header>
   `,
   styles: `
-    @use '@angular/material' as mat;
-
     :host {
       display: block;
       white-space: nowrap;
@@ -69,14 +67,6 @@ export interface LoadedComponentSummary {
     }
     .show-all {
       flex-shrink: 0;
-      @include mat.slide-toggle-overrides(
-        (
-          label-text-font: var(--mat-sys-label-large-font),
-          label-text-size: var(--mat-sys-label-large-size),
-          label-text-weight: var(--mat-sys-label-large-weight),
-          label-text-tracking: var(--mat-sys-label-large-tracking),
-        )
-      );
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

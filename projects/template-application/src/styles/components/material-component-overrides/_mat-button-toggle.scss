@@ -1,0 +1,22 @@
+@use '@angular/material' as mat;
+
+// Figma's segmented toggle (QI, Analysis, VNV form): 36 px tall including the
+// 1 px outline, corner-small, label-large, selected in secondary-container.
+// The token height is the inner height, so 34 + 2 px of border = 36.
+:root {
+  @include mat.button-toggle-overrides(
+    (
+      background-color: transparent,
+      text-color: var(--mat-sys-on-surface),
+      selected-state-background-color: var(--mat-sys-secondary-container),
+      selected-state-text-color: var(--mat-sys-on-secondary-container),
+      divider-color: var(--mat-sys-outline),
+      shape: var(--mat-sys-corner-small),
+      height: 34px,
+      label-text-font: var(--mat-sys-label-large-font),
+      label-text-weight: var(--mat-sys-label-large-weight),
+      label-text-size: var(--mat-sys-label-large-size),
+      label-text-tracking: var(--mat-sys-label-large-tracking),
+    )
+  );
+}

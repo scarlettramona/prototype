@@ -1,6 +1,6 @@
 @use '@angular/material' as mat;
 
-// Figma 1:9821: surface-container section; groups outlined; inputs 202 px,
+// Figma 1:9821: surface-container section; groups outlined (577 / 611 / 611); inputs 240 px,
 // right-aligned with a unit suffix; edited fields get a dot, a primary
 // outline and "Saved <value>" beneath (1:8968).
 :host {
@@ -24,6 +24,11 @@
 .bar,
 .group__head {
   justify-content: space-between;
+}
+
+// Figma 1:9823: a 28 px title row; the 36 px collapse button overhangs it.
+.head {
+  height: 28px;
 }
 
 .title {
@@ -70,7 +75,7 @@
 
 .groups {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 577fr) minmax(0, 611fr) minmax(0, 611fr);
   gap: var(--spacing-160);
   align-items: start;
 }
@@ -89,6 +94,15 @@
   border: 1px solid var(--mat-sys-outline-variant);
 }
 
+// Every group header is 36 px, with or without its Edit / Revert button, so titles line up.
+.group__head {
+  min-height: 36px;
+
+  button {
+    min-width: 0;
+  }
+}
+
 .group__title {
   margin: 0;
   font: var(--mat-sys-title-medium);
@@ -98,7 +112,7 @@
 
 .row {
   display: grid;
-  grid-template-columns: 1fr 202px;
+  grid-template-columns: 1fr 240px;
   align-items: start;
   gap: var(--spacing-160);
 }

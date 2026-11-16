@@ -15,7 +15,7 @@ import { QiIconComponent } from '../qi-icon/qi-icon.component';
   template: `
     @for (qi of qis; track qi) {
       <button type="button" class="chip" [class.chip--on]="isOn(qi)" [attr.aria-pressed]="isOn(qi)" (click)="toggle(qi)">
-        <app-qi-icon [qi]="qi" />
+        <app-qi-icon [qi]="qi" [size]="iconSize[qi]" />
         <span>{{ qi }}</span>
       </button>
     }
@@ -42,10 +42,6 @@ import { QiIconComponent } from '../qi-icon/qi-icon.component';
       &:hover {
         background: color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent);
       }
-      &:focus-visible {
-        outline: 2px solid var(--mat-sys-primary);
-        outline-offset: 1px;
-      }
     }
     .chip--on {
       background: var(--mat-sys-secondary-container);
@@ -64,6 +60,8 @@ export class QualityFilterComponent {
   /** The QIs that are shown. */
   readonly value = model<Qi[]>([...QI_VALUES]);
   protected readonly qis = QI_VALUES;
+  /** Figma 1:11456 sizes each shape differently. */
+  protected readonly iconSize: Record<Qi, number> = { Good: 18, Suspect: 18, Unreviewed: 12, Transcribed: 16 };
 
   protected isOn(qi: Qi): boolean {
     return this.value().includes(qi);

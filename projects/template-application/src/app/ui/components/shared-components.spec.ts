@@ -83,10 +83,15 @@ describe('Shared components', () => {
       expect(btn.getAttribute('aria-pressed')).toBe('false');
     });
 
-    it('a locked checkbox row is disabled', async () => {
-      const { el } = await render(Host);
+    it('a locked checkbox row stays checked and is aria-disabled, but not dimmed', async () => {
+      const { el, fixture } = await render(Host);
       const input = el.querySelector('.locked input[type=checkbox]') as HTMLInputElement;
-      expect(input.disabled).toBe(true);
+      // disabledInteractive: focusable and announced as disabled, drawn like a normal checked box.
+      expect(input.disabled).toBe(false);
+      expect(input.getAttribute('aria-disabled')).toBe('true');
+      expect(el.querySelector('.locked .check--locked')).not.toBeNull();
+      input.click();
+      await fixture.whenStable();
       expect(input.checked).toBe(true);
     });
   });

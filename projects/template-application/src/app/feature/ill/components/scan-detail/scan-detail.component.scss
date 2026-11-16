@@ -1,11 +1,10 @@
-@use '@angular/material' as mat;
-
-// Figma 1:2094 expanded row: two outlined cards on surface-container.
+// Figma 1:2094 expanded row (1:2176): two outlined cards, 1092 and 670 wide with a
+// 16 gap, inset 32 at the sides and bottom; inside the first, a 721 chart and a 312 legend.
 :host {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
+  grid-template-columns: minmax(0, 1092fr) minmax(0, 670fr);
   gap: var(--spacing-160);
-  padding: var(--spacing-160) var(--spacing-240) var(--spacing-240);
+  padding: 0 var(--spacing-320) var(--spacing-320);
 }
 
 .card {
@@ -17,12 +16,12 @@
 
 .card--chart {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr);
+  grid-template-columns: minmax(0, 721fr) minmax(220px, 312fr);
   gap: var(--spacing-240);
 }
 
 .chart {
-  height: 380px;
+  height: 466px;
 }
 
 .legend {
@@ -95,17 +94,6 @@
 
 .toggles {
   align-self: flex-start;
-  @include mat.button-toggle-overrides(
-    (
-      background-color: transparent,
-      text-color: var(--mat-sys-on-surface),
-      selected-state-background-color: var(--mat-sys-secondary-container),
-      selected-state-text-color: var(--mat-sys-on-secondary-container),
-      divider-color: var(--mat-sys-outline),
-      shape: var(--mat-sys-corner-small),
-      height: 34px,
-    )
-  );
 }
 
 .input {

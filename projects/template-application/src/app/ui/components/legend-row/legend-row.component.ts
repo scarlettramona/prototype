@@ -12,7 +12,8 @@ export interface LegendSwatch {
  * - `toggle` (VNV legend, Figma 1:11552): the whole row is a toggle button;
  *   hidden rows dim. No checkbox.
  * - `checkbox` (ILL scans legend, Figma 1:10714): checkbox · plain swatch ·
- *   name. `locked` disables the checkbox (the focused scan); `emphasis` bolds
+ *   name. `locked` keeps the checkbox checked and unchangeable (the focused
+ *   scan) but draws it like a normal checked box; `emphasis` bolds
  *   it; `indent` nests the Saved / Unsaved sub-rows.
  */
 @Component({
@@ -27,8 +28,15 @@ export interface LegendSwatch {
         <span class="name">{{ label() }}</span>
       </button>
     } @else {
-      <div class="check" [class.check--indent]="indent()">
-        <mat-checkbox [checked]="visible()" [indeterminate]="indeterminate()" [disabled]="locked()" (change)="visible.set($event.checked)" [aria-label]="label()" />
+      <div class="check" [class.check--indent]="indent()" [class.check--locked]="locked()">
+        <mat-checkbox
+          [checked]="visible()"
+          [indeterminate]="indeterminate()"
+          [disabled]="locked()"
+          disabledInteractive
+          (change)="visible.set($event.checked)"
+          [aria-label]="label()"
+        />
         @if (swatch(); as s) {
           <app-series-swatch [color]="s.color" [dash]="s.dash" marker="none" />
         }
@@ -37,6 +45,8 @@ export interface LegendSwatch {
     }
   `,
   styles: `
+    @use '@angular/material' as mat;
+
     :host {
       display: block;
     }
@@ -56,10 +66,6 @@ export interface LegendSwatch {
       cursor: pointer;
       --swatch-ring-fill: var(--mat-sys-surface-container);
 
-      &:focus-visible {
-        outline: 2px solid var(--mat-sys-primary);
-        outline-offset: 2px;
-      }
       &:hover .name {
         text-decoration: underline;
       }
@@ -75,6 +81,16 @@ export interface LegendSwatch {
     }
     .check--indent {
       padding-left: 42px;
+    }
+    // The focused scan can't be hidden, but Figma (1:10714) draws its box as a
+    // normal checked box, not a dimmed one.
+    .check--locked {
+      @include mat.checkbox-overrides(
+        (
+          disabled-selected-icon-color: var(--mat-sys-primary),
+          disabled-selected-checkmark-color: var(--mat-sys-on-primary),
+        )
+      );
     }
     .name--bold {
       font-weight: 700;

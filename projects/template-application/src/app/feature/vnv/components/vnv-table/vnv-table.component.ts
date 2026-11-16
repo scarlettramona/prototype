@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, DOCUMENT, inject } from '
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { formatDateTime } from '../../../../core/mock-data/dates';
 import { ChartCardComponent } from '../../../../ui/components/chart-card/chart-card.component';
 import { QualityFilterComponent } from '../../../../ui/components/quality-filter/quality-filter.component';
@@ -26,7 +27,7 @@ const ROW = 49;
  */
 @Component({
   selector: 'app-vnv-table',
-  imports: [ScrollingModule, MatButtonModule, MatCheckboxModule, MatIconModule, ChartCardComponent, QualityFilterComponent],
+  imports: [ScrollingModule, MatButtonModule, MatCheckboxModule, MatIconModule, MatProgressBarModule, ChartCardComponent, QualityFilterComponent],
   templateUrl: './vnv-table.component.html',
   styleUrl: './vnv-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

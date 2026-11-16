@@ -1,0 +1,18 @@
+@use '@angular/material' as mat;
+
+// Figma's switch (1:9509) is 50 × 32 with a label-large label before it.
+// The selected handle margins shrink by the same 2 px as the track.
+:root {
+  @include mat.slide-toggle-overrides(
+    (
+      track-width: 50px,
+      selected-handle-horizontal-margin: 0 22px,
+      selected-with-icon-handle-horizontal-margin: 0 22px,
+      selected-pressed-handle-horizontal-margin: 0 20px,
+      label-text-font: var(--mat-sys-label-large-font),
+      label-text-size: var(--mat-sys-label-large-size),
+      label-text-weight: var(--mat-sys-label-large-weight),
+      label-text-tracking: var(--mat-sys-label-large-tracking),
+    )
+  );
+}

@@ -34,7 +34,7 @@ import { scanToCsv } from '../library-model';
 
     <mat-tab-nav-panel #panel class="body">
       @if (tab() === 'library') {
-        <div class="page" [class.page--wide]="store.loaded()">
+        <div class="page" [class.page--wide]="store.loaded()" [class.page--summary]="!store.formOpen()">
           <div class="query">
             @if (store.formOpen()) {
               <app-load-scans-form
@@ -64,6 +64,8 @@ import { scanToCsv } from '../library-model';
     </mat-tab-nav-panel>
   `,
   styles: `
+    @use '@angular/material' as mat;
+
     :host {
       display: flex;
       flex-direction: column;
@@ -78,8 +80,11 @@ import { scanToCsv } from '../library-model';
     .page--wide {
       width: 100%;
     }
+    /* Figma 1:2128: a 106 px header (24 top, 66 of text, 16 bottom), then 48 px tabs. */
     .header {
+      min-height: 106px;
       padding: var(--spacing-240) var(--spacing-240) var(--spacing-160);
+      box-sizing: border-box;
     }
     .title {
       margin: 0 0 var(--spacing-80);
@@ -92,6 +97,7 @@ import { scanToCsv } from '../library-model';
     .tabs {
       width: 360px;
       margin-left: var(--spacing-240);
+      @include mat.tabs-overrides((container-height: 48px));
     }
     .body {
       display: flex;
@@ -110,6 +116,15 @@ import { scanToCsv } from '../library-model';
     }
     .results {
       padding: var(--spacing-240);
+    }
+    /* With the filter summary (1:2136), 16 px either side of the divider. */
+    .page--summary {
+      .query {
+        padding-bottom: var(--spacing-160);
+      }
+      .results {
+        padding-top: var(--spacing-160);
+      }
     }
     .empty {
       display: flex;
