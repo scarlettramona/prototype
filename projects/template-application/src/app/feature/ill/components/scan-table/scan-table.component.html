@@ -102,9 +102,9 @@
     }
     <span class="cell" role="cell">{{ qi(s.qi) }}</span>
     <span class="cell cell--date" role="cell">
-      {{ date(s.datetime) }}
+      <span class="cell__text">{{ date(s.datetime) }}</span>
       @if (s.reference) {
-        <span class="app-tag">Reference</span>
+        <span class="ref-badge" role="img" aria-label="Reference scan" matTooltip="Reference scan" tabindex="0"></span>
       }
     </span>
     @for (c of columns; track c.key) {

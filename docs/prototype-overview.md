@@ -590,7 +590,7 @@ These replace the earlier decisions marked *Superseded* above.
 - **Scan details** has **Set as reference scan**; it's hidden on the reference itself.
 
 **Library**
-- The Date cell tags the reference row, with the tag under the date.
+- The Date cell marks the reference row with a small primary dot after the date. It has a "Reference scan" tooltip and label, is focusable, and keeps the date on one line.
 - The row ⋮ menu has **Set as reference scan** (disabled on the reference).
 - **The expanded row draws this scan plus the well's reference:**
   - Legend: "This scan · time", then "Reference scan · time", each with a **Raw** checkbox.
