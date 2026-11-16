@@ -184,10 +184,6 @@
   gap: var(--spacing-40);
 }
 
-.input {
-  @include mat.form-field-density(-3);
-}
-
 .input--edited {
   @include mat.form-field-overrides(
     (

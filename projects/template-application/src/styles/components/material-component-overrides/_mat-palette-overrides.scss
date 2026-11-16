@@ -1,29 +1,17 @@
 @use '@angular/material' as mat;
 
+// Component colours that differ from the theme's defaults.
 :root {
-  // @include mat.autocomplete-overrides(( container-shape: var(----mat-sys-corner-extra-small), ));
-  // @include mat.badge-overrides(( container-shape: var(--mat-sys-corner-extra-small), ));
-  // @include mat.button-toggle-overrides(( shape: var(--mat-sys-corner-extra-large), ));
-  // @include mat.card-overrides(( elevated-container-shape: var(--mat-sys-corner-medium), filled-container-shape: var(--mat-sys-corner-medium), outlined-container-shape: var(--mat-sys-corner-medium), ));
-  // @include mat.chips-overrides(( container-shape-radius: 8px )); controled by density? why px and not var? whatever
-  // @include mat.datepicker-overrides(( calendar-container-shape: var(--mat-sys-corner-large), ));
   @include mat.dialog-overrides(
     (
       container-color: var(--mat-sys-surface-container),
     )
   );
-  // @include mat.expansion-overrides(( container-shape: 12px )); // weird
-  // @include mat.form-field-overrides((filled-container-shape: var(--mat-sys-corner-extra-small), outlined-container-shape: var(--mat-sys-corner-extra-small), ));
-  // @include mat.list-overrides(( active-indicator-shape: var(--mat-sys-corner-full), list-item-container-shape: var(--mat-sys-corner-none), ) );
-  // @include mat.menu-overrides(( container-shape: var(--mat-sys-corner-extra-small), ));
   @include mat.paginator-overrides(
     (
       container-background-color: transparent,
     )
   );
-  // @include mat.slide-toggle-overrides(( handle-shape: var(--mat-sys-corner-full), track-shape: var(--mat-sys-corner-full));
-  // @include mat.snack-bar-overrides(( container-shape: var(--mat-sys-corner-extra-small), ));
-  // @include mat.stepper-overrides(( header-hover-state-layer-shape: var(--mat-sys-corner-medium), header-focus-state-layer-shape: var(--mat-sys-corner-medium), header-active-state-layer-shape: var(--mat-sys-corner-medium), ));
   @include mat.table-overrides(
     (
       background-color: var(--mat-sys-surface-container),

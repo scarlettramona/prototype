@@ -12,7 +12,6 @@ import { parseUsDate, startOfDay } from '../../../../core/mock-data/dates';
 import { MOCK_DATA_CONFIG } from '../../../../core/mock-data/mock-data.config';
 import type { Sensor, VnvFarm } from '../../../../core/vnv/vnv.models';
 import type { DateRangeValue } from '../../../../ui/components/date-range-field/date-range-field.component';
-import { LabelAboveDirective } from '../../../../ui/components/label-above/label-above.directive';
 import {
   buildList,
   buildSearch,
@@ -38,6 +37,8 @@ export interface LoadSensorsRequest {
   sensorIds: string[];
   range: DateRangeValue;
 }
+
+let nextId = 0;
 
 /** "Set to default": the last 3 months of data. */
 export function defaultLoadRange(): DateRangeValue {
@@ -66,7 +67,6 @@ export function defaultLoadRange(): DateRangeValue {
     MatMenuModule,
     MatSelectModule,
     MatSlideToggleModule,
-    LabelAboveDirective,
   ],
   templateUrl: './load-sensors-form.component.html',
   styleUrl: './load-sensors-form.component.scss',
@@ -74,6 +74,7 @@ export function defaultLoadRange(): DateRangeValue {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoadSensorsFormComponent {
+  protected readonly fieldId = `load-sensors-${nextId++}`;
   readonly mode = input<'page' | 'popover'>('page');
   readonly farm = input.required<VnvFarm>();
   readonly sensors = input.required<readonly Sensor[]>();

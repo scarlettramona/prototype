@@ -7,9 +7,10 @@ import { seriesStyle } from '../../../../../core/charts/chart-palette';
 import type { ScanQi } from '../../../../../core/ill/ill.models';
 import { formatDate, formatDateTime } from '../../../../../core/mock-data/dates';
 import { DetailRowComponent } from '../../../../../ui/components/detail-row/detail-row.component';
-import { LabelAboveDirective } from '../../../../../ui/components/label-above/label-above.directive';
 import { resultRows } from '../../focus-model';
 import { IllFocusStore } from '../../ill-focus-store';
+
+let nextId = 0;
 
 /**
  * Scan details (Figma floating-parameters 1:9721): the scan's dot and date,
@@ -19,7 +20,7 @@ import { IllFocusStore } from '../../ill-focus-store';
  */
 @Component({
   selector: 'app-scan-details',
-  imports: [MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, DetailRowComponent, LabelAboveDirective],
+  imports: [MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, DetailRowComponent],
   template: `
     @if (store.focused(); as scan) {
       <div class="top">
@@ -42,14 +43,18 @@ import { IllFocusStore } from '../../ill-focus-store';
             <mat-button-toggle value="Suspect">Suspect</mat-button-toggle>
           </mat-button-toggle-group>
         </div>
-        <mat-form-field appLabelAbove appearance="outline" subscriptSizing="dynamic" class="input">
-          <mat-label>Scan comment</mat-label>
-          <input matInput placeholder="Placeholder" [value]="review.scanComment" (input)="store.setReview({ scanComment: $any($event.target).value })" />
-        </mat-form-field>
-        <mat-form-field appLabelAbove appearance="outline" subscriptSizing="dynamic" class="input">
-          <mat-label>VNV comment</mat-label>
-          <input matInput placeholder="Placeholder" [value]="review.vnvComment" (input)="store.setReview({ vnvComment: $any($event.target).value })" />
-        </mat-form-field>
+        <div class="app-field">
+          <label class="app-field__label" [for]="fieldId + '-scan'">Scan comment</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput [id]="fieldId + '-scan'" placeholder="Placeholder" [value]="review.scanComment" (input)="store.setReview({ scanComment: $any($event.target).value })" />
+          </mat-form-field>
+        </div>
+        <div class="app-field">
+          <label class="app-field__label" [for]="fieldId + '-vnv'">VNV comment</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <input matInput [id]="fieldId + '-vnv'" placeholder="Placeholder" [value]="review.vnvComment" (input)="store.setReview({ vnvComment: $any($event.target).value })" />
+          </mat-form-field>
+        </div>
       }
 
       <div class="saved">
@@ -71,8 +76,6 @@ import { IllFocusStore } from '../../ill-focus-store';
     }
   `,
   styles: `
-    @use '@angular/material' as mat;
-
     :host {
       display: flex;
       flex-direction: column;
@@ -132,10 +135,6 @@ import { IllFocusStore } from '../../ill-focus-store';
     .toggles {
       align-self: flex-start;
     }
-    .input {
-      width: 100%;
-      @include mat.form-field-density(-3);
-    }
     .actions {
       display: flex;
       justify-content: flex-end;
@@ -147,6 +146,7 @@ import { IllFocusStore } from '../../ill-focus-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScanDetailsComponent {
+  protected readonly fieldId = `scan-details-${nextId++}`;
   protected readonly store = inject(IllFocusStore);
   readonly exportScan = output<void>();
 

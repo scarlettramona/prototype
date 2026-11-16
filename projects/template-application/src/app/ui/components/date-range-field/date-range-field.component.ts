@@ -7,7 +7,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { formatDate } from '../../../core/mock-data/dates';
-import { LabelAboveDirective } from '../label-above/label-above.directive';
 
 export interface DateRangeValue {
   /** Local midnight, ms. */
@@ -15,6 +14,8 @@ export interface DateRangeValue {
   /** Local midnight, ms. */
   end: number;
 }
+
+let nextId = 0;
 
 /**
  * The page header's date range: `01/01/2025 – 11/09/2026 ▾` (Figma 1:11440).
@@ -33,7 +34,6 @@ export interface DateRangeValue {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    LabelAboveDirective,
   ],
   template: `
     <button
@@ -63,22 +63,26 @@ export interface DateRangeValue {
     >
       <div class="app-popover popover" role="dialog" [attr.aria-label]="ariaLabel()" cdkTrapFocus cdkTrapFocusAutoCapture>
         <div class="fields">
-          <mat-form-field appLabelAbove subscriptSizing="dynamic">
-            <mat-label>Start date</mat-label>
-            <input matInput [matDatepicker]="startPicker" [value]="draftStart()" (dateChange)="draftStart.set($event.value)" />
-            <mat-datepicker-toggle matIconSuffix [for]="startPicker">
-              <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
-            </mat-datepicker-toggle>
-            <mat-datepicker #startPicker />
-          </mat-form-field>
-          <mat-form-field appLabelAbove subscriptSizing="dynamic">
-            <mat-label>End date</mat-label>
-            <input matInput [matDatepicker]="endPicker" [value]="draftEnd()" [min]="draftStart()" (dateChange)="draftEnd.set($event.value)" />
-            <mat-datepicker-toggle matIconSuffix [for]="endPicker">
-              <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
-            </mat-datepicker-toggle>
-            <mat-datepicker #endPicker />
-          </mat-form-field>
+          <div class="app-field">
+            <label class="app-field__label" [for]="fieldId + '-start'">Start date</label>
+            <mat-form-field subscriptSizing="dynamic">
+              <input matInput [id]="fieldId + '-start'" [matDatepicker]="startPicker" [value]="draftStart()" (dateChange)="draftStart.set($event.value)" />
+              <mat-datepicker-toggle matIconSuffix [for]="startPicker">
+                <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
+              </mat-datepicker-toggle>
+              <mat-datepicker #startPicker />
+            </mat-form-field>
+          </div>
+          <div class="app-field">
+            <label class="app-field__label" [for]="fieldId + '-end'">End date</label>
+            <mat-form-field subscriptSizing="dynamic">
+              <input matInput [id]="fieldId + '-end'" [matDatepicker]="endPicker" [value]="draftEnd()" [min]="draftStart()" (dateChange)="draftEnd.set($event.value)" />
+              <mat-datepicker-toggle matIconSuffix [for]="endPicker">
+                <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
+              </mat-datepicker-toggle>
+              <mat-datepicker #endPicker />
+            </mat-form-field>
+          </div>
         </div>
         <div class="actions">
           <button mat-button type="button" (click)="close()">Cancel</button>
@@ -120,7 +124,7 @@ export interface DateRangeValue {
       display: flex;
       gap: var(--spacing-120);
     }
-    .fields mat-form-field {
+    .fields .app-field {
       width: 216px;
     }
     .actions {
@@ -132,6 +136,7 @@ export interface DateRangeValue {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DateRangeFieldComponent {
+  protected readonly fieldId = `date-range-${nextId++}`;
   readonly range = model.required<DateRangeValue>();
   readonly ariaLabel = input('Date range');
   /** Fires after Apply, with the new range. */

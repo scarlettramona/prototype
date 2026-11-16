@@ -7,16 +7,18 @@
   <nav class="header__nav" aria-label="Modules">
     @for (item of navItems; track item.label) {
       @if (item.path) {
+        <!-- Active module: Material's filled button; others: text buttons in the toolbar's text colour. -->
         <a
-          class="header__nav-item"
-          mat-button
+          [matButton]="rla.isActive ? 'filled' : 'text'"
           [routerLink]="item.path"
-          routerLinkActive="header__nav-item--active"
+          routerLinkActive
+          #rla="routerLinkActive"
           ariaCurrentWhenActive="page"
           >{{ item.label }}</a
         >
       } @else {
-        <a class="header__nav-item header__nav-item--unbuilt" mat-button aria-disabled="true">{{ item.label }}</a>
+        <!-- Not built in this prototype: plain text, not a control (Figma shows it in primary). -->
+        <span class="header__nav-unbuilt">{{ item.label }}</span>
       }
     }
   </nav>

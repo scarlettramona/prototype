@@ -502,3 +502,17 @@ These replace earlier decisions where they differ: Phase 6's value cells and Pha
 - Library: `ill-library-saved` performs analysis on its two selected rows.
 - Focus view: `ill-scan-unsaved-rerun`, `ill-scan-first-run-unsaved` and `ill-scans-popover` run an analysis on the active scan (`run: true`). A re-run edits ILL Normal Lower Range to 12.
 - Library: `expandFirstSaved` became `expandFirst`.
+
+### Material styling clean-up (2026-11-16)
+
+- **No styles select Material's internal DOM any more.**
+  - The `appLabelAbove` directive and `_mat-form-field.scss` are gone. They restyled the floating label, infix padding and outline notch through `.mdc-*` classes, which pushed select arrows and suffixes off-centre.
+  - Labels above fields now use `.app-field` (`styles/components/_field.scss`): a real `<label>` above a label-less `mat-form-field` (`aria-labelledby` for selects).
+- **The theme density is -2:** every form field is 48 px, and each value, select arrow and suffix sits on the field's centre line. Buttons and icon buttons stay at 36 px through the overrides API (`_mat-button.scss`). The per-component `form-field-density()` calls are gone.
+- **Header nav:**
+  - The active module is Material's filled button (`[matButton]` switched by `routerLinkActive`), and the others are text buttons coloured by `toolbar-overrides(container-text-color)`. The `.mat-mdc-button` specificity chain is gone.
+  - Baseline (not built) is plain text, not a disabled link.
+- **Override sheets cleaned up:**
+  - Fixed a broken `----mat-sys-corner-extra-small` token.
+  - Removed a button-toggle `shape` that overrode the toggles' Figma `corner-small`.
+  - Removed commented-out dead code from `_mat-shape-overrides.scss` and `_mat-palette-overrides.scss`.

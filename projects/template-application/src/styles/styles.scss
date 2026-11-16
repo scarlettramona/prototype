@@ -4,6 +4,7 @@
 @use './components/popover';
 @use './components/dividers';
 @use './components/filled-fields';
+@use './components/field';
 @use './components/focus';
 @use './components/data-table';
 @use './components/loading-bar';
@@ -12,7 +13,6 @@
 @use './components/material-component-overrides/mat-button';
 @use './components/material-component-overrides/mat-button-toggle';
 @use './components/material-component-overrides/mat-slide-toggle';
-@use './components/material-component-overrides/mat-form-field';
 @use './components/material-component-overrides/mat-shape-overrides';
 @use './components/material-component-overrides/mat-palette-overrides';
 @use './base/spacing';
@@ -41,7 +41,7 @@ html {
         tertiary: template-palette.$tertiary-palette,
       ),
       typography: Roboto,
-      density: -1,
+      density: -2,
     ),
     $overrides: (shape-overrides.$corner-overrides)
   );

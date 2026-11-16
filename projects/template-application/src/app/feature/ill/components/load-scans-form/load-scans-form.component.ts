@@ -8,8 +8,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import type { AnalysisFilter, QiFilter, ScanQuery } from '../../../../core/ill/ill.models';
 import { startOfDay } from '../../../../core/mock-data/dates';
-import { LabelAboveDirective } from '../../../../ui/components/label-above/label-above.directive';
 import { wellLabel } from '../../library-model';
+
+let nextId = 0;
 
 /**
  * Load scans (Figma 1:2014): Start / End date, Well, the Quality indicator and
@@ -26,7 +27,6 @@ import { wellLabel } from '../../library-model';
     MatIconModule,
     MatInputModule,
     MatSelectModule,
-    LabelAboveDirective,
   ],
   template: `
     <div class="head">
@@ -36,34 +36,40 @@ import { wellLabel } from '../../library-model';
 
     <div class="query">
       <div class="dates">
-        <mat-form-field appLabelAbove subscriptSizing="dynamic" class="field">
-          <mat-label>Start date</mat-label>
-          <input matInput [matDatepicker]="startPicker" [value]="date(draft().start)" (dateChange)="setStart($event.value)" />
-          <mat-datepicker-toggle matIconSuffix [for]="startPicker"><mat-icon matDatepickerToggleIcon>calendar_today</mat-icon></mat-datepicker-toggle>
-          <mat-datepicker #startPicker />
-        </mat-form-field>
-        <mat-form-field appLabelAbove subscriptSizing="dynamic" class="field">
-          <mat-label>End date</mat-label>
-          <input matInput [matDatepicker]="endPicker" [value]="date(draft().end)" (dateChange)="setEnd($event.value)" />
-          <mat-datepicker-toggle matIconSuffix [for]="endPicker"><mat-icon matDatepickerToggleIcon>calendar_today</mat-icon></mat-datepicker-toggle>
-          <mat-datepicker #endPicker />
-        </mat-form-field>
+        <div class="app-field field">
+          <label class="app-field__label" [for]="fieldId + '-start'">Start date</label>
+          <mat-form-field subscriptSizing="dynamic">
+            <input matInput [id]="fieldId + '-start'" [matDatepicker]="startPicker" [value]="date(draft().start)" (dateChange)="setStart($event.value)" />
+            <mat-datepicker-toggle matIconSuffix [for]="startPicker"><mat-icon matDatepickerToggleIcon>calendar_today</mat-icon></mat-datepicker-toggle>
+            <mat-datepicker #startPicker />
+          </mat-form-field>
+        </div>
+        <div class="app-field field">
+          <label class="app-field__label" [for]="fieldId + '-end'">End date</label>
+          <mat-form-field subscriptSizing="dynamic">
+            <input matInput [id]="fieldId + '-end'" [matDatepicker]="endPicker" [value]="date(draft().end)" (dateChange)="setEnd($event.value)" />
+            <mat-datepicker-toggle matIconSuffix [for]="endPicker"><mat-icon matDatepickerToggleIcon>calendar_today</mat-icon></mat-datepicker-toggle>
+            <mat-datepicker #endPicker />
+          </mat-form-field>
+        </div>
       </div>
 
-      <mat-form-field appLabelAbove class="field">
-        <mat-label>Well</mat-label>
-        <mat-select multiple placeholder="All wells" [value]="draft().wellIds" (valueChange)="patch({ wellIds: $event })">
-          @for (id of wells(); track id) {
-            <mat-option [value]="id">{{ label(id) }}</mat-option>
+      <div class="app-field field">
+        <span class="app-field__label" [id]="fieldId + '-well'">Well</span>
+        <mat-form-field>
+          <mat-select multiple placeholder="All wells" [aria-labelledby]="fieldId + '-well'" [value]="draft().wellIds" (valueChange)="patch({ wellIds: $event })">
+            @for (id of wells(); track id) {
+              <mat-option [value]="id">{{ label(id) }}</mat-option>
+            }
+          </mat-select>
+          @if (draft().wellIds.length) {
+            <button matIconSuffix mat-icon-button type="button" aria-label="Clear wells" (click)="$event.stopPropagation(); patch({ wellIds: [] })">
+              <mat-icon>cancel</mat-icon>
+            </button>
           }
-        </mat-select>
-        @if (draft().wellIds.length) {
-          <button matIconSuffix mat-icon-button type="button" aria-label="Clear wells" (click)="$event.stopPropagation(); patch({ wellIds: [] })">
-            <mat-icon>cancel</mat-icon>
-          </button>
-        }
-        <mat-hint>* denotes a recent scan</mat-hint>
-      </mat-form-field>
+          <mat-hint>* denotes a recent scan</mat-hint>
+        </mat-form-field>
+      </div>
     </div>
 
     <div class="filters">
@@ -156,6 +162,7 @@ import { wellLabel } from '../../library-model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoadScansFormComponent {
+  protected readonly fieldId = `load-scans-${nextId++}`;
   readonly query = input.required<ScanQuery>();
   readonly wells = input<readonly string[]>([]);
   readonly recent = input<ReadonlySet<string>>(new Set());

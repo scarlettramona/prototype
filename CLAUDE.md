@@ -12,7 +12,8 @@ A **clickable, no-backend prototype** of two PIWA modules, **VNV** and **ILL**, 
 ## Standing rules
 
 - **Tokens for every colour, spacing and type value.** No hard-coded hex values in components. The one exception is the chart palette module (`app/core/charts/`).
-- **Angular Material components before custom ones.** Style them with `mat.*-overrides()` mixins or `--mat-*` tokens, not by overriding internal classes. `_mat-form-field.scss` is the existing exception.
+- **Angular Material components before custom ones.** Style them with `mat.*-overrides()` mixins or `--mat-*` tokens, never by selecting Material's internal classes (`.mat-mdc-*`, `.mdc-*`). There are no exceptions.
+- **Density:** the theme runs at **-2** (48 px form fields). Buttons and icon buttons are held at 36 px through `mat.button-overrides` / `mat.icon-button-overrides` in `_mat-button.scss`. Don't add `mat.*-density()` calls: in Material 21 they only accept M2 themes.
 - **Charts only through `ngx-echarts`**, using the shared theme and palette module. Register every chart type or component in `app/core/charts/echarts.ts` before using it, or ECharts silently ignores it.
 - **Prototype only.** No backend, no auth, no persistence beyond memory. All data comes from the mock services.
 - **Don't restructure the template shell; add to it.**
@@ -88,6 +89,7 @@ There is **no linter**; ESLint and Prettier were removed from the template. Keep
 - **Popovers:** use a CDK `cdkConnectedOverlay` with `[cdkConnectedOverlayHasBackdrop]="true"` and `cdkConnectedOverlayBackdropClass="app-popover-backdrop"`, close on `backdropClick` and on Escape (`overlayKeydown`), and put `.app-popover` on the content root. Add `cdkTrapFocus cdkTrapFocusAutoCapture` so focus moves in and returns to the trigger.
 - **Vertical rules** between groups in a row use `<span class="app-divider-vertical"></span>`.
 - **Filled form fields** (Figma's `surface-variant` style) get `class: 'app-filled-fields'` on a host or wrapper (`styles/components/_filled-fields.scss`). Don't repeat the overrides per component.
+- **Labels above fields:** don't use `<mat-label>` for them. Wrap the field in `.app-field`, put a `<label class="app-field__label" [for]>` above a label-less `mat-form-field`, and give each instance its own ids (`let nextId = 0`). A `mat-select` gets `aria-labelledby` instead of `for`. See `styles/components/_field.scss`.
 - **Shared selection state:** tri-state checkboxes use `checkState()` from `core/selection/check-state.ts`.
 - **Content projection and control flow:** a projected slot (`matTextSuffix`, `mat-hint`, …) must be the only root node of its `@if`/`@case` block, or it lands in the default slot. Put it in its own `@if`.
 - **No amber.** Unsaved or changed values use `--mat-sys-primary`.

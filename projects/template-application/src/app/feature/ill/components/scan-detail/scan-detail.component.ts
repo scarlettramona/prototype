@@ -10,10 +10,11 @@ import { PlutoChartThemeService } from '../../../../core/charts/pluto-chart-them
 import type { ParameterPreset, Scan, ScanQi } from '../../../../core/ill/ill.models';
 import { formatDate, formatDateTime } from '../../../../core/mock-data/dates';
 import { DetailRowComponent } from '../../../../ui/components/detail-row/detail-row.component';
-import { LabelAboveDirective } from '../../../../ui/components/label-above/label-above.directive';
 import { buildDepthChartOptions } from '../../focus-page/depth-chart-options';
 import { depthYRange } from '../../focus-page/focus-model';
 import type { ScanReview } from '../../ill-library-store';
+
+let nextId = 0;
 
 /**
  * A library row, expanded (Figma 1:2094 / 1:3814): the scan's depth profile
@@ -22,13 +23,14 @@ import type { ScanReview } from '../../ill-library-store';
  */
 @Component({
   selector: 'app-scan-detail',
-  imports: [MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, NgxEchartsDirective, DetailRowComponent, LabelAboveDirective],
+  imports: [MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, NgxEchartsDirective, DetailRowComponent],
   templateUrl: './scan-detail.component.html',
   styleUrl: './scan-detail.component.scss',
   host: { class: 'app-filled-fields' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScanDetailComponent {
+  protected readonly fieldId = `scan-detail-${nextId++}`;
   protected readonly chartTheme = inject(PlutoChartThemeService);
 
   readonly scan = input.required<Scan>();

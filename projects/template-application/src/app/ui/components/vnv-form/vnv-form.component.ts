@@ -57,8 +57,6 @@ let nextId = 0;
     </div>
   `,
   styles: `
-    @use '@angular/material' as mat;
-
     :host {
       display: flex;
       flex-direction: column;
@@ -107,7 +105,6 @@ let nextId = 0;
     }
     .comment {
       width: 100%;
-      @include mat.form-field-density(-3);
     }
     .actions {
       display: flex;

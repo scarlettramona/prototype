@@ -12,7 +12,7 @@ export interface SwatchOption<T = string> {
 
 /**
  * A select whose value shows a series swatch (Figma: Baseline sensor and
- * Equipment out of service, 1:11566 / 1:11613). Outlined, 44 px.
+ * Equipment out of service, 1:11566 / 1:11613). Outlined.
  */
 @Component({
   selector: 'app-swatch-select',
@@ -40,14 +40,11 @@ export interface SwatchOption<T = string> {
     </mat-form-field>
   `,
   styles: `
-    @use '@angular/material' as mat;
-
     :host {
       display: block;
     }
     .field {
       width: 100%;
-      @include mat.form-field-density(-3);
     }
     .item {
       display: inline-flex;

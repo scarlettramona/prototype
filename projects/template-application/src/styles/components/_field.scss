@@ -1,0 +1,28 @@
+// A form field with its label above the container (Figma's form fields). Use
+// Material as intended: a plain <label> outside a label-less mat-form-field,
+// so Material's own layout (infix, notch, suffix, select arrow) is untouched.
+//
+//   <div class="app-field">
+//     <label class="app-field__label" [for]="id + '-start'">Start date</label>
+//     <mat-form-field subscriptSizing="dynamic">
+//       <input matInput [id]="id + '-start'" ... />
+//     </mat-form-field>
+//   </div>
+//
+// A mat-select can't be the target of `for`: give the label an id and the
+// select `aria-labelledby`. Put width classes on the `.app-field` wrapper.
+.app-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-40);
+  min-width: 0;
+
+  > mat-form-field {
+    width: 100%;
+  }
+}
+
+.app-field__label {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface);
+}
