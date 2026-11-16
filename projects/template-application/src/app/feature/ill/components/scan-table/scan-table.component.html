@@ -82,7 +82,7 @@
 </div>
 
 <ng-template #scanRow let-s let-indent="indent">
-  <div class="row" role="row" [class.row--open]="store.expandedId() === s.id">
+  <div class="row app-data-table__row" role="row" [class.row--open]="store.expandedId() === s.id" [class.app-data-table__row--checked]="store.selectedIds().has(s.id)">
     <span class="cell cell--icon" [class.cell--indent]="indent">
       <button
         mat-icon-button

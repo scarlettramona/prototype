@@ -251,7 +251,7 @@ export class IllFocusStore {
     this.hidden.set(next);
   }
 
-  /** Makes `id` the well's reference scan (it moves the Reference tag and the dashed line). */
+  /** Makes `id` the well's reference scan (it moves the Reference tag). */
   async setReference(id: string): Promise<void> {
     if (this.busy() || id === this.referenceId()) return;
     this.busy.set(true);

@@ -55,14 +55,6 @@
 
 .row--reading {
   cursor: pointer;
-
-  &:hover {
-    background: color-mix(in srgb, var(--mat-sys-on-surface) 4%, transparent);
-  }
-}
-
-.row--selected {
-  background: color-mix(in srgb, var(--mat-sys-primary) 8%, transparent);
 }
 
 .row--group {

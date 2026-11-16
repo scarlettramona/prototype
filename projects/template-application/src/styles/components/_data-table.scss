@@ -10,3 +10,19 @@
   font: var(--mat-sys-label-large);
   font-weight: var(--app-font-weight-bold);
 }
+
+// Body rows tint on hover, and again (primary) while their checkbox is checked.
+// Put `.app-data-table__row` on each data row and toggle `--checked` with its checkbox.
+.app-data-table__row {
+  &:hover {
+    background: var(--app-table-row-hover);
+  }
+
+  &--checked {
+    background: var(--app-table-row-checked);
+
+    &:hover {
+      background: var(--app-table-row-checked-hover);
+    }
+  }
+}

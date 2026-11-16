@@ -7,8 +7,6 @@ import { countsAt, DEPTH_MAX, DEPTH_MIN, type DepthWindow } from './focus-model'
 export const SCAN_SERIES_PREFIX = 'scan:';
 const ILL_SERIES_ID = 'ill-lines';
 
-/** The reference scan is drawn dashed (Figma 1:2094); every other scan is solid. */
-export const REFERENCE_DASH = [7, 3];
 
 export interface DepthChartData {
   /** Visible scans, in tab order. */
@@ -24,7 +22,7 @@ export interface DepthChartData {
 /**
  * The ILL depth chart (Figma 1:8968 / 1:9514 / 1:10048), also used for a single
  * scan and its reference in the library's expanded row (1:2094) with `zoom: false`.
- * One line per visible scan. The well's reference scan is dashed and never faded.
+ * One line per visible scan, all solid. The well's reference scan is never faded.
  * In a scan tab the focused scan is heavier and on top, the others thinner and
  * faded. The focused scan's Calculated ILL is drawn as vertical lines: saved
  * solid, unsaved dashed (as the legend draws them).
@@ -51,7 +49,7 @@ export function buildDepthChartOptions(
       showSymbol: false,
       sampling: 'lttb',
       emphasis: { disabled: true },
-      lineStyle: { width: isFocus ? 2 : isReference ? 1.5 : 1, type: isReference ? REFERENCE_DASH : 'solid', opacity: faded ? 0.5 : 1 },
+      lineStyle: { width: isFocus ? 2 : isReference ? 1.5 : 1, type: 'solid', opacity: faded ? 0.5 : 1 },
       data: scan.points.map((p) => [p.depthIn, p.counts]),
     };
   });

@@ -1,5 +1,5 @@
 import type { Scan } from '../../../core/ill/ill.models';
-import { buildDepthChartOptions, REFERENCE_DASH, SCAN_SERIES_PREFIX, type DepthChartData } from './depth-chart-options';
+import { buildDepthChartOptions, SCAN_SERIES_PREFIX, type DepthChartData } from './depth-chart-options';
 
 interface LineSeries {
   id: string;
@@ -30,15 +30,15 @@ function lines(data: DepthChartData): Map<string, LineSeries['lineStyle']> {
 describe('Depth chart options', () => {
   const base = { scans: [scan('a', 0), scan('ref', 1), scan('b', 2)], lines: { saved: true, unsaved: true }, referenceId: 'ref' };
 
-  it('draws one line per scan; the reference dashed and never faded', () => {
+  it('draws one line per scan; all solid; the reference never faded', () => {
     const tab = lines({ ...base, focusedId: 'a' });
     expect([...tab.keys()]).toEqual(['a', 'ref', 'b']);
     expect(tab.get('a')).toEqual({ width: 2, type: 'solid', opacity: 1 });
-    expect(tab.get('ref')).toEqual({ width: 1.5, type: REFERENCE_DASH, opacity: 1 });
+    expect(tab.get('ref')).toEqual({ width: 1.5, type: 'solid', opacity: 1 });
     expect(tab.get('b')).toEqual({ width: 1, type: 'solid', opacity: 0.5 }); // faded behind the focused scan
 
     const all = lines({ ...base, focusedId: null });
     expect(all.get('b')!.opacity).toBe(1);
-    expect(all.get('ref')!.type).toEqual(REFERENCE_DASH);
+    expect(all.get('ref')!.type).toBe('solid');
   });
 });

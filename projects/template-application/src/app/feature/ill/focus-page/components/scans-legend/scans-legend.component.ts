@@ -3,14 +3,13 @@ import { seriesStyle } from '../../../../../core/charts/chart-palette';
 import { formatDateTime } from '../../../../../core/mock-data/dates';
 import { checkState } from '../../../../../core/selection/check-state';
 import { LegendRowComponent } from '../../../../../ui/components/legend-row/legend-row.component';
-import { REFERENCE_DASH } from '../../depth-chart-options';
 import { IllFocusStore } from '../../ill-focus-store';
 
 /**
  * The scans legend popover (Figma 1:10714): All scans, then one row per open
  * scan. The focused scan is bold and locked on; its Saved (solid) and Unsaved
  * (dashed) Calculated ILL lines get their own rows when it has them. The
- * reference scan is tagged and drawn dashed.
+ * reference scan is tagged.
  */
 @Component({
   selector: 'app-scans-legend',
@@ -33,7 +32,7 @@ import { IllFocusStore } from '../../ill-focus-store';
         mode="checkbox"
         [label]="label(scan.datetime)"
         [tag]="scan.reference ? 'Reference' : ''"
-        [swatch]="scan.reference ? { color: style.color, dash: referenceDash } : style"
+        [swatch]="style"
         [visible]="focused || !store.hidden().has(scan.id)"
         [locked]="focused"
         [emphasis]="focused"
@@ -91,7 +90,6 @@ import { IllFocusStore } from '../../ill-focus-store';
 export class ScansLegendComponent {
   protected readonly store = inject(IllFocusStore);
   protected readonly dashed = [3, 3] as const;
-  protected readonly referenceDash = REFERENCE_DASH;
 
   protected readonly allState = computed(() => {
     const hidden = this.store.hidden();

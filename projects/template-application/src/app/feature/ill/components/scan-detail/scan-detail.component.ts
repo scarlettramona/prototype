@@ -11,7 +11,7 @@ import type { ParameterPreset, Scan, ScanQi } from '../../../../core/ill/ill.mod
 import { formatDate, formatDateTime } from '../../../../core/mock-data/dates';
 import { DetailRowComponent } from '../../../../ui/components/detail-row/detail-row.component';
 import { SeriesSwatchComponent } from '../../../../ui/components/series-swatch/series-swatch.component';
-import { buildDepthChartOptions, REFERENCE_DASH, type DepthChartData } from '../../focus-page/depth-chart-options';
+import { buildDepthChartOptions, type DepthChartData } from '../../focus-page/depth-chart-options';
 import { depthYRange } from '../../focus-page/focus-model';
 import type { ScanReview } from '../../ill-library-store';
 
@@ -47,7 +47,6 @@ export class ScanDetailComponent {
   protected readonly qi = signal<ScanQi>(null);
   protected readonly scanComment = signal('');
   protected readonly vnvComment = signal('');
-  protected readonly referenceDash = REFERENCE_DASH;
 
   constructor() {
     effect(() => {

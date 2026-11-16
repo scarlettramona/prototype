@@ -63,7 +63,7 @@
           </div>
         } @else {
           @let r = row.reading;
-          <div class="row--reading" [class.row--selected]="store.selectedIds().has(r.id)" (click)="onRowClick($event, r.id)">
+          <div class="row--reading app-data-table__row" [class.app-data-table__row--checked]="store.selectedIds().has(r.id)" (click)="onRowClick($event, r.id)">
             <div class="cell cell--check" [class.cell--indent]="store.grouped()">
               <mat-checkbox [aria-label]="'Select ' + r.sensorId + ' ' + date(r.timestamp)" [checked]="store.selectedIds().has(r.id)" (change)="store.toggleSelected(r.id)" />
             </div>

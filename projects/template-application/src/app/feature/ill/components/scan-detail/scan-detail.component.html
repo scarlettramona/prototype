@@ -15,7 +15,7 @@
       </div>
       @if (reference(); as ref) {
         <div class="legend__scan">
-          <app-series-swatch [color]="colorOf(ref)" [dash]="referenceDash" marker="none" />
+          <app-series-swatch [color]="colorOf(ref)" marker="none" />
           <span class="legend__name">Reference scan</span>
           <span class="legend__value">{{ timeOf(ref) }}</span>
         </div>
