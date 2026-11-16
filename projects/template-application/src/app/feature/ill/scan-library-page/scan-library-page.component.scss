@@ -1,0 +1,78 @@
+@use '@angular/material' as mat;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+/* Figma 1:2014: a centred 1248 px column before loading; 1:2094: full width after. */
+.page {
+  width: min(1248px, 100%);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.page--wide {
+  width: 100%;
+}
+/* Figma 1:2128: a 106 px header (24 top, 66 of text, 16 bottom), then 48 px tabs. */
+.header {
+  min-height: 106px;
+  padding: var(--spacing-240) var(--spacing-240) var(--spacing-160);
+  box-sizing: border-box;
+}
+.title {
+  margin: 0 0 var(--spacing-80);
+  font: var(--mat-sys-headline-small);
+}
+.subtitle {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+}
+.tabs {
+  width: 360px;
+  margin-left: var(--spacing-240);
+  @include mat.tabs-overrides((container-height: 48px));
+}
+.body {
+  display: flex;
+  flex: 1 1 auto;
+}
+/* The content panel: the centred column before loading, full width after. */
+.body > .page {
+  background: var(--mat-sys-surface-container-low);
+}
+.query {
+  padding: var(--spacing-240);
+}
+.divider {
+  height: 1px;
+  background: var(--mat-sys-outline-variant);
+}
+.results {
+  padding: var(--spacing-240);
+}
+/* With the filter summary (1:2136), 16 px either side of the divider. */
+.page--summary {
+  .query {
+    padding-bottom: var(--spacing-160);
+  }
+  .results {
+    padding-top: var(--spacing-160);
+  }
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-160);
+  min-height: 406px;
+  color: var(--mat-sys-on-surface);
+}
+.empty__title {
+  margin: 0;
+  font: var(--mat-sys-headline-medium);
+}
+.empty__body {
+  margin: 0;
+  font: var(--mat-sys-body-large);
+}

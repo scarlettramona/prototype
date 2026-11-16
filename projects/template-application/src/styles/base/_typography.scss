@@ -2,6 +2,11 @@
 * all custom text/font styling lives here
 */
 
+:root {
+  /* Figma's bold labels (Roboto Bold); the M3 type roles have no bold weight. */
+  --app-font-weight-bold: 700;
+}
+
 body {
   font: var(--mat-sys-body-medium);
 }

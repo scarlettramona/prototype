@@ -5,7 +5,6 @@ import {
   countsAt,
   depthYRange,
   editedFields,
-  groupEdited,
   initialDraft,
   referenceParameters,
   resultRows,
@@ -43,8 +42,6 @@ describe('Focus view model', () => {
     expect(draft.illMethod.normalLowerRange).toBe(12);
     const edited = editedFields(draft, referenceParameters(s));
     expect([...edited]).toEqual(['illMethod.normalLowerRange']);
-    expect(groupEdited(edited, 'illMethod')).toBe(true);
-    expect(groupEdited(edited, 'markerMethod')).toBe(false);
   });
 
   it('measures edits against the Default preset when nothing is saved', () => {

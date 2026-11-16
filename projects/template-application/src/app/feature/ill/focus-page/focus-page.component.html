@@ -1,0 +1,24 @@
+<header class="header">
+  <div class="back">
+    <a mat-icon-button class="back__button" [routerLink]="libraryLink" aria-label="Back to Scan library">
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+    <div class="crumbs">
+      <a class="crumb" [routerLink]="libraryLink">Scan library<mat-icon class="crumb__icon" aria-hidden="true">chevron_right</mat-icon></a>
+      <h1 class="title">{{ store.wellId() }}</h1>
+    </div>
+  </div>
+  <app-focus-tab-bar (close)="closeTab($event)" />
+</header>
+
+<main class="content">
+  @if (store.focused()) {
+    <div class="top">
+      <app-focus-chart class="chart" />
+      <app-scan-details class="details" (exportScan)="exportScan()" />
+    </div>
+    <app-analysis-parameters />
+  } @else {
+    <app-focus-chart class="chart chart--all" />
+  }
+</main>

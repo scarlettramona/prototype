@@ -1,3 +1,4 @@
+import { mean, round, std } from '../math/stats';
 import { DAY_MS, parseUsDate } from '../mock-data/dates';
 import type { AnalysisParameters, AnalysisResults, ScanPoint } from './ill.models';
 
@@ -90,14 +91,14 @@ export function analyse(points: readonly ScanPoint[], p: AnalysisParameters, sca
   const outliers = plateau.filter((c) => Math.abs(c - m) > 2.5 * sd).length;
 
   return {
-    calculatedIll: round3(calculatedIll),
-    depthCorrection: round3(depthCorrection),
-    baseline: round3(baseline),
-    stdDeviation: round3(sd / 100),
+    calculatedIll: round(calculatedIll, 3),
+    depthCorrection: round(depthCorrection, 3),
+    baseline: round(baseline, 3),
+    stdDeviation: round(sd / 100, 3),
     inTolerance: calculatedIll <= baseline + ill.normalUpperRange && calculatedIll >= baseline - ill.normalLowerRange,
     outliers,
-    rawMarkers: round3(mean(upper) / 3),
-    rawIll: round3(rawIll),
+    rawMarkers: round(mean(upper) / 3, 3),
+    rawIll: round(rawIll, 3),
   };
 }
 
@@ -106,17 +107,4 @@ function median(values: number[]): number {
   const s = [...values].sort((a, b) => a - b);
   const mid = Math.floor(s.length / 2);
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
-}
-
-function mean(values: number[]): number {
-  return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-}
-
-function std(values: number[]): number {
-  const m = mean(values);
-  return values.length ? Math.sqrt(values.reduce((a, b) => a + (b - m) ** 2, 0) / values.length) : 0;
-}
-
-function round3(value: number): number {
-  return Math.round(value * 1000) / 1000;
 }

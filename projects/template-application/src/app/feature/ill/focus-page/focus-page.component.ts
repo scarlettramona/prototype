@@ -4,9 +4,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
+import { downloadText } from '../../../core/download/download';
 import { PrototypeStateService } from '../../../core/prototype-state/prototype-state.service';
 import { APP_PATHS } from '../../../core/routing/app-paths';
-import { scanToCsv } from '../library-model';
+import { scanCsvFileName, scanToCsv } from '../library-model';
 import { AnalysisParametersComponent } from './components/analysis-parameters/analysis-parameters.component';
 import { FocusChartComponent } from './components/focus-chart/focus-chart.component';
 import { FocusTabBarComponent } from './components/focus-tab-bar/focus-tab-bar.component';
@@ -24,106 +25,8 @@ import { IllFocusStore } from './ill-focus-store';
   selector: 'app-focus-page',
   imports: [MatButtonModule, MatIconModule, RouterLink, AnalysisParametersComponent, FocusChartComponent, FocusTabBarComponent, ScanDetailsComponent],
   providers: [IllFocusStore],
-  template: `
-    <header class="header">
-      <div class="back">
-        <a mat-icon-button class="back__button" [routerLink]="libraryLink" aria-label="Back to Scan library">
-          <mat-icon>arrow_back</mat-icon>
-        </a>
-        <div class="crumbs">
-          <a class="crumb" [routerLink]="libraryLink">Scan library<mat-icon class="crumb__icon" aria-hidden="true">chevron_right</mat-icon></a>
-          <h1 class="title">{{ store.wellId() }}</h1>
-        </div>
-      </div>
-      <app-focus-tab-bar (close)="closeTab($event)" />
-    </header>
-
-    <main class="content">
-      @if (store.focused()) {
-        <div class="top">
-          <app-focus-chart class="chart" />
-          <app-scan-details class="details" (exportScan)="exportScan()" />
-        </div>
-        <app-analysis-parameters />
-      } @else {
-        <app-focus-chart class="chart chart--all" />
-      }
-    </main>
-  `,
-  styles: `
-    :host {
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-    }
-    .header {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-160);
-      padding: var(--spacing-240) var(--spacing-240) 0;
-      border-bottom: 1px solid var(--mat-sys-outline-variant);
-    }
-    .back {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-160);
-    }
-    .back__button {
-      border: 1px solid var(--mat-sys-outline-variant);
-    }
-    .crumbs {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-60);
-    }
-    .crumb {
-      display: inline-flex;
-      align-items: center;
-      font: var(--mat-sys-title-small);
-      color: var(--mat-sys-primary);
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
-      &:focus-visible {
-        outline: 2px solid var(--mat-sys-primary);
-        outline-offset: 2px;
-      }
-    }
-    .crumb__icon {
-      width: 20px;
-      height: 20px;
-      font-size: 20px;
-    }
-    .title {
-      margin: 0;
-      font: var(--mat-sys-headline-small);
-      color: var(--mat-sys-on-surface);
-    }
-    .content {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-240);
-      padding: var(--spacing-240);
-      background: var(--mat-sys-background);
-    }
-    .top {
-      display: flex;
-      gap: var(--spacing-240);
-      height: 765px;
-    }
-    .chart {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-    .chart--all {
-      height: 630px;
-    }
-    .details {
-      flex: 0 0 412px;
-    }
-  `,
+  templateUrl: './focus-page.component.html',
+  styleUrl: './focus-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FocusPageComponent {
@@ -174,12 +77,7 @@ export class FocusPageComponent {
   protected exportScan(): void {
     const scan = this.store.focused();
     if (!scan) return;
-    const url = URL.createObjectURL(new Blob([scanToCsv(scan)], { type: 'text/csv' }));
-    const a = this.document.createElement('a');
-    a.href = url;
-    a.download = `${scan.wellId.replace(/\s+/g, '')}_${scan.datetime}.csv`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadText(this.document, scanToCsv(scan), scanCsvFileName(scan));
   }
 
   private async ask(): Promise<UnsavedChoice> {

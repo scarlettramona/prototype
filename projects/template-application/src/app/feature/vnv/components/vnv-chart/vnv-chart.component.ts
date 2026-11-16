@@ -6,7 +6,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import type { ECharts, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { seriesStyle } from '../../../../core/charts/chart-palette';
+import { oncePerFrame, onWheelZoom, zoomEventWindow, type ChartWindow, type ZoomEvent } from '../../../../core/charts/chart-zoom';
 import { PlutoChartThemeService, withAlpha } from '../../../../core/charts/pluto-chart-theme';
+import { downloadText, downloadUrl } from '../../../../core/download/download';
 import { formatDate } from '../../../../core/mock-data/dates';
 import { ChartCardComponent } from '../../../../ui/components/chart-card/chart-card.component';
 import { ChartNavigatorComponent, type NavigatorSeries, type NavigatorWindow } from '../../../../ui/components/chart-navigator/chart-navigator.component';
@@ -15,12 +17,6 @@ import { SelectionActionBarComponent } from '../../../../ui/components/selection
 import { VnvFormComponent } from '../../../../ui/components/vnv-form/vnv-form.component';
 import { VnvStore } from '../../vnv-store';
 import { buildVnvChartOptions, selectInRect, selectionPoints, showMarkers, toCsv, windowOption, yRangeFor, type VnvChartData } from './vnv-chart-options';
-
-interface ZoomEvent {
-  start?: number;
-  end?: number;
-  batch?: { start?: number; end?: number }[];
-}
 
 /** The VNV | ⋯ bar's size (Figma 1:11704), for keeping it inside the chart. */
 const BAR_SIZE = { width: 94, height: 42 };
@@ -50,109 +46,8 @@ interface BrushEndEvent {
     SelectionActionBarComponent,
     VnvFormComponent,
   ],
-  template: `
-    <app-chart-card class="card" [showNavigator]="true" [resetDisabled]="store.atFullRange()" (reset)="store.resetWindow()">
-      <div chartToolbar class="toolbar">
-        <app-quality-filter [value]="store.visibleQi()" (valueChange)="store.visibleQi.set($event)" />
-        <div class="toolbar__end">
-          <button mat-button type="button" [disabled]="!store.visibleReadings().length" (click)="store.selectShown()">Select all shown</button>
-          <mat-slide-toggle class="fit-y" labelPosition="before" hideIcon [checked]="store.fitY()" (change)="store.fitY.set($event.checked)">
-            Fit Y
-          </mat-slide-toggle>
-          <span class="app-divider-vertical"></span>
-          <button mat-button type="button" class="export" [matMenuTriggerFor]="exportMenu">Export</button>
-          <mat-menu #exportMenu="matMenu" xPosition="before">
-            <button mat-menu-item type="button" (click)="exportImage()">Chart image (PNG)</button>
-            <button mat-menu-item type="button" (click)="exportCsv()">Data (CSV)</button>
-          </mat-menu>
-        </div>
-      </div>
-
-      <div
-        class="chart"
-        echarts
-        [options]="options()"
-        [merge]="windowMerge()"
-        [theme]="chartTheme.theme()"
-        [loading]="store.loading() || store.applying()"
-        [loadingOpts]="loadingOpts()"
-        (chartInit)="chart = $event"
-        (chartDataZoom)="onZoom($event)"
-        (chartBrushEnd)="onBrushEnd($event)"
-        (chartFinished)="positionBar()"
-        (wheel)="onWheel($event)"
-        (pointerenter)="setHovering(true)"
-        (pointerleave)="setHovering(false)"
-      ></div>
-
-      @if (barPos(); as p) {
-        <div class="bar" [style.left.px]="p.x" [style.top.px]="p.y" cdkOverlayOrigin #barOrigin="cdkOverlayOrigin">
-          <app-selection-action-bar (vnv)="store.vnvPopoverOpen.set(true)" />
-        </div>
-        <ng-template
-          cdkConnectedOverlay
-          [cdkConnectedOverlayOrigin]="barOrigin"
-          [cdkConnectedOverlayOpen]="store.vnvPopoverOpen()"
-          [cdkConnectedOverlayPositions]="popoverPositions"
-          [cdkConnectedOverlayHasBackdrop]="true"
-          cdkConnectedOverlayBackdropClass="app-popover-backdrop"
-          (backdropClick)="store.vnvPopoverOpen.set(false)"
-          (overlayKeydown)="onPopoverKey($event)"
-        >
-          <app-vnv-form
-            [count]="store.selectedReadings().length"
-            [initial]="store.formInitial()"
-            (apply)="store.applyReview($event)"
-            (cancel)="store.clearSelection()"
-            (close)="store.clearSelection()"
-          />
-        </ng-template>
-      }
-
-      <app-chart-navigator
-        chartNavigator
-        [series]="navigatorSeries()"
-        [xMin]="store.xRange().start"
-        [xMax]="store.xRange().end"
-        [window]="store.window()"
-        (windowChange)="onNavigator($event)"
-        [labelFormatter]="formatDate"
-      />
-    </app-chart-card>
-  `,
-  styles: `
-    :host {
-      display: block;
-      min-height: 0;
-    }
-    .card {
-      height: 100%;
-    }
-    .toolbar,
-    .toolbar__end {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-160);
-    }
-    .toolbar {
-      justify-content: space-between;
-      width: 100%;
-    }
-    .toolbar__end {
-      align-self: stretch;
-    }
-    .export {
-      min-width: 97px; // Figma 1:11479
-    }
-    .chart {
-      position: absolute;
-      inset: 0;
-    }
-    .bar {
-      position: absolute;
-      z-index: 1;
-    }
-  `,
+  templateUrl: './vnv-chart.component.html',
+  styleUrl: './vnv-chart.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VnvChartComponent {
@@ -229,8 +124,8 @@ export class VnvChartComponent {
   private hovering = false;
   private shiftHeld = false;
   private brushOn = false;
-  private pendingWindow: { start: number; end: number } | null = null;
-  private frame: number | null = null;
+  private unbindWheelZoom: (() => void) | null = null;
+  private readonly setWindowPerFrame = oncePerFrame((window: ChartWindow) => this.store.setWindow(window));
 
   constructor() {
     const onKey = (e: KeyboardEvent) => {
@@ -261,6 +156,7 @@ export class VnvChartComponent {
       this.document.removeEventListener('pointermove', onPointer, true);
       this.document.removeEventListener('pointerup', onPointer, true);
       view?.removeEventListener('blur', onBlur);
+      this.unbindWheelZoom?.();
     });
 
     // The rings change with the selection; re-place the bar once the chart has drawn them.
@@ -335,19 +231,9 @@ export class VnvChartComponent {
 
   /** Inside zoom (drag pan, Ctrl + wheel): percent of the loaded range. */
   protected onZoom(event: ZoomEvent): void {
-    const e = event.batch?.[0] ?? event;
-    if (e.start === undefined || e.end === undefined) return;
     const x = this.store.xRange();
-    const span = x.end - x.start;
-    // ECharts has already drawn the pan; coalesce the store update (y fit, navigator) to one per frame.
-    this.pendingWindow = { start: x.start + (span * e.start) / 100, end: x.start + (span * e.end) / 100 };
-    if (this.frame === null) {
-      this.frame = requestAnimationFrame(() => {
-        this.frame = null;
-        if (this.pendingWindow) this.store.setWindow(this.pendingWindow);
-        this.pendingWindow = null;
-      });
-    }
+    const window = zoomEventWindow(event, x.start, x.end);
+    if (window) this.setWindowPerFrame(window);
   }
 
   protected onNavigator(window: NavigatorWindow | null): void {
@@ -355,40 +241,26 @@ export class VnvChartComponent {
     else this.store.resetWindow();
   }
 
-  /** ⌘ + wheel zooms at the cursor (ECharts handles Ctrl itself). A plain wheel scrolls the page. */
-  protected onWheel(event: WheelEvent): void {
-    if (!event.metaKey || event.ctrlKey || !this.chart) return;
-    event.preventDefault();
-    const at = this.chart.convertFromPixel({ xAxisIndex: 0 }, [event.offsetX, event.offsetY]) as unknown as number[] | number;
-    const center = Array.isArray(at) ? at[0] : at;
-    const w = this.store.effectiveWindow();
-    const factor = event.deltaY > 0 ? 1.2 : 1 / 1.2;
-    this.store.setWindow({ start: center - (center - w.start) * factor, end: center + (w.end - center) * factor });
+  /** Keeps the chart and wires ⌘ + wheel zoom. Runs again when the theme changes and the chart is rebuilt. */
+  protected onChartInit(chart: ECharts): void {
+    this.chart = chart;
+    this.unbindWheelZoom?.();
+    this.unbindWheelZoom = onWheelZoom(chart, () => this.store.effectiveWindow(), (window) => this.store.setWindow(window));
   }
 
   protected exportImage(): void {
     if (!this.chart) return;
     const url = this.chart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: this.chartTheme.tokens().surfaceContainer });
-    this.download(url, this.fileName('png'));
+    downloadUrl(this.document, url, this.fileName('png'));
   }
 
   protected exportCsv(): void {
-    const csv = toCsv(this.data(), this.store.effectiveWindow());
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    this.download(url, this.fileName('csv'));
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadText(this.document, toCsv(this.data(), this.store.effectiveWindow()), this.fileName('csv'));
   }
 
   private fileName(ext: string): string {
     const w = this.store.effectiveWindow();
     const name = this.store.location()?.id ?? 'vnv';
     return `${name}_${formatDate(w.start).replace(/\//g, '-')}_${formatDate(w.end).replace(/\//g, '-')}.${ext}`;
-  }
-
-  private download(href: string, name: string): void {
-    const a = this.document.createElement('a');
-    a.href = href;
-    a.download = name;
-    a.click();
   }
 }

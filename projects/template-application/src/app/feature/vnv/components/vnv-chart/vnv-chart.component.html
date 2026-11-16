@@ -1,0 +1,67 @@
+<app-chart-card class="card" [showNavigator]="true" [resetDisabled]="store.atFullRange()" (reset)="store.resetWindow()">
+  <div chartToolbar class="toolbar">
+    <app-quality-filter [value]="store.visibleQi()" (valueChange)="store.visibleQi.set($event)" />
+    <div class="toolbar__end">
+      <button mat-button type="button" [disabled]="!store.visibleReadings().length" (click)="store.selectShown()">Select all shown</button>
+      <mat-slide-toggle class="fit-y" labelPosition="before" hideIcon [checked]="store.fitY()" (change)="store.fitY.set($event.checked)">
+        Fit Y
+      </mat-slide-toggle>
+      <span class="app-divider-vertical"></span>
+      <button mat-button type="button" class="export" [matMenuTriggerFor]="exportMenu">Export</button>
+      <mat-menu #exportMenu="matMenu" xPosition="before">
+        <button mat-menu-item type="button" (click)="exportImage()">Chart image (PNG)</button>
+        <button mat-menu-item type="button" (click)="exportCsv()">Data (CSV)</button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <div
+    class="chart"
+    echarts
+    [options]="options()"
+    [merge]="windowMerge()"
+    [theme]="chartTheme.theme()"
+    [loading]="store.loading() || store.applying()"
+    [loadingOpts]="loadingOpts()"
+    (chartInit)="onChartInit($event)"
+    (chartDataZoom)="onZoom($event)"
+    (chartBrushEnd)="onBrushEnd($event)"
+    (chartFinished)="positionBar()"
+    (pointerenter)="setHovering(true)"
+    (pointerleave)="setHovering(false)"
+  ></div>
+
+  @if (barPos(); as p) {
+    <div class="bar" [style.left.px]="p.x" [style.top.px]="p.y" cdkOverlayOrigin #barOrigin="cdkOverlayOrigin">
+      <app-selection-action-bar (vnv)="store.vnvPopoverOpen.set(true)" />
+    </div>
+    <ng-template
+      cdkConnectedOverlay
+      [cdkConnectedOverlayOrigin]="barOrigin"
+      [cdkConnectedOverlayOpen]="store.vnvPopoverOpen()"
+      [cdkConnectedOverlayPositions]="popoverPositions"
+      [cdkConnectedOverlayHasBackdrop]="true"
+      cdkConnectedOverlayBackdropClass="app-popover-backdrop"
+      (backdropClick)="store.vnvPopoverOpen.set(false)"
+      (overlayKeydown)="onPopoverKey($event)"
+    >
+      <app-vnv-form
+        [count]="store.selectedReadings().length"
+        [initial]="store.formInitial()"
+        (apply)="store.applyReview($event)"
+        (cancel)="store.clearSelection()"
+        (close)="store.clearSelection()"
+      />
+    </ng-template>
+  }
+
+  <app-chart-navigator
+    chartNavigator
+    [series]="navigatorSeries()"
+    [xMin]="store.xRange().start"
+    [xMax]="store.xRange().end"
+    [window]="store.window()"
+    (windowChange)="onNavigator($event)"
+    [labelFormatter]="formatDate"
+  />
+</app-chart-card>

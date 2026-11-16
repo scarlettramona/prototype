@@ -113,7 +113,7 @@
 .group__title {
   margin: 0;
   font: var(--mat-sys-title-medium);
-  font-weight: 700;
+  font-weight: var(--app-font-weight-bold);
   color: var(--mat-sys-on-surface-variant);
 }
 

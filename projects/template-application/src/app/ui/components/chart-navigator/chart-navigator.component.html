@@ -1,0 +1,13 @@
+<div
+  class="nav"
+  echarts
+  [options]="options()"
+  [merge]="windowMerge()"
+  [theme]="chartTheme.theme()"
+  (chartInit)="chart = $event"
+  (chartDataZoom)="onZoom($event)"
+  (pointerdown)="dragging.set(true)"
+></div>
+@if (bubble(); as b) {
+  <span class="bubble" [style.left.px]="b.x">{{ b.text }}</span>
+}

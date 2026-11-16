@@ -6,6 +6,6 @@ export const APP_PATHS = {
   vnv: 'vnv',
   /** Stub for the page being built next. */
   baseline: 'baseline',
-  /** Dev-only pages, e.g. `/dev/data`. */
+  /** Dev-only pages, e.g. `/dev/gallery`. */
   dev: 'dev',
 } as const;

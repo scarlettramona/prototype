@@ -91,6 +91,11 @@ export function groupByWell<T extends { wellId: string; datetime: number }>(scan
   return [...map.keys()].sort().map((wellId) => ({ wellId, scans: map.get(wellId)!.sort((a, b) => b.datetime - a.datetime) }));
 }
 
+/** File name for a scan's CSV export: the well without spaces, then the scan time. */
+export function scanCsvFileName(scan: Pick<Scan, 'wellId' | 'datetime'>): string {
+  return `${scan.wellId.replace(/\s+/g, '')}_${scan.datetime}.csv`;
+}
+
 /** "Export smooth data": the scan's depth profile as CSV. */
 export function scanToCsv(scan: Scan): string {
   const rows = scan.points.map((p) => `${p.depthIn},${p.counts}`);

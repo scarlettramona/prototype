@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, DOCUMENT, inject, input, model, signal, untracked } from '@angular/core';
 import type { ECharts, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
+import { zoomEventWindow, type ChartWindow, type ZoomEvent } from '../../../core/charts/chart-zoom';
 import { PlutoChartThemeService, withAlpha } from '../../../core/charts/pluto-chart-theme';
 
 export interface NavigatorSeries {
@@ -10,16 +11,7 @@ export interface NavigatorSeries {
   points: readonly (readonly [number, number])[];
 }
 
-export interface NavigatorWindow {
-  start: number;
-  end: number;
-}
-
-interface ZoomEvent {
-  start?: number;
-  end?: number;
-  batch?: { start?: number; end?: number }[];
-}
+export type NavigatorWindow = ChartWindow;
 
 /**
  * The navigator under a chart: a thin preview of every series over the full
@@ -33,43 +25,8 @@ interface ZoomEvent {
 @Component({
   selector: 'app-chart-navigator',
   imports: [NgxEchartsDirective],
-  template: `
-    <div
-      class="nav"
-      echarts
-      [options]="options()"
-      [merge]="windowMerge()"
-      [theme]="chartTheme.theme()"
-      (chartInit)="chart = $event"
-      (chartDataZoom)="onZoom($event)"
-      (pointerdown)="dragging.set(true)"
-    ></div>
-    @if (bubble(); as b) {
-      <span class="bubble" [style.left.px]="b.x">{{ b.text }}</span>
-    }
-  `,
-  styles: `
-    :host {
-      position: relative;
-      display: block;
-      height: 52px;
-    }
-    .nav {
-      height: 100%;
-    }
-    .bubble {
-      position: absolute;
-      bottom: calc(100% + 4px);
-      transform: translateX(-50%);
-      padding: 0 var(--spacing-60);
-      border-radius: var(--mat-sys-corner-full);
-      background: var(--mat-sys-primary);
-      color: var(--mat-sys-on-primary);
-      font: var(--mat-sys-label-small);
-      white-space: nowrap;
-      pointer-events: none;
-    }
-  `,
+  templateUrl: './chart-navigator.component.html',
+  styleUrl: './chart-navigator.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChartNavigatorComponent {
@@ -159,16 +116,14 @@ export class ChartNavigatorComponent {
   });
 
   protected onZoom(event: ZoomEvent): void {
-    const e = event.batch?.[0] ?? event;
-    if (e.start === undefined || e.end === undefined) return;
-    const span = this.xMax() - this.xMin();
-    const start = this.xMin() + (span * e.start) / 100;
-    const end = this.xMin() + (span * e.end) / 100;
+    const next = zoomEventWindow(event, this.xMin(), this.xMax());
+    if (!next) return;
+    const { start, end } = next;
     const prev = this.windowValues();
     // Whichever handle moved gets the label; a window drag labels its start.
     const moved = Math.abs(end - prev.end) > Math.abs(start - prev.start) ? end : start;
     this.active.set({ value: moved });
-    this.window.set(e.start <= 0 && e.end >= 100 ? null : { start, end });
+    this.window.set(start <= this.xMin() && end >= this.xMax() ? null : { start, end });
   }
 
   private windowValues(): NavigatorWindow {

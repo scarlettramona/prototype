@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DOCUMENT, effect, inject, signal, untracked } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { Router } from '@angular/router';
+import { downloadText } from '../../../core/download/download';
 import { IllMockService } from '../../../core/ill/ill-mock.service';
 import type { ScanSummary } from '../../../core/ill/ill.models';
 import { PrototypeStateService } from '../../../core/prototype-state/prototype-state.service';
@@ -9,7 +10,7 @@ import { FilterSummaryComponent } from '../components/filter-summary/filter-summ
 import { LoadScansFormComponent } from '../components/load-scans-form/load-scans-form.component';
 import { ScanTableComponent } from '../components/scan-table/scan-table.component';
 import { defaultScanQuery, IllLibraryStore } from '../ill-library-store';
-import { scanToCsv } from '../library-model';
+import { scanCsvFileName, scanToCsv } from '../library-model';
 
 /**
  * The ILL Scan library (Figma 1:2014 … 1:3814): page header, Scan Library /
@@ -19,130 +20,8 @@ import { scanToCsv } from '../library-model';
 @Component({
   selector: 'app-scan-library-page',
   imports: [MatTabsModule, FilterSummaryComponent, LoadScansFormComponent, ScanTableComponent],
-  template: `
-    <div class="page" [class.page--wide]="store.loaded()">
-      <header class="header">
-        <h1 class="title">Interstitial Liquid Level</h1>
-        <p class="subtitle">Justo lacinia e ede morbi porttitor lorem id</p>
-      </header>
-
-      <nav mat-tab-nav-bar class="tabs" [tabPanel]="panel" aria-label="Interstitial Liquid Level">
-        <a mat-tab-link [active]="tab() === 'library'" (click)="tab.set('library')" (keydown.enter)="tab.set('library')" tabindex="0">Scan Library</a>
-        <a mat-tab-link [active]="tab() === 'parameters'" (click)="tab.set('parameters')" (keydown.enter)="tab.set('parameters')" tabindex="0">Parameters</a>
-      </nav>
-    </div>
-
-    <mat-tab-nav-panel #panel class="body">
-      @if (tab() === 'library') {
-        <div class="page" [class.page--wide]="store.loaded()" [class.page--summary]="!store.formOpen()">
-          <div class="query">
-            @if (store.formOpen()) {
-              <app-load-scans-form
-                [query]="store.query()"
-                [wells]="store.wellIds()"
-                [recent]="store.recent()"
-                (load)="store.loadScans($event)"
-                (reset)="store.reset()"
-              />
-            } @else {
-              <app-filter-summary [query]="store.query()" (edit)="store.editFilters()" />
-            }
-          </div>
-          <div class="divider"></div>
-          <div class="results">
-            @if (store.loaded() || store.loading()) {
-              <app-scan-table (openWell)="openWell($event)" (openScan)="openScan($event)" (exportScan)="exportScan($event)" />
-            } @else {
-              <div class="empty">
-                <p class="empty__title">No scans yet</p>
-                <p class="empty__body">Click the “Load scans” button and something should show up here.</p>
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </mat-tab-nav-panel>
-  `,
-  styles: `
-    @use '@angular/material' as mat;
-
-    :host {
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-    }
-    /* Figma 1:2014: a centred 1248 px column before loading; 1:2094: full width after. */
-    .page {
-      width: min(1248px, 100%);
-      margin: 0 auto;
-      box-sizing: border-box;
-    }
-    .page--wide {
-      width: 100%;
-    }
-    /* Figma 1:2128: a 106 px header (24 top, 66 of text, 16 bottom), then 48 px tabs. */
-    .header {
-      min-height: 106px;
-      padding: var(--spacing-240) var(--spacing-240) var(--spacing-160);
-      box-sizing: border-box;
-    }
-    .title {
-      margin: 0 0 var(--spacing-80);
-      font: var(--mat-sys-headline-small);
-    }
-    .subtitle {
-      margin: 0;
-      font: var(--mat-sys-body-medium);
-    }
-    .tabs {
-      width: 360px;
-      margin-left: var(--spacing-240);
-      @include mat.tabs-overrides((container-height: 48px));
-    }
-    .body {
-      display: flex;
-      flex: 1 1 auto;
-    }
-    /* The content panel: the centred column before loading, full width after. */
-    .body > .page {
-      background: var(--mat-sys-surface-container-low);
-    }
-    .query {
-      padding: var(--spacing-240);
-    }
-    .divider {
-      height: 1px;
-      background: var(--mat-sys-outline-variant);
-    }
-    .results {
-      padding: var(--spacing-240);
-    }
-    /* With the filter summary (1:2136), 16 px either side of the divider. */
-    .page--summary {
-      .query {
-        padding-bottom: var(--spacing-160);
-      }
-      .results {
-        padding-top: var(--spacing-160);
-      }
-    }
-    .empty {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--spacing-160);
-      min-height: 406px;
-      color: var(--mat-sys-on-surface);
-    }
-    .empty__title {
-      margin: 0;
-      font: var(--mat-sys-headline-medium);
-    }
-    .empty__body {
-      margin: 0;
-      font: var(--mat-sys-body-large);
-    }
-  `,
+  templateUrl: './scan-library-page.component.html',
+  styleUrl: './scan-library-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScanLibraryPageComponent {
@@ -193,11 +72,6 @@ export class ScanLibraryPageComponent {
   protected async exportScan(scanId: string): Promise<void> {
     const [scan] = await this.service.getScans([scanId]);
     if (!scan) return;
-    const url = URL.createObjectURL(new Blob([scanToCsv(scan)], { type: 'text/csv' }));
-    const a = this.document.createElement('a');
-    a.href = url;
-    a.download = `${scan.wellId.replace(/\s+/g, '')}_${scan.datetime}.csv`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadText(this.document, scanToCsv(scan), scanCsvFileName(scan));
   }
 }

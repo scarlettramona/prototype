@@ -99,7 +99,7 @@ export interface LegendSwatch {
       );
     }
     .name--bold {
-      font-weight: 700;
+      font-weight: var(--app-font-weight-bold);
     }
     .name--primary {
       color: var(--mat-sys-primary);

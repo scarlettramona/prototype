@@ -83,7 +83,7 @@ Don't polish it.
 ## Acceptance
 
 - [ ] Template report delivered; `CLAUDE.md` written
-- [ ] Builds, lints and serves cleanly
+- [ ] Builds and serves cleanly (`npm run verify`; there is no linter)
 - [ ] Theme registered from tokens; palette, dashes, amber and QI symbols exported from one module
 - [ ] CSVs parse; the real 212 readings and 513 points appear unchanged in the generated data
 - [ ] Generator is deterministic (unit test) and produces 40 sensors and 8 scans with the analysis-state spread

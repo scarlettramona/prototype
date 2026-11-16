@@ -48,6 +48,12 @@ export function formatDate(ts: number): string {
   return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`;
 }
 
+/** `YYYY-MM-DD`, the value of a native date input. */
+export function formatIsoDate(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 /** `MM/DD/YYYY h:mm AM`, as the designs show date-times. */
 export function formatDateTime(ts: number): string {
   const d = new Date(ts);

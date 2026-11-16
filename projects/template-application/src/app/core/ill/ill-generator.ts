@@ -1,3 +1,4 @@
+import { round } from '../math/stats';
 import { DAY_MS, parseUsDate } from '../mock-data/dates';
 import type { MockDataConfig } from '../mock-data/mock-data.config';
 import { Rng } from '../mock-data/random';
@@ -124,7 +125,7 @@ export function deriveProfile(real: readonly ScanPoint[], rng: Rng, config: Mock
     const shift = p.depthIn > 300 ? dropShift : riseShift;
     const level = p.counts * gain + offset * Math.min(1, p.counts / 100);
     const counts = Math.max(0, level + rng.normal() * ill.noise * Math.sqrt(Math.max(p.counts, 1)));
-    return { depthIn: round3(p.depthIn + shift), counts: round3(counts) };
+    return { depthIn: round(p.depthIn + shift, 3), counts: round(counts, 3) };
   });
 }
 
@@ -137,7 +138,7 @@ function buildAnalysis(state: StoredAnalysisState, points: ScanPoint[], datetime
   if (state === 'none') return {};
 
   const parameters = defaultParameters();
-  parameters.miscellaneous.markerDepth = round3(418.8 + rng.range(-1.5, 1.5));
+  parameters.miscellaneous.markerDepth = round(418.8 + rng.range(-1.5, 1.5), 3);
   const savedAt = datetime + rng.int(1, 20) * DAY_MS;
   return { saved: { parameters, results: analyse(points, parameters, datetime), savedAt, savedBy } };
 }
@@ -152,6 +153,3 @@ function pickState(rng: Rng, config: MockDataConfig): StoredAnalysisState {
   return 'saved';
 }
 
-function round3(value: number): number {
-  return Math.round(value * 1000) / 1000;
-}

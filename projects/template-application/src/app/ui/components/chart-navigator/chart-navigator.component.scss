@@ -1,0 +1,20 @@
+:host {
+  position: relative;
+  display: block;
+  height: 52px;
+}
+.nav {
+  height: 100%;
+}
+.bubble {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  padding: 0 var(--spacing-60);
+  border-radius: var(--mat-sys-corner-full);
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+  font: var(--mat-sys-label-small);
+  white-space: nowrap;
+  pointer-events: none;
+}

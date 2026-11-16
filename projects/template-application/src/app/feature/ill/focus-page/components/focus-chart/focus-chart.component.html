@@ -1,0 +1,58 @@
+<app-chart-card class="card" [showNavigator]="true" [resetDisabled]="store.atFullRange()" (reset)="store.setWindow(null)">
+  <div chartToolbar class="toolbar">
+    <h2 class="title">
+      @if (store.focused(); as scan) {
+        <span class="dot" [style.background]="color(scan.colorIndex)"></span>
+        {{ label(scan.datetime) }}
+        @if (scan.reference) {
+          <span class="app-tag">Reference</span>
+        }
+      } @else {
+        All scans
+      }
+    </h2>
+    <div class="actions">
+      <button mat-button type="button" cdkOverlayOrigin #legendOrigin="cdkOverlayOrigin" (click)="store.legendOpen.set(true)">Open legend</button>
+      <mat-slide-toggle class="fit-y" labelPosition="before" hideIcon [checked]="store.fitY()" (change)="store.fitY.set($event.checked)">
+        Fit Y
+      </mat-slide-toggle>
+      <span class="app-divider-vertical"></span>
+      <button mat-button type="button" (click)="exportImage()">Export graph</button>
+    </div>
+  </div>
+
+  <ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="legendOrigin"
+    [cdkConnectedOverlayOpen]="store.legendOpen()"
+    [cdkConnectedOverlayPositions]="positions"
+    [cdkConnectedOverlayHasBackdrop]="true"
+    cdkConnectedOverlayBackdropClass="app-popover-backdrop"
+    (backdropClick)="store.legendOpen.set(false)"
+    (overlayKeydown)="onKey($event)"
+  >
+    <app-scans-legend class="app-popover legend" cdkTrapFocus cdkTrapFocusAutoCapture />
+  </ng-template>
+
+  <div
+    class="chart"
+    echarts
+    [options]="options()"
+    [merge]="windowMerge()"
+    [theme]="chartTheme.theme()"
+    [loading]="store.loading() || store.busy()"
+    [loadingOpts]="loadingOpts()"
+    (chartInit)="onChartInit($event)"
+    (chartDataZoom)="onZoom($event)"
+  ></div>
+
+  <app-chart-navigator
+    chartNavigator
+    [series]="navigatorSeries()"
+    [xMin]="min"
+    [xMax]="max"
+    [inverse]="true"
+    [window]="store.window()"
+    (windowChange)="store.setWindow($event)"
+  />
+</app-chart-card>

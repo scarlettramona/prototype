@@ -195,11 +195,6 @@ export function fieldId(field: Pick<ParamField, 'group' | 'key'>): string {
   return `${field.group}.${field.key}`;
 }
 
-export function groupEdited(edited: ReadonlySet<string>, group: ParamGroup): boolean {
-  for (const id of edited) if (id.startsWith(group + '.')) return true;
-  return false;
-}
-
 // ── Chart ───────────────────────────────────────────────────────────────────
 
 /** The counts at the depth closest to `depth`. Points are in descending depth, as exported. */

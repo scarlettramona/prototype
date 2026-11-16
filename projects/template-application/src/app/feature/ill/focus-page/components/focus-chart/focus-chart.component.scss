@@ -1,0 +1,42 @@
+:host {
+  display: block;
+  min-height: 0;
+}
+.card {
+  height: 100%;
+  padding: var(--spacing-240);
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+.toolbar,
+.actions,
+.title {
+  display: flex;
+  align-items: center;
+}
+.toolbar {
+  justify-content: space-between;
+  width: 100%;
+}
+.actions {
+  gap: var(--spacing-160);
+  align-self: stretch;
+}
+.title {
+  gap: var(--spacing-80);
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+  color: var(--mat-sys-on-surface);
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.chart {
+  position: absolute;
+  inset: 0;
+}
+.legend {
+  gap: 0;
+  padding: var(--spacing-80) 0;
+}

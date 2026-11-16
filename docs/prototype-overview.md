@@ -95,7 +95,7 @@ Each phase brief lists only its own frames.
 Before finishing a phase:
 1. Update **What already exists** below: what you built, file paths, public inputs/outputs, and any decision you had to make.
 2. Update `CLAUDE.md` if you added a convention.
-3. Make sure the app builds and lints.
+3. Make sure `npm run verify` passes (tests + build; there is no linter).
 
 ## What already exists
 
@@ -119,7 +119,7 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 | `/vnv` | `feature/vnv/vnv-page/` `VnvPageComponent` | empty stub for Phase 3 |
 | `/ill` | `feature/ill/scan-library-page/` `ScanLibraryPageComponent` | empty stub for Phase 6 |
 | `/ill/focus/:wellId` | `feature/ill/focus-page/` `FocusPageComponent` | empty stub for Phase 7 |
-| `/dev/data` | `feature/dev/data-proof/` | dev builds only (`canMatch: isDevMode`). Proof charts; delete when no longer useful |
+| `/dev/gallery` | `feature/dev/component-gallery/` | dev builds only; left out of the production bundle (added in Phase 2) |
 
 **Charts** (`core/charts/`)
 - `echarts.ts`: registered parts. Brush and markArea were added in Phase 1; dataZoom covers the slider and inside zoom.
@@ -180,7 +180,7 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 - Mutations stay in memory until reload.
 
 **State switcher** (`core/prototype-state/`)
-- `prototype-states.ts` defines `PROTOTYPE_STATES`: 20 fixtures, which are the brief's states plus `vnv-load-form-search`, `ill-library-grouped`, `ill-library-saved`, `ill-library-grouped-expanded` and `ill-scan-zoomed`. Each fixture notes the Figma frame it reproduces.
+- `prototype-states.ts` defines `PROTOTYPE_STATES`: 22 fixtures, which are the brief's states plus `vnv-load-form-search`, `ill-library-grouped`, `ill-library-saved`, `ill-library-grouped-expanded` and `ill-scan-zoomed`. Each fixture notes the Figma frame it reproduces.
 - `resolve-prototype-state.ts` turns a fixture into concrete ids: loaded sensors, selected reading ids, library query and selection, expanded scan, focus-well scan ids, the active tab (picked by analysis state), and the zoom.
 - `PrototypeStateService` (started in `app.config.ts`) watches `?state=`, resolves it, and moves to the fixture's route. **Screens read `state()`**: `ResolvedVnvState | ResolvedIllLibraryState | ResolvedIllFocusState | null`, where `null` means start fresh.
 - `ui/patterns/state-menu/` is the dev-only header menu that lists every state.
@@ -586,3 +586,31 @@ These replace the earlier decisions marked *Superseded* above.
 **Shared:** the `.app-tag` style (`styles/components/_tag.scss`) and a `tag` input on `app-legend-row`.
 
 **Copy that's mine (not in Figma), to confirm:** "Reference" (tag) and "Set as reference scan". "This scan" and "Reference scan" come from Figma 1:2094.
+
+### Clean-up pass (2026-11-16)
+
+No design or copy changes. `npm run verify` passes and every `?state=` loads without console errors.
+
+**Dependencies**
+- Angular 21.2.26, Material / CDK 21.2.14, CLI / build 21.2.30, Vitest 4.1.12. `npm audit` went from 53 advisories to 16 moderate, none in runtime packages; the 16 are inside the Angular CLI's own packaging chain and need Angular 22.
+- Removed `@angular/animations` and `@angular/aria` (never imported). Added `@types/node`, which the spec helpers in `core/mock-data/testing/` need.
+- **Regenerate the lockfile with npm 11** (`npx npm@11 install --package-lock-only`). npm 10's resolver crashes on this dependency tree. `npm ci` works with either.
+
+**Shared helpers** (replacing per-component copies)
+- `core/download/download.ts`: `downloadText(document, text, fileName)` and `downloadUrl(document, href, fileName)` for every CSV and PNG export.
+- `core/charts/chart-zoom.ts`: `ChartWindow`, `ZoomEvent`, `zoomEventWindow()` (a `datazoom` event → axis values), `onWheelZoom()` (⌘ + wheel) and `oncePerFrame()`. Both charts and the navigator use them; `NavigatorWindow` is now an alias of `ChartWindow`.
+- `core/math/stats.ts`: `mean`, `std`, `round(value, digits)` for the generators and the mock analysis.
+- `core/mock-data/dates.ts` gained `formatIsoDate`; the date range field uses the shared `startOfDay`.
+- `feature/ill/library-model.ts` gained `scanCsvFileName`.
+
+**Fixes**
+- **⌘ + wheel zoom now works** in the VNV chart and the focus chart. ECharts stops wheel events from bubbling, so the old template `(wheel)` handler never ran; `onWheelZoom()` listens in the capture phase.
+- **Focus view:** the chart / Scan details row is `min-height: 765px` instead of a fixed height, so the card grows when its action buttons wrap instead of letting Save analysis hang over the edge.
+- `FooterComponent` is `OnPush`. Bold labels use `--app-font-weight-bold` (`styles/base/_typography.scss`).
+
+**Removed**
+- `/dev/data` and `feature/dev/data-proof/`; `groupEdited` (only its spec used it).
+- The dev routes are left out of the production bundle (`ngDevMode` in `app.routes.ts`), not just blocked at runtime.
+
+**Structure**
+- Components over about 150 lines moved their template and styles into `.html` / `.scss` files: `vnv-chart`, `vnv-page`, `focus-page`, `focus-chart`, `focus-tab-bar`, `scan-details`, `scan-library-page`, `load-scans-form`, `chart-navigator`, `date-range-field`, `vnv-form`. Small components keep them inline.

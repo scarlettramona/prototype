@@ -1,0 +1,40 @@
+:host {
+  display: inline-block;
+}
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 260px;
+  height: 52px;
+  padding: 0 0 0 var(--spacing-160);
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: var(--mat-sys-corner-extra-small);
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-large);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--mat-sys-on-surface);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -1px;
+  }
+}
+.arrow {
+  width: 44px;
+}
+.fields {
+  display: flex;
+  gap: var(--spacing-120);
+}
+.fields .app-field {
+  width: 216px;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-160);
+}

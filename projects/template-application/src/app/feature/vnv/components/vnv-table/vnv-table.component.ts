@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { downloadText } from '../../../../core/download/download';
 import { formatDateTime } from '../../../../core/mock-data/dates';
 import { ChartCardComponent } from '../../../../ui/components/chart-card/chart-card.component';
 import { QualityFilterComponent } from '../../../../ui/components/quality-filter/quality-filter.component';
@@ -97,11 +98,6 @@ export class VnvTableComponent {
 
   protected exportCsv(): void {
     const readings = this.rows().flatMap((r) => (r.kind === 'reading' ? [r.reading] : []));
-    const url = URL.createObjectURL(new Blob([readingsToCsv(readings)], { type: 'text/csv' }));
-    const a = this.document.createElement('a');
-    a.href = url;
-    a.download = `${this.store.location()?.id ?? 'vnv'}_table.csv`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadText(this.document, readingsToCsv(readings), `${this.store.location()?.id ?? 'vnv'}_table.csv`);
   }
 }

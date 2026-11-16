@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { NgTemplateOutlet } from '@angular/common';
-import { formatDate } from '../../../../../core/mock-data/dates';
+import { formatDate, formatIsoDate } from '../../../../../core/mock-data/dates';
 import {
   fieldId,
   formatParam,
@@ -60,8 +60,7 @@ export class AnalysisParametersComponent {
   protected isoDate(field: ParamField): string {
     const d = this.store.draft();
     if (!d) return '';
-    const t = new Date(paramValue(d, field) as number);
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+    return formatIsoDate(paramValue(d, field) as number);
   }
 
   protected savedHint(field: ParamField): string {

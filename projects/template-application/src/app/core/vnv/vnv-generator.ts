@@ -1,3 +1,4 @@
+import { mean, round, std } from '../math/stats';
 import { addDays, DAY_MS, eachDay, endOfDay, parseUsDate } from '../mock-data/dates';
 import type { MockDataConfig } from '../mock-data/mock-data.config';
 import { Rng } from '../mock-data/random';
@@ -265,16 +266,3 @@ function groupBy<T>(items: readonly T[], key: (item: T) => string): Map<string, 
   return map;
 }
 
-function mean(values: number[]): number {
-  return values.reduce((a, b) => a + b, 0) / values.length;
-}
-
-function std(values: number[]): number {
-  const m = mean(values);
-  return Math.sqrt(values.reduce((a, b) => a + (b - m) ** 2, 0) / values.length);
-}
-
-function round(value: number, digits: number): number {
-  const f = 10 ** digits;
-  return Math.round(value * f) / f;
-}

@@ -1,0 +1,67 @@
+<app-vnv-page-header
+  [class.header--centered]="!store.location()"
+  [loaded]="store.headerSummary()"
+  [range]="store.range()"
+  (rangeChange)="store.range.set($event)"
+  (rangeApplied)="store.reloadRange($event)"
+  [showAllData]="store.showAllData()"
+  (showAllDataChange)="store.showAllData.set($event)"
+  [view]="store.view()"
+  (viewChange)="store.view.set($event)"
+  (loadData)="openLoadForm()"
+/>
+
+@if (store.location()) {
+  <div class="body" [class.body--docked]="docked()">
+    @if (store.view() === 'chart') {
+      <app-vnv-chart class="chart" />
+    } @else {
+      <app-vnv-table class="chart" />
+    }
+    @if (docked()) {
+      <app-side-panel class="panel">
+        <app-vnv-form
+          layout="docked"
+          [count]="store.selectedReadings().length"
+          [initial]="store.formInitial()"
+          (apply)="store.applyReview($event)"
+          (cancel)="store.clearSelection()"
+          (close)="store.clearSelection()"
+        />
+      </app-side-panel>
+    } @else {
+      <app-vnv-reference-panel class="panel" />
+    }
+  </div>
+} @else if (store.farm(); as farm) {
+  <!-- First visit: the form is the page. -->
+  <div class="first-visit">
+    <app-load-sensors-form
+      mode="page"
+      [farm]="farm"
+      [sensors]="store.sensorIndex()"
+      [initial]="pageInit()"
+      [range]="store.range()"
+      (rangeChange)="store.range.set($event)"
+      (load)="onLoad($event)"
+    />
+  </div>
+} @else {
+  <!-- The sensor picker is still loading. -->
+  <div class="first-visit"><mat-progress-bar mode="indeterminate" /></div>
+}
+
+<!-- Load data: the Load sensors form in a large centred dialog. -->
+<ng-template #loadDialog>
+  <app-load-sensors-form
+    mode="dialog"
+    [farm]="store.farm()!"
+    [sensors]="store.sensorIndex()"
+    [loadedSensorIds]="store.loadedSensorIds()"
+    [initial]="popoverInit()"
+    [range]="store.range()"
+    (rangeChange)="store.range.set($event)"
+    (load)="onLoad($event)"
+    (cancel)="cancelLoadForm()"
+  />
+</ng-template>

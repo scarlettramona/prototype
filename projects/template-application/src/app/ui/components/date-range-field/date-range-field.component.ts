@@ -6,7 +6,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { formatDate } from '../../../core/mock-data/dates';
+import { formatDate, startOfDay } from '../../../core/mock-data/dates';
 
 export interface DateRangeValue {
   /** Local midnight, ms. */
@@ -35,104 +35,8 @@ let nextId = 0;
     MatIconModule,
     MatInputModule,
   ],
-  template: `
-    <button
-      type="button"
-      class="trigger"
-      cdkOverlayOrigin
-      #origin="cdkOverlayOrigin"
-      aria-haspopup="dialog"
-      [attr.aria-expanded]="open()"
-      [attr.aria-label]="ariaLabel() + ': ' + label()"
-      (click)="show()"
-    >
-      <span class="text">{{ label() }}</span>
-      <mat-icon class="arrow">arrow_drop_down</mat-icon>
-    </button>
-
-    <ng-template
-      cdkConnectedOverlay
-      [cdkConnectedOverlayOrigin]="origin"
-      [cdkConnectedOverlayOpen]="open()"
-      [cdkConnectedOverlayPositions]="positions"
-      [cdkConnectedOverlayHasBackdrop]="true"
-      cdkConnectedOverlayBackdropClass="app-popover-backdrop"
-      (backdropClick)="close()"
-      (detach)="close()"
-      (overlayKeydown)="onKeydown($event)"
-    >
-      <div class="app-popover popover" role="dialog" [attr.aria-label]="ariaLabel()" cdkTrapFocus cdkTrapFocusAutoCapture>
-        <div class="fields">
-          <div class="app-field">
-            <label class="app-field__label" [for]="fieldId + '-start'">Start date</label>
-            <mat-form-field subscriptSizing="dynamic">
-              <input matInput [id]="fieldId + '-start'" [matDatepicker]="startPicker" [value]="draftStart()" (dateChange)="draftStart.set($event.value)" />
-              <mat-datepicker-toggle matIconSuffix [for]="startPicker">
-                <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
-              </mat-datepicker-toggle>
-              <mat-datepicker #startPicker />
-            </mat-form-field>
-          </div>
-          <div class="app-field">
-            <label class="app-field__label" [for]="fieldId + '-end'">End date</label>
-            <mat-form-field subscriptSizing="dynamic">
-              <input matInput [id]="fieldId + '-end'" [matDatepicker]="endPicker" [value]="draftEnd()" [min]="draftStart()" (dateChange)="draftEnd.set($event.value)" />
-              <mat-datepicker-toggle matIconSuffix [for]="endPicker">
-                <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
-              </mat-datepicker-toggle>
-              <mat-datepicker #endPicker />
-            </mat-form-field>
-          </div>
-        </div>
-        <div class="actions">
-          <button mat-button type="button" (click)="close()">Cancel</button>
-          <button mat-flat-button type="button" [disabled]="!valid()" (click)="apply()">Apply</button>
-        </div>
-      </div>
-    </ng-template>
-  `,
-  styles: `
-    :host {
-      display: inline-block;
-    }
-    .trigger {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 260px;
-      height: 52px;
-      padding: 0 0 0 var(--spacing-160);
-      border: 1px solid var(--mat-sys-outline);
-      border-radius: var(--mat-sys-corner-extra-small);
-      background: transparent;
-      color: var(--mat-sys-on-surface-variant);
-      font: var(--mat-sys-body-large);
-      cursor: pointer;
-
-      &:hover {
-        border-color: var(--mat-sys-on-surface);
-      }
-      &:focus-visible {
-        outline: 2px solid var(--mat-sys-primary);
-        outline-offset: -1px;
-      }
-    }
-    .arrow {
-      width: 44px;
-    }
-    .fields {
-      display: flex;
-      gap: var(--spacing-120);
-    }
-    .fields .app-field {
-      width: 216px;
-    }
-    .actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: var(--spacing-160);
-    }
-  `,
+  templateUrl: './date-range-field.component.html',
+  styleUrl: './date-range-field.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DateRangeFieldComponent {
@@ -170,7 +74,7 @@ export class DateRangeFieldComponent {
 
   protected apply(): void {
     if (!this.valid()) return;
-    const value = { start: startOfDay(this.draftStart()!), end: startOfDay(this.draftEnd()!) };
+    const value = { start: startOfDay(this.draftStart()!.getTime()), end: startOfDay(this.draftEnd()!.getTime()) };
     this.range.set(value);
     this.applied.emit(value);
     this.close();
@@ -182,8 +86,4 @@ export class DateRangeFieldComponent {
       this.close();
     }
   }
-}
-
-function startOfDay(d: Date): number {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }

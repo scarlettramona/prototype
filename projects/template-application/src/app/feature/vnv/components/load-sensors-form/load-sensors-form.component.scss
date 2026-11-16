@@ -220,7 +220,7 @@
 }
 
 .hit {
-  font-weight: 700;
+  font-weight: var(--app-font-weight-bold);
   color: var(--mat-sys-primary);
 }
 

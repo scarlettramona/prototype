@@ -1,0 +1,63 @@
+<div class="tabs" role="tablist" aria-label="Scans">
+  <button
+    type="button"
+    role="tab"
+    class="tab tab--all"
+    [class.tab--active]="store.active() === all"
+    [attr.aria-selected]="store.active() === all"
+    (click)="store.select(all)"
+  >
+    All scans
+  </button>
+
+  <button mat-icon-button type="button" class="arrow" aria-label="Scroll tabs left" [disabled]="!canLeft()" (click)="scrollBy(-1)">
+    <mat-icon>chevron_left</mat-icon>
+  </button>
+
+  <div class="scroller" #scroller (scroll)="syncArrows()">
+    @for (scan of store.openScans(); track scan.id) {
+      @let active = store.active() === scan.id;
+      @let dirty = store.dirty(scan.id);
+      <div class="tab" [class.tab--active]="active" [style.--tab-color]="color(scan.colorIndex)" [attr.data-tab]="scan.id">
+        <button type="button" role="tab" class="tab__main" [attr.aria-selected]="active" (click)="store.select(scan.id)">
+          <span class="dot"></span>
+          {{ label(scan.datetime) }}
+          @if (scan.reference) {
+            <span class="app-tag">Reference</span>
+          }
+        </button>
+        <!-- The reference scan is always open: no close ×. -->
+        @if (dirty && scan.reference) {
+          <span class="tab__close" aria-label="Unsaved analysis"><span class="unsaved-dot"></span></span>
+        } @else if (dirty) {
+          <button type="button" class="tab__close" aria-label="Close scan (unsaved analysis)" (click)="close.emit(scan.id)">
+            <span class="unsaved-dot"></span>
+          </button>
+        } @else if (active && !scan.reference) {
+          <button type="button" class="tab__close" aria-label="Close scan" (click)="close.emit(scan.id)">
+            <mat-icon>close_small</mat-icon>
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <button mat-icon-button type="button" class="arrow" aria-label="Scroll tabs right" [disabled]="!canRight()" (click)="scrollBy(1)">
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+</div>
+
+<button mat-button type="button" class="add" [matMenuTriggerFor]="addMenu" [disabled]="store.closedScans().length === 0">
+  <mat-icon>add</mat-icon>
+  Add scans
+</button>
+<mat-menu #addMenu="matMenu" xPosition="before">
+  @for (scan of store.closedScans(); track scan.id) {
+    <button mat-menu-item type="button" (click)="store.open(scan.id)">
+      <span class="menu-item">
+        <span class="dot" [style.--tab-color]="color(scan.colorIndex)"></span>
+        {{ label(scan.datetime) }}
+      </span>
+    </button>
+  }
+</mat-menu>

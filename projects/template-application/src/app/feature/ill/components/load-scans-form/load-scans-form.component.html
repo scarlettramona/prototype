@@ -1,0 +1,70 @@
+<div class="head">
+  <h2 class="title">Load scans</h2>
+  <p class="line">Find what you’re looking for or look what you’re finding for</p>
+</div>
+
+<div class="query">
+  <div class="dates">
+    <div class="app-field field">
+      <label class="app-field__label" [for]="fieldId + '-start'">Start date</label>
+      <mat-form-field subscriptSizing="dynamic">
+        <input matInput [id]="fieldId + '-start'" [matDatepicker]="startPicker" [value]="date(draft().start)" (dateChange)="setStart($event.value)" />
+        <mat-datepicker-toggle matIconSuffix [for]="startPicker"><mat-icon matDatepickerToggleIcon>calendar_today</mat-icon></mat-datepicker-toggle>
+        <mat-datepicker #startPicker />
+      </mat-form-field>
+    </div>
+    <div class="app-field field">
+      <label class="app-field__label" [for]="fieldId + '-end'">End date</label>
+      <mat-form-field subscriptSizing="dynamic">
+        <input matInput [id]="fieldId + '-end'" [matDatepicker]="endPicker" [value]="date(draft().end)" (dateChange)="setEnd($event.value)" />
+        <mat-datepicker-toggle matIconSuffix [for]="endPicker"><mat-icon matDatepickerToggleIcon>calendar_today</mat-icon></mat-datepicker-toggle>
+        <mat-datepicker #endPicker />
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="app-field field">
+    <span class="app-field__label" [id]="fieldId + '-well'">Well</span>
+    <mat-form-field>
+      <mat-select multiple placeholder="All wells" [aria-labelledby]="fieldId + '-well'" [value]="draft().wellIds" (valueChange)="patch({ wellIds: $event })">
+        @for (id of wells(); track id) {
+          <mat-option [value]="id">{{ label(id) }}</mat-option>
+        }
+      </mat-select>
+      @if (draft().wellIds.length) {
+        <button matIconSuffix mat-icon-button type="button" aria-label="Clear wells" (click)="$event.stopPropagation(); patch({ wellIds: [] })">
+          <mat-icon>cancel</mat-icon>
+        </button>
+      }
+      <mat-hint>* denotes a recent scan</mat-hint>
+    </mat-form-field>
+  </div>
+</div>
+
+<div class="filters">
+  <div class="filters__head">
+    <span class="filters__title">Additional filters</span>
+    <span class="line">Maybe these will help you out. Maybe they won’t. It’s not my business.</span>
+  </div>
+  <div class="toggle">
+    <span class="toggle__label" id="qi-label">Quality indicator</span>
+    <mat-button-toggle-group class="toggles" aria-labelledby="qi-label" [value]="draft().qi" (change)="patch({ qi: $event.value })">
+      @for (q of qiOptions; track q) {
+        <mat-button-toggle [value]="q">{{ q }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </div>
+  <div class="toggle">
+    <span class="toggle__label" id="analysis-label">Analysis</span>
+    <mat-button-toggle-group class="toggles" aria-labelledby="analysis-label" [value]="draft().analysis" (change)="patch({ analysis: $event.value })">
+      @for (a of analysisOptions; track a) {
+        <mat-button-toggle [value]="a">{{ a }}</mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  </div>
+</div>
+
+<div class="actions">
+  <button mat-flat-button type="button" (click)="load.emit(draft())">Load scans</button>
+  <button mat-button type="button" (click)="reset.emit()">Reset</button>
+</div>

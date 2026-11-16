@@ -82,6 +82,8 @@ public/                 static assets, served from the site root (mock CSVs go i
 | `npm test` | Unit tests for both projects |
 | `npm run verify` | Tests + build. **Run before finishing a phase.** |
 
+**Lockfile:** regenerate it with npm 11 (`npx npm@11 install --package-lock-only`); npm 10's resolver crashes on this tree. `npm ci` works with either.
+
 There is **no linter**; ESLint and Prettier were removed from the template. Keep code formatted to match the surrounding files.
 
 ## UI conventions
@@ -99,6 +101,10 @@ There is **no linter**; ESLint and Prettier were removed from the template. Keep
 - Check shared components in `/dev/gallery`, and add new shared pieces there with their states.
 - **Focus rings are global** (`_focus.scss`): 2 px primary on every control. Don't add per-component `:focus-visible` outlines unless the ring has to sit inset.
 - **Loading:** non-chart surfaces show `<mat-progress-bar mode="indeterminate" class="app-loading-bar" />` along their top edge (the host needs `position: relative`). Charts use the ECharts `[loading]` mask. Cover every mock call.
+- **Downloads** (CSV, PNG) go through `core/download/download.ts`. Don't build `<a download>` elements in components.
+- **Chart zoom plumbing** (datazoom events, ⌘ + wheel, one update per frame) comes from `core/charts/chart-zoom.ts`. ECharts stops wheel events from bubbling, so a template `(wheel)` binding on a chart never fires; use `onWheelZoom()`.
+- **Templates and styles:** inline for small components; move them to `.html` / `.scss` files once the component file passes about 150 lines.
+- **Bold text** uses `font-weight: var(--app-font-weight-bold)`, not a literal weight.
 - **Toggles, switches and tables are styled globally** (`_mat-button-toggle.scss`, `_mat-slide-toggle.scss`, `_data-table.scss`). Don't repeat their overrides per component.
 
 ## Prototype mechanics
