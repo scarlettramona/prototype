@@ -24,11 +24,10 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       align-items: center;
       gap: var(--spacing-240);
       padding: var(--spacing-240) var(--spacing-240) 0;
-      min-height: 52px;
     }
     .title {
       margin: 0;
-      font: var(--mat-sys-headline-medium);
+      font: var(--mat-sys-headline-small); /* matches the Scan library title */
       color: var(--mat-sys-on-surface);
       white-space: nowrap;
     }
