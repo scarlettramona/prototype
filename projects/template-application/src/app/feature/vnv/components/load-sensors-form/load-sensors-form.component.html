@@ -38,19 +38,29 @@
       <input matInput placeholder="Search sensors" aria-label="Search sensors" [value]="search()" (input)="search.set($any($event.target).value)" />
     </mat-form-field>
     <div class="chips">
-      <button mat-button type="button" [matMenuTriggerFor]="filterMenuRef" [disabled]="!filterMenu().length">
+      <button mat-button type="button" [matMenuTriggerFor]="filterMenuRef">
         <mat-icon>add</mat-icon>
         Add filters
       </button>
+      <!-- Add filters → Equipment / Tank / Component type → values. -->
       <mat-menu #filterMenuRef="matMenu">
-        @for (t of filterMenu(); track t) {
-          <button mat-menu-item type="button" (click)="addFilter(t)">{{ t }}</button>
+        @for (m of filterMenus(); track m.kind) {
+          <button mat-menu-item type="button" [matMenuTriggerFor]="filterValuesRef" [matMenuTriggerData]="{ menu: m }" [disabled]="!m.values.length">
+            {{ m.label }}
+          </button>
         }
       </mat-menu>
-      @for (f of filters(); track f) {
+      <mat-menu #filterValuesRef="matMenu">
+        <ng-template matMenuContent let-menu="menu">
+          @for (v of menu.values; track v) {
+            <button mat-menu-item type="button" (click)="addFilter({ kind: menu.kind, value: v })">{{ v }}</button>
+          }
+        </ng-template>
+      </mat-menu>
+      @for (f of filters(); track f.kind + f.value) {
         <span class="chip">
-          {{ f }}
-          <button type="button" class="chip__remove" [attr.aria-label]="'Remove ' + f" (click)="removeFilter(f)">
+          {{ f.value }}
+          <button type="button" class="chip__remove" [attr.aria-label]="'Remove ' + kindLabel(f) + ' ' + f.value" (click)="removeFilter(f)">
             <mat-icon>cancel</mat-icon>
           </button>
         </span>
@@ -60,31 +70,49 @@
 </div>
 
 <div class="columns">
+  <!-- Equipment → tank → component. The number on the right of every row is how many of its sensors have data in the date range. -->
   <div class="tree" role="tree" aria-label="Locations">
     @for (g of tree(); track g.id) {
-      <button type="button" class="tree__row" role="treeitem" [attr.aria-expanded]="isExpanded(g.id)" (click)="toggleGroup(g.id)">
+      <button type="button" class="tree__row" role="treeitem" aria-level="1" [attr.aria-expanded]="isExpanded(g.id)" (click)="toggleNode(g.id)">
         <mat-icon class="tree__chevron">{{ isExpanded(g.id) ? 'keyboard_arrow_down' : 'chevron_right' }}</mat-icon>
-        <span>{{ g.id }}</span>
+        <span class="tree__label">{{ g.id }}</span>
+        <span class="tree__count" [attr.aria-label]="g.dataCount + ' sensors with data'">{{ g.dataCount }}</span>
       </button>
       @if (isExpanded(g.id)) {
-        @for (l of g.locations; track l.id) {
-          <button
-            type="button"
-            class="tree__row tree__row--leaf"
-            role="treeitem"
-            [class.tree__row--active]="l.id === activeLocationId() && !searching()"
-            [attr.aria-current]="l.id === activeLocationId() ? 'true' : null"
-            (click)="openLocation(l.id); searching() && showInTree(l.groupId, l.id)"
-          >
-            <span>{{ l.id }}</span>
-            @if (l.selectedCount) {
-              <span class="tree__count">{{ l.selectedCount }}</span>
-            }
+        @for (t of g.tanks; track t.id) {
+          <button type="button" class="tree__row tree__row--tank" role="treeitem" aria-level="2" [attr.aria-expanded]="isExpanded(t.id)" (click)="toggleNode(t.id)">
+            <mat-icon class="tree__chevron">{{ isExpanded(t.id) ? 'keyboard_arrow_down' : 'chevron_right' }}</mat-icon>
+            <span class="tree__label">{{ t.id }}</span>
+            <span class="tree__count" [attr.aria-label]="t.dataCount + ' sensors with data'">{{ t.dataCount }}</span>
           </button>
+          @if (isExpanded(t.id)) {
+            @for (l of t.locations; track l.id) {
+              <ng-container *ngTemplateOutlet="leaf; context: { $implicit: l, level: 3 }" />
+            }
+          }
+        }
+        @for (l of g.locations; track l.id) {
+          <ng-container *ngTemplateOutlet="leaf; context: { $implicit: l, level: 2 }" />
         }
       }
     }
   </div>
+
+  <ng-template #leaf let-l let-level="level">
+    <button
+      type="button"
+      class="tree__row tree__row--leaf"
+      [class.tree__row--direct]="level === 2"
+      role="treeitem"
+      [attr.aria-level]="level"
+      [class.tree__row--active]="l.id === activeLocationId() && !searching()"
+      [attr.aria-current]="l.id === activeLocationId() ? 'true' : null"
+      (click)="openLocation(l.id); searching() && showInTree(l.groupId, l.tankId, l.id)"
+    >
+      <span class="tree__label">{{ l.id }}</span>
+      <span class="tree__count" [attr.aria-label]="l.dataCount + ' sensors with data'">{{ l.dataCount }}</span>
+    </button>
+  </ng-template>
 
   <div class="list">
     @if (results(); as r) {
@@ -101,9 +129,15 @@
             [aria-label]="'Select ' + g.locationId + ' matches'"
             (change)="setAll(g.locationId, g.rows.filter(x => !x.noData).map(x => x.id), $event.checked)"
           />
-          <span class="parent__path">{{ g.groupId }} <mat-icon>chevron_right</mat-icon> {{ g.locationId }}</span>
+          <span class="parent__path">
+            {{ g.groupId }} <mat-icon>chevron_right</mat-icon>
+            @if (g.tankId) {
+              {{ g.tankId }} <mat-icon>chevron_right</mat-icon>
+            }
+            {{ g.locationId }}
+          </span>
           @if (!g.disabled) {
-            <button mat-button type="button" class="link" (click)="showInTree(g.groupId, g.locationId)">Show in tree</button>
+            <button mat-button type="button" class="link" (click)="showInTree(g.groupId, g.tankId, g.locationId)">Show in tree</button>
           }
         </div>
         @for (row of g.rows; track row.id) {

@@ -5,8 +5,9 @@ import type { DateRange, Sensor, VnvFarm, VnvLocation } from '../../../../core/v
 export { checkState, type CheckState };
 
 /**
- * Pure logic for the Load sensors form (Figma 1:11708…1:12068): name-token
- * filters, search, no-data, and the one-component-at-a-time selection.
+ * Pure logic for the Load sensors form (Figma 1:11708…1:12068): Equipment /
+ * Tank / Component type filters, search, sensors-with-data counts, no-data, and
+ * the one-component-at-a-time selection.
  */
 
 /** The selection: sensors of one location (one component at a time). */
@@ -17,32 +18,45 @@ export interface PickerSelection {
 
 export const EMPTY_SELECTION: PickerSelection = { locationId: null, ids: new Set() };
 
-/** Upper-case name tokens of a location id and a sensor id, split on '-'. */
-export function tokensOf(locationId: string, sensorId: string): Set<string> {
-  return new Set([...locationId.split('-'), ...sensorId.split('-')].map((t) => t.toUpperCase()));
+// ── Filters ─────────────────────────────────────────────────────────────────
+
+export type FilterKind = 'equipment' | 'tank' | 'type';
+
+/** One filter chip, e.g. Equipment WST or Component type TI. */
+export interface PickerFilter {
+  kind: FilterKind;
+  value: string;
 }
 
-/**
- * The Add filters menu: area codes and types from the location ids
- * (`241-AN-<AREA>-<tank>-<TYPE>`), e.g. TI, TMAC, WST, WSTA.
- */
-export function filterOptions(farm: VnvFarm): string[] {
-  const out = new Set<string>();
-  for (const g of farm.groups) {
-    for (const l of g.locations) {
-      const parts = l.id.split('-');
-      if (parts[2]) out.add(parts[2].toUpperCase());
-      if (parts.length > 4) out.add(parts[parts.length - 1].toUpperCase());
-    }
+/** The Add filters menu's submenus, in order. */
+export const FILTER_KINDS: readonly { kind: FilterKind; label: string }[] = [
+  { kind: 'equipment', label: 'Equipment' },
+  { kind: 'tank', label: 'Tank' },
+  { kind: 'type', label: 'Component type' },
+];
+
+/** Each submenu's values, from the components in the farm (sorted). */
+export function filterOptions(farm: VnvFarm): Record<FilterKind, string[]> {
+  const sets: Record<FilterKind, Set<string>> = { equipment: new Set(), tank: new Set(), type: new Set() };
+  for (const l of farm.groups.flatMap((g) => g.locations)) {
+    if (l.equipment) sets.equipment.add(l.equipment);
+    if (l.tank) sets.tank.add(l.tank);
+    sets.type.add(l.type);
   }
-  return [...out].sort();
+  const sorted = (s: Set<string>) => [...s].sort();
+  return { equipment: sorted(sets.equipment), tank: sorted(sets.tank), type: sorted(sets.type) };
 }
 
-/** Every chip must be one of the sensor's tokens (WST matches WST, not WSTA). */
-export function matchesFilters(locationId: string, sensorId: string, filters: readonly string[]): boolean {
-  if (filters.length === 0) return true;
-  const tokens = tokensOf(locationId, sensorId);
-  return filters.every((f) => tokens.has(f.toUpperCase()));
+export function sameFilter(a: PickerFilter, b: PickerFilter): boolean {
+  return a.kind === b.kind && a.value === b.value;
+}
+
+/** A component passes when, for every kind with chips, its value is one of them (OR within a kind, AND across kinds). */
+export function matchesFilters(location: VnvLocation, filters: readonly PickerFilter[]): boolean {
+  return FILTER_KINDS.every(({ kind }) => {
+    const values = filters.filter((f) => f.kind === kind).map((f) => f.value);
+    return values.length === 0 || values.includes(location[kind] ?? '');
+  });
 }
 
 export function matchesSearch(sensorId: string, query: string): boolean {
@@ -89,36 +103,70 @@ export function highlight(text: string, query: string): TextSegment[] {
 
 // ── Tree ────────────────────────────────────────────────────────────────────
 
+/** Every row shows how many of its sensors have data in the date range, on the right. */
 export interface TreeLocationVm {
   id: string;
   groupId: string;
-  selectedCount: number;
+  tankId: string | null;
+  dataCount: number;
+}
+
+export interface TreeTankVm {
+  id: string;
+  dataCount: number;
+  locations: TreeLocationVm[];
 }
 
 export interface TreeGroupVm {
   id: string;
+  dataCount: number;
+  tanks: TreeTankVm[];
+  /** Components directly under the group (no tank). */
   locations: TreeLocationVm[];
 }
 
-/** Groups → locations that have at least one sensor passing the filters (and search, when searching). */
+/**
+ * Equipment → tank → component, keeping the components that pass the filters
+ * (and, while searching, have a matching sensor). Empty tanks and groups drop out.
+ */
 export function buildTree(
   farm: VnvFarm,
-  filters: readonly string[],
+  sensorsById: ReadonlyMap<string, Sensor>,
+  filters: readonly PickerFilter[],
   query: string,
-  selection: PickerSelection,
+  range: DateRange,
 ): TreeGroupVm[] {
+  const node = (l: VnvLocation): TreeLocationVm | null => {
+    if (!matchesFilters(l, filters)) return null;
+    const ids = l.sensorIds.filter((id) => matchesSearch(id, query));
+    if (query.trim() && ids.length === 0) return null;
+    const dataCount = ids.filter((id) => {
+      const s = sensorsById.get(id);
+      return !!s && hasData(s, range);
+    }).length;
+    return { id: l.id, groupId: l.groupId, tankId: l.tankId, dataCount };
+  };
+  const sum = (rows: readonly { dataCount: number }[]) => rows.reduce((n, r) => n + r.dataCount, 0);
+
   return farm.groups
-    .map((g) => ({
-      id: g.id,
-      locations: g.locations
-        .filter((l) => l.sensorIds.some((id) => matchesFilters(l.id, id, filters) && matchesSearch(id, query)))
-        .map((l) => ({
-          id: l.id,
-          groupId: g.id,
-          selectedCount: selection.locationId === l.id ? selection.ids.size : 0,
-        })),
-    }))
-    .filter((g) => g.locations.length > 0);
+    .map((g) => {
+      const byId = new Map(g.locations.map((l) => [l.id, l]));
+      const tanks = g.tanks
+        .map((t) => {
+          const locations = t.locationIds.flatMap((id) => {
+            const vm = byId.has(id) ? node(byId.get(id)!) : null;
+            return vm ? [vm] : [];
+          });
+          return { id: t.id, dataCount: sum(locations), locations };
+        })
+        .filter((t) => t.locations.length > 0);
+      const locations = g.locations.filter((l) => l.tankId === null).flatMap((l) => {
+        const vm = node(l);
+        return vm ? [vm] : [];
+      });
+      return { id: g.id, dataCount: sum(tanks) + sum(locations), tanks, locations };
+    })
+    .filter((g) => g.tanks.length > 0 || g.locations.length > 0);
 }
 
 // ── List (browse) ───────────────────────────────────────────────────────────
@@ -144,13 +192,12 @@ export interface SensorListVm {
 export function buildList(
   location: VnvLocation,
   sensorsById: ReadonlyMap<string, Sensor>,
-  filters: readonly string[],
   range: DateRange,
   loaded: ReadonlySet<string>,
   selection: PickerSelection,
   showNoData: boolean,
 ): SensorListVm {
-  const ids = location.sensorIds.filter((id) => matchesFilters(location.id, id, filters));
+  const ids = location.sensorIds;
   const mine = selection.locationId === location.id ? selection.ids : new Set<string>();
   const all = ids.map((id) => {
     const s = sensorsById.get(id);
@@ -173,6 +220,7 @@ export interface SearchRowVm {
 
 export interface SearchGroupVm {
   groupId: string;
+  tankId: string | null;
   locationId: string;
   rows: SearchRowVm[];
   check: CheckState;
@@ -186,11 +234,11 @@ export interface SearchVm {
   groups: SearchGroupVm[];
 }
 
-/** The right column while searching: matches grouped by location (Figma 1:12068). */
+/** The right column while searching: matches grouped by component (Figma 1:12068). */
 export function buildSearch(
   farm: VnvFarm,
   sensorsById: ReadonlyMap<string, Sensor>,
-  filters: readonly string[],
+  filters: readonly PickerFilter[],
   query: string,
   range: DateRange,
   selection: PickerSelection,
@@ -198,7 +246,8 @@ export function buildSearch(
   const groups: SearchGroupVm[] = [];
   for (const g of farm.groups) {
     for (const l of g.locations) {
-      const ids = l.sensorIds.filter((id) => matchesFilters(l.id, id, filters) && matchesSearch(id, query));
+      if (!matchesFilters(l, filters)) continue;
+      const ids = l.sensorIds.filter((id) => matchesSearch(id, query));
       if (ids.length === 0) continue;
       const mine = selection.locationId === l.id ? selection.ids : new Set<string>();
       const rows = ids.map((id) => {
@@ -208,6 +257,7 @@ export function buildSearch(
       const selectable = rows.filter((r) => !r.noData);
       groups.push({
         groupId: g.id,
+        tankId: l.tankId,
         locationId: l.id,
         rows,
         check: checkState(selectable.map((r) => r.checked)),

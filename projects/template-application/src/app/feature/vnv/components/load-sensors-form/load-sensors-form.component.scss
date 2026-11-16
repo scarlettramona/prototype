@@ -10,15 +10,10 @@
   color: var(--mat-sys-on-surface);
 }
 
-:host(.popover) {
-  width: 806px;
-  max-height: var(--load-form-max-height, 80vh);
-  box-shadow: var(--mat-sys-level2);
-}
-
-// Search results show "group › location" paths: Figma's search frame (1:12068) is 968 px wide.
-:host(.popover.searching) {
-  width: 968px;
+// In the Load data dialog the form fills the dialog; the columns scroll inside.
+:host(.dialog) {
+  height: 100%;
+  border-radius: 0;
 }
 
 .top {
@@ -99,7 +94,7 @@
   border-width: 1px 0;
 }
 
-:host(.popover) .columns {
+:host(.dialog) .columns {
   min-height: 0;
 }
 
@@ -130,23 +125,38 @@
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-large);
   cursor: pointer;
+  --app-focus-offset: -2px; // the global focus ring, inset
 
   &:hover {
     background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
   }
-  &:focus-visible {
-    outline: 2px solid var(--mat-sys-primary);
-    outline-offset: -2px;
-  }
 }
 
 .tree__chevron {
+  flex-shrink: 0;
   width: 40px;
   text-align: center;
 }
 
+// Indents: equipment (chevron at 0), tank (chevron at 20), component under a
+// tank (label at 100), component straight under equipment (label at 60).
+.tree__row--tank {
+  padding-left: var(--spacing-200);
+}
+
 .tree__row--leaf {
+  padding-left: 100px;
+}
+
+.tree__row--direct {
   padding-left: 60px;
+}
+
+.tree__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tree__row--active {
@@ -155,7 +165,9 @@
 }
 
 .tree__count {
+  flex-shrink: 0;
   margin-left: auto;
+  padding-left: var(--spacing-160);
 }
 
 .list__head {
@@ -248,6 +260,10 @@
   padding: var(--spacing-160) var(--spacing-240);
   background: var(--mat-sys-surface-container);
   border-radius: 0 0 var(--mat-sys-corner-large) var(--mat-sys-corner-large);
+}
+
+:host(.dialog) .actions {
+  border-radius: 0;
 }
 
 :host(.page) .actions {

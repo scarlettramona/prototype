@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { QI_VALUES, type Qi } from '../../core/qi/qi.models';
 import type { ResolvedVnvState } from '../../core/prototype-state/resolve-prototype-state';
+import { dailyReadings } from '../../core/vnv/daily-readings';
 import { VnvMockService } from '../../core/vnv/vnv-mock.service';
 import type { Sensor, VnvFarm, VnvLoadResult, VnvLocation } from '../../core/vnv/vnv.models';
 import type { DateRangeValue } from '../../ui/components/date-range-field/date-range-field.component';
@@ -24,7 +25,7 @@ export class VnvStore {
   readonly location = signal<VnvLocation | null>(null);
   /** The page header's date range (local midnights). */
   readonly range = signal<DateRangeValue>({ start: 0, end: 0 });
-  /** Visual only for now (decided 2026-11-15). */
+  /** Off (default): one reading per sensor per day, nearest 12:00. On: every reading. Chart and table both follow it. */
   readonly showAllData = signal(false);
   readonly view = signal<ContentView>('chart');
 
@@ -85,21 +86,32 @@ export class VnvStore {
     return !w || (w.start <= x.start && w.end >= x.end);
   });
 
+  /** The readings on show: daily (nearest 12:00) unless Show all data is on. */
+  readonly shownReadings = computed(() => {
+    const r = this.result();
+    if (!r) return [];
+    return this.showAllData() ? r.readings : dailyReadings(r.readings);
+  });
+
   readonly series = computed<SensorSeries[]>(() => {
     const r = this.result();
-    return r ? groupBySensor(r.sensors, r.readings) : [];
+    return r ? groupBySensor(r.sensors, this.shownReadings()) : [];
   });
   readonly baseline = computed(() => this.result()?.baselines.find((b) => b.sensorId === this.baselineSensorId()) ?? null);
   readonly outOfService = computed(() => this.result()?.outOfService.filter((o) => o.sensorId === this.oosSensorId()) ?? []);
 
-  /** Readings of visible sensors whose QI passes the quality filter: the table's rows. */
+  /** Shown readings of visible sensors whose QI passes the quality filter: the table's rows. */
   readonly visibleReadings = computed(() => {
-    const r = this.result();
-    if (!r) return [];
     const hidden = this.hiddenSensorIds();
     const qi = new Set(this.visibleQi());
-    return r.readings.filter((x) => !hidden.has(x.sensorId) && qi.has(x.qi));
+    return this.shownReadings().filter((x) => !hidden.has(x.sensorId) && qi.has(x.qi));
   });
+
+  /** Select all shown: every reading drawn in the chart's current window (visible sensors, shown QIs). */
+  selectShown(): void {
+    const w = this.effectiveWindow();
+    this.setSelection(this.visibleReadings().filter((r) => r.timestamp >= w.start && r.timestamp <= w.end).map((r) => r.id));
+  }
 
   readonly selectedReadings = computed(() => {
     const ids = this.selectedIds();

@@ -22,6 +22,9 @@ interface ZoomEvent {
   batch?: { start?: number; end?: number }[];
 }
 
+/** The VNV | ⋯ bar's size (Figma 1:11704), for keeping it inside the chart. */
+const BAR_SIZE = { width: 94, height: 42 };
+
 interface BrushEndEvent {
   areas?: { coordRange?: [[number, number], [number, number]] }[];
 }
@@ -52,6 +55,7 @@ interface BrushEndEvent {
       <div chartToolbar class="toolbar">
         <app-quality-filter [value]="store.visibleQi()" (valueChange)="store.visibleQi.set($event)" />
         <div class="toolbar__end">
+          <button mat-button type="button" [disabled]="!store.visibleReadings().length" (click)="store.selectShown()">Select all shown</button>
           <mat-slide-toggle class="fit-y" labelPosition="before" hideIcon [checked]="store.fitY()" (change)="store.fitY.set($event.checked)">
             Fit Y
           </mat-slide-toggle>
@@ -207,8 +211,16 @@ export class VnvChartComponent {
     return { text: '', color: t.primary, maskColor: withAlpha(t.surfaceContainer, 0.7), lineWidth: 3 };
   });
 
-  /** Where the VNV | ⋯ bar floats: above the selection's top-left, inside the chart. */
+  /**
+   * Where the VNV | ⋯ bar floats, inside the chart: where the pointer ended a
+   * Shift + drag selection; for other selections (Select all shown, the table, a
+   * fixture), above the selection's top-left.
+   */
   protected readonly barPos = signal<{ x: number; y: number } | null>(null);
+  /** The pointer's position over the chart, kept while Shift is held. */
+  private pointer: { x: number; y: number } | null = null;
+  /** Where the last drag selection ended, in data coordinates (so it follows pans), and the selection it belongs to. */
+  private dragEnd: { point: [number, number]; ids: ReadonlySet<string> } | null = null;
   protected readonly popoverPositions: ConnectedPosition[] = [
     { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 6 },
     { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -6 },
@@ -230,13 +242,24 @@ export class VnvChartComponent {
       this.shiftHeld = false;
       this.syncBrush();
     };
+    // Where a Shift + drag ends: ECharts owns the pointer during a drag, so listen
+    // on the document (capture, before ECharts' mouseup ends the brush).
+    const onPointer = (e: PointerEvent) => {
+      if (!this.shiftHeld || !this.chart) return;
+      const box = this.chart.getDom().getBoundingClientRect();
+      this.pointer = { x: e.clientX - box.left, y: e.clientY - box.top };
+    };
     const view = this.document.defaultView;
     this.document.addEventListener('keydown', onKey);
     this.document.addEventListener('keyup', onKey);
+    this.document.addEventListener('pointermove', onPointer, true);
+    this.document.addEventListener('pointerup', onPointer, true);
     view?.addEventListener('blur', onBlur);
     inject(DestroyRef).onDestroy(() => {
       this.document.removeEventListener('keydown', onKey);
       this.document.removeEventListener('keyup', onKey);
+      this.document.removeEventListener('pointermove', onPointer, true);
+      this.document.removeEventListener('pointerup', onPointer, true);
       view?.removeEventListener('blur', onBlur);
     });
 
@@ -265,11 +288,16 @@ export class VnvChartComponent {
     this.chart?.dispatchAction({ type: 'brush', areas: [] });
     if (!range) return;
     const ids = selectInRect(this.data(), range[0], range[1]);
-    if (ids.length) this.store.setSelection(ids);
-    else this.store.clearSelection();
+    if (!ids.length) {
+      this.store.clearSelection();
+      return;
+    }
+    this.store.setSelection(ids);
+    const at = this.pointer && this.chart ? (this.chart.convertFromPixel({ xAxisIndex: 0, yAxisIndex: 0 }, [this.pointer.x, this.pointer.y]) as number[]) : null;
+    this.dragEnd = at ? { point: [at[0], at[1]], ids: this.store.selectedIds() } : null;
   }
 
-  /** Places the action bar above the top-left of the visible selected points; hides it when none are in view. */
+  /** Places the action bar (see `barPos`); hides it when no selected point is in view. */
   protected positionBar(): void {
     const chart = this.chart;
     const w = this.store.effectiveWindow();
@@ -278,14 +306,25 @@ export class VnvChartComponent {
       if (this.barPos()) this.barPos.set(null);
       return;
     }
-    let minX = Infinity;
-    let minY = Infinity;
-    for (const [t, v] of inView) {
-      const [x, y] = chart.convertToPixel({ xAxisIndex: 0, yAxisIndex: 0 }, [t, v]) as number[];
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
+    let next: { x: number; y: number };
+    const end = this.dragEnd?.ids === this.store.selectedIds() ? this.dragEnd.point : null;
+    if (end) {
+      // Just past the pointer's end point, kept inside the chart.
+      const [x, y] = chart.convertToPixel({ xAxisIndex: 0, yAxisIndex: 0 }, end) as number[];
+      next = {
+        x: Math.round(Math.min(Math.max(0, x + 8), chart.getWidth() - BAR_SIZE.width)),
+        y: Math.round(Math.min(Math.max(0, y + 8), chart.getHeight() - BAR_SIZE.height)),
+      };
+    } else {
+      let minX = Infinity;
+      let minY = Infinity;
+      for (const [t, v] of inView) {
+        const [x, y] = chart.convertToPixel({ xAxisIndex: 0, yAxisIndex: 0 }, [t, v]) as number[];
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+      }
+      next = { x: Math.max(0, Math.round(minX - 12)), y: Math.max(0, Math.round(minY - 56)) };
     }
-    const next = { x: Math.max(0, Math.round(minX - 12)), y: Math.max(0, Math.round(minY - 56)) };
     const prev = this.barPos();
     if (!prev || prev.x !== next.x || prev.y !== next.y) this.barPos.set(next);
   }

@@ -122,16 +122,44 @@ describe('VnvStore', () => {
 
   it('gives the Load sensors form its tree and sensor index', async () => {
     await store.loadPickerData();
-    expect(store.farm()!.groups.map((g) => g.id)).toEqual(['241-AN-TMAC', '241-AN-WST', '241-AN-WSTA']);
-    expect(store.sensorIndex().length).toBe(82);
+    // The real AN tree (equipment → tank → component); only TI components have sensors.
+    expect(store.farm()!.groups.map((g) => g.id)).toEqual(['241-AN-Other', '241-AN-TMAC', '241-AN-VTA', '241-AN-VTP', '241-AN-WST', '241-AN-WSTA']);
+    const wsta = store.farm()!.groups.find((g) => g.id === '241-AN-WSTA')!;
+    expect(wsta.tanks[0]).toEqual({ id: '241-AN-WSTA-101', tank: '101', locationIds: ['241-AN-01C', '241-AN-WSTA-101-LDI', '241-AN-WSTA-101-TI'] });
+    expect(wsta.locations.find((l) => l.id === '241-AN-01C')).toMatchObject({ type: 'C', tank: '101', sensorIds: [] });
+    // 7 TMAC + 7 WST + 6 WSTA TI components with 6 sensors, plus the 40 in 241-AN-WSTA-102-TI.
+    expect(store.sensorIndex().length).toBe(20 * 6 + 40);
   });
 
   it('passes a load-form fixture to the form and shows its dates', async () => {
     await store.applyState(resolvePrototypeState('vnv-load-form-no-data', data) as ResolvedVnvState);
     expect(store.loadFormOpen()).toBe(true);
-    expect(store.loadFormInit()).toMatchObject({ locationId: '241-AN-TMAC-103-TI', filters: ['TI'], showNoData: true });
+    expect(store.loadFormInit()).toMatchObject({ locationId: '241-AN-TMAC-103-TI', filters: [{ kind: 'type', value: 'TI' }], showNoData: true });
     expect(store.range()).toEqual({ start: new Date(2026, 6, 19).getTime(), end: new Date(2026, 9, 19).getTime() });
     expect(store.loadedRange().start).toBe(new Date(2025, 0, 1).getTime()); // Cancel goes back to this
+  });
+
+  it('shows one reading per sensor per day (nearest 12:00) unless Show all data is on', async () => {
+    await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
+    expect(store.showAllData()).toBe(false);
+    const daily = store.shownReadings();
+    const days = new Set(daily.map((r) => `${r.sensorId}|${new Date(r.timestamp).toDateString()}`));
+    expect(days.size).toBe(daily.length);
+    expect(daily.length).toBeLessThan(store.result()!.readings.length);
+    store.showAllData.set(true);
+    expect(store.shownReadings().length).toBe(store.result()!.readings.length);
+  });
+
+  it('selects every shown reading in the current window', async () => {
+    await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
+    const w = { start: new Date(2026, 9, 1).getTime(), end: new Date(2026, 9, 8).getTime() };
+    store.setWindow(w);
+    store.toggleSensor('AN103-TMAC-TI-U1-RJA');
+    store.selectShown();
+    const selected = store.selectedReadings();
+    expect(selected.length).toBeGreaterThan(0);
+    expect(selected.every((r) => r.timestamp >= w.start && r.timestamp <= w.end && r.sensorId !== 'AN103-TMAC-TI-U1-RJA')).toBe(true);
+    expect(selected.length).toBe(store.visibleReadings().filter((r) => r.timestamp >= w.start && r.timestamp <= w.end).length);
   });
 
   it('toggles sensors and clamps the window to the loaded range', async () => {

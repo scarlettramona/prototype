@@ -53,7 +53,7 @@ let nextId = 0;
 
     <div class="actions">
       <button mat-button type="button" (click)="cancel.emit()">Cancel</button>
-      <button mat-flat-button type="button" class="apply" [disabled]="!qi()" (click)="submit()">Apply</button>
+      <button mat-flat-button type="button" class="apply" [disabled]="!qi() || count() === 0" (click)="submit()">Apply</button>
     </div>
   `,
   styles: `

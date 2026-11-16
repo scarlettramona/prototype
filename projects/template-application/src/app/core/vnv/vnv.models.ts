@@ -1,6 +1,10 @@
 import type { Qi } from '../qi/qi.models';
 
-/** Farm → group → location → sensors, as the Load sensors tree shows them. */
+/**
+ * The farm tree the Load sensors picker shows: equipment group → tank →
+ * component → sensors. Some components hang straight off the group (no tank),
+ * e.g. `241-AN-VTA` → `241-AN-VTA-CAM`.
+ */
 export interface VnvFarm {
   id: string; // 'AN'
   groups: VnvGroup[];
@@ -8,13 +12,31 @@ export interface VnvFarm {
 
 export interface VnvGroup {
   id: string; // '241-AN-TMAC'
+  /** Equipment code for the filter menu (TMAC, WST, WSTA, VTA, VTP); `null` for 241-AN-Other. */
+  equipment: string | null;
+  tanks: VnvTank[];
+  /** Every component of the group, flat (tank ones and direct ones), sorted by id. */
   locations: VnvLocation[];
+}
+
+export interface VnvTank {
+  id: string; // '241-AN-TMAC-101'
+  /** Tank number for the filter menu, e.g. '101'. */
+  tank: string;
+  locationIds: string[];
 }
 
 /** A "component" in the page header, e.g. `241-AN-TMAC-103-TI · 6 sensors`. */
 export interface VnvLocation {
   id: string; // '241-AN-TMAC-103-TI'
   groupId: string;
+  /** The tank it belongs to; `null` for components directly under the group. */
+  tankId: string | null;
+  equipment: string | null;
+  tank: string | null;
+  /** Component type for the filter menu: TI, LI, LDI, PR, PDI, CAM, C (the 01C–07C ones). */
+  type: string;
+  /** Only TI components have sensors in this prototype; the others are listed empty. */
   sensorIds: string[];
 }
 

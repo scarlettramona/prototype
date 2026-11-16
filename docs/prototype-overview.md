@@ -235,7 +235,7 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 **Decisions** (Scarlett, 2026-11-15)
 - **Navigator + Reset added** to the VNV chart, though the VNV frame lacks them (ILL pattern).
 - **Fit Y switch added** to the VNV toolbar ("Fit Y" + switch, on by default).
-- **Show all data is visual only:** it keeps its state but doesn't change the data until its behaviour is defined.
+- **Show all data is visual only:** it keeps its state but doesn't change the data until its behaviour is defined. *(Superseded 2026-11-16: see "VNV: daily data, Load data dialog and the AN tree".)*
 - **Export opens a menu: "Chart image (PNG)" / "Data (CSV)"**, both real downloads. **Wording is mine; to be confirmed.**
 - **Right panel follows Figma's order:** Legend, then Baseline sensor, then Equipment out of service. The whole panel scrolls with 40 sensors.
 - **Baseline and out of service** are drawn for the sensor selected in each panel select. The baseline is a solid `FURNITURE` line in a faint `FURNITURE` limit band; out of service is a shaded `markArea`.
@@ -278,7 +278,7 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 - **Table columns follow Figma:** checkbox · Sensor · Value (right-aligned, 2 decimals) · Quality (text) · Date · Comment (one line) · Reviewer. Empty cells show `--`, as in the frame.
 - There's **no search field** (none in the frame). Rows are **virtual-scrolled**, 48 px each. The default sort is newest date first; every header sorts, and the active one shows an arrow.
 - **Table Export** downloads a CSV of the visible rows straight away.
-- **Right panel in Table view:** with a selection, the docked VNV form (340 px) replaces the reference panel; otherwise the reference panel stays.
+- **Right panel in Table view:** with a selection, the docked VNV form (340 px) replaces the reference panel; otherwise the reference panel stays. *(Superseded 2026-11-16: see "VNV: daily data, Load data dialog and the AN tree".)*
 - **Cancel and × clear the selection.** Apply records `Scarlett Reagan` as reviewer and clears the selection.
 - **The VNV form pre-fills the QI** when every selected reading shares Good or Suspect.
 - **Fixtures with a selection** open with the chart zoomed to about 3 weeks around it.
@@ -315,7 +315,7 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 
 **Decisions** (Scarlett, 2026-11-15, or Figma-wins)
 - **One component at a time:** ticking a sensor in another location switches the selection there. The header shows that location and the number of **loaded** sensors (a subset is allowed).
-- **Filters are name tokens:** Add filters lists TI, TMAC, WST and WSTA. A sensor shows only if its location and sensor-id tokens (split on `-`) contain every chip, so WST ≠ WSTA.
+- **Filters are name tokens:** Add filters lists TI, TMAC, WST and WSTA. A sensor shows only if its location and sensor-id tokens (split on `-`) contain every chip, so WST ≠ WSTA. *(Superseded 2026-11-16: see "VNV: daily data, Load data dialog and the AN tree".)*
 - **First visit shows Cancel** (as Figma does), which resets the form. **Set to default** (first visit only) = the **last 3 months of data**, 08/12/2026 – 11/12/2026.
 - **Dates are shared with the page header.**
   - Editing the form's dates updates the header straight away.
@@ -325,7 +325,7 @@ Paths are relative to `projects/template-application/src/app/` unless they start
   - A notice reads "N sensor(s) with no data in the selected date range" with a **Show all** switch, off by default.
   - With it on, those sensors are dimmed with a "no data" tag and no checkbox, as in the `miller-item` set.
   - In search, groups with no selectable sensors are dimmed.
-- **The popover widens from 806 to 968 px while searching**, as Figma's search frame (`1:12068`) does, so "group › location" paths fit.
+- **The popover widens from 806 to 968 px while searching**, as Figma's search frame (`1:12068`) does, so "group › location" paths fit. *(Superseded 2026-11-16: see "VNV: daily data, Load data dialog and the AN tree".)*
 - **First visit:** the title and form share a centred 1,248 px column (`1:11016`), and the footer is sticky to the window until the form ends.
 - **The footer summary** is `<location> | N selected`, in `on-surface-variant`.
 - **Fixtures:**
@@ -455,7 +455,7 @@ Checked every frame in dark mode at 1912×1024 against its `?state=` fixture. Fi
 
 **Global styles** (`styles/components/`)
 - `material-component-overrides/_mat-button-toggle.scss`: every segmented toggle is 36 px including its border, `corner-small`, label-large, selected in secondary-container. Components no longer repeat these overrides; the view switcher overrides colours only.
-- `material-component-overrides/_mat-slide-toggle.scss`: switches are 50 × 32 with a label-large label.
+- `material-component-overrides/_mat-slide-toggle.scss`: switches use a label-large label. Their size and handle are Material's own (52 × 32; the earlier 50 px Figma override was removed).
 - `_data-table.scss`: `.app-data-table` (body-medium, tabular figures) and `.app-data-table__head` (Roboto Bold 14/20). Both tables use them.
 
 **Component changes**
@@ -516,3 +516,45 @@ These replace earlier decisions where they differ: Phase 6's value cells and Pha
   - Fixed a broken `----mat-sys-corner-extra-small` token.
   - Removed a button-toggle `shape` that overrode the toggles' Figma `corner-small`.
   - Removed commented-out dead code from `_mat-shape-overrides.scss` and `_mat-palette-overrides.scss`.
+
+### VNV: daily data, Load data dialog and the AN tree (Scarlett, 2026-11-16)
+
+These replace the earlier decisions marked *Superseded* above.
+
+**Data on show**
+- **Daily by default.** The chart and the table show one reading per sensor per day: the one nearest 12:00 (`core/vnv/daily-readings.ts`, `VnvStore.shownReadings`).
+  - **Show all data** in the page header shows every reading.
+  - Fixtures load with it off, and a fixture's selected readings are drawn from the daily set.
+- **Select all shown** (chart toolbar) selects every reading drawn in the current window: visible sensors, shown QIs, daily or all (`VnvStore.selectShown()`). The table's header checkbox already does the same for its rows.
+  - The selection-ring series draws without progressive rendering (`progressive: 0`), so thousands of rings appear at once.
+- **The VNV ⋯ bar appears where the pointer ended** a Shift + drag selection, just past the end point and kept inside the chart.
+  - The end point is stored in data coordinates, so the bar follows pans.
+  - Selections made another way (Select all shown, the table, a fixture) still put the bar above the selection's top-left.
+  - The drag end is read by a document-level capture listener, because ECharts owns the pointer during a drag.
+- **Table view always docks the VNV form** in the right panel. It reads "0 values selected", and Apply stays disabled until rows are ticked (`count > 0`). Chart view shows the reference panel.
+
+**Load data**
+- **Load data opens a large centred `MatDialog`** (1120 px wide, viewport height minus 96 px), replacing the anchored popover. The form's modes are now `page | dialog`.
+  - The dialog follows `VnvStore.loadFormOpen`. Escape or the backdrop count as Cancel (the dates go back to the loaded range).
+
+**The AN farm tree** (`MOCK_DATA_CONFIG.vnv.farmTree`)
+- The tree is equipment group → tank → component; some components sit directly under their group:
+  - `241-AN-Other` (tank 271: LI, PR)
+  - `241-AN-TMAC` (101–107: TI)
+  - `241-AN-VTA` (CAM)
+  - `241-AN-VTP` (CAM, PDI)
+  - `241-AN-WST` (101–107: LI, TI)
+  - `241-AN-WSTA` (101–107: 0nC, LDI, TI)
+- `241-AN-WSTA-101-LI` in Scarlett's list is taken as `241-AN-WST-101-LI`, to match the other WST tanks.
+- **Only TI components have sensors:** the 40 in `241-AN-WSTA-102-TI`, and 6 in each other TI component (160 in all). The other component types are listed with none.
+- The models gain these fields:
+  - `VnvGroup.equipment` and `.tanks`
+  - `VnvTank`
+  - `VnvLocation.tankId`, `.equipment`, `.tank` and `.type` (`componentType()`: the last id segment without leading digits, so `241-AN-01C` → `C`)
+
+**Sensor picker**
+- **Add filters has three submenus: Equipment** (TMAC, VTA, VTP, WST, WSTA), **Tank** (101–107, 271) and **Component type** (C, CAM, LDI, LI, PDI, PR, TI). Each value becomes a chip.
+  - A component passes if, for every kind with chips, its value is one of them: OR within a kind, AND across kinds.
+  - Fixtures use `{ kind, value }` chips (`TI_FILTER`).
+- **Every tree row shows its count of sensors with data** in the date range, on the right: equipment, tank and component rows alike. Component rows no longer show the selected count; the footer still does.
+- Search results show "group › tank › component" paths, and Show in tree opens the group and the tank.

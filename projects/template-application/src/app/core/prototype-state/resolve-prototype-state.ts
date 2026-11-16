@@ -3,10 +3,11 @@ import type { IllDataset } from '../ill/ill-generator';
 import { byNewest, matchesScanQuery } from '../ill/ill-query';
 import { endOfDay, parseUsDate } from '../mock-data/dates';
 import { MOCK_DATA_CONFIG } from '../mock-data/mock-data.config';
+import { dailyReadings } from '../vnv/daily-readings';
 import { QI_VALUES, type Qi } from '../qi/qi.models';
 import { APP_PATHS } from '../routing/app-paths';
 import type { VnvDataset } from '../vnv/vnv-generator';
-import { PROTOTYPE_STATES, type IllFocusFixture, type IllLibraryFixture, type PrototypeStateName, type VnvFixture } from './prototype-states';
+import { PROTOTYPE_STATES, type IllFocusFixture, type PickerFilterFixture, type IllLibraryFixture, type PrototypeStateName, type VnvFixture } from './prototype-states';
 
 export interface ResolvedVnvState {
   name: PrototypeStateName;
@@ -18,7 +19,7 @@ export interface ResolvedVnvState {
   visibleQi: Qi[];
   selectedReadingIds: string[];
   popover: 'load-form' | 'vnv-form' | null;
-  loadForm: null | { start: number; end: number; locationId: string | null; search: string; filters: string[]; showNoData: boolean };
+  loadForm: null | { start: number; end: number; locationId: string | null; search: string; filters: PickerFilterFixture[]; showNoData: boolean };
 }
 
 export interface ResolvedIllLibraryState {
@@ -87,7 +88,9 @@ function resolveVnv(name: PrototypeStateName, f: VnvFixture, ds: VnvDataset): Re
 
     if (f.selectionCount) {
       const first = location.sensorIds.find((id) => !hiddenSensorIds.includes(id))!;
-      const inRange = ds.readingsFor(first).filter((r) => r.timestamp >= start && r.timestamp <= end);
+      // Select readings that are on show: the daily ones unless the fixture shows all data.
+      const all = ds.readingsFor(first);
+      const inRange = (f.loaded.showAllData ? all : dailyReadings(all)).filter((r) => r.timestamp >= start && r.timestamp <= end);
       selectedReadingIds = inRange.slice(-f.selectionCount).map((r) => r.id);
       if (selectedReadingIds.length !== f.selectionCount) throw new Error(`${name}: not enough readings to select`);
     }
@@ -109,7 +112,7 @@ function resolveVnv(name: PrototypeStateName, f: VnvFixture, ds: VnvDataset): Re
           end: parseUsDate(f.loadForm.end),
           locationId: f.loadForm.locationId ?? null,
           search: f.loadForm.search ?? '',
-          filters: [...(f.loadForm.filters ?? [])],
+          filters: (f.loadForm.filters ?? []).map((x) => ({ ...x })),
           showNoData: f.loadForm.showNoData ?? false,
         }
       : null,

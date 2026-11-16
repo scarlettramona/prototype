@@ -39,7 +39,8 @@ export interface VnvFixture {
     end: string;
     locationId?: string;
     search?: string;
-    filters?: readonly string[];
+    /** Filter chips (Add filters → Equipment / Tank / Component type). */
+    filters?: readonly PickerFilterFixture[];
     /** The no-data notice's "Show all" switch. */
     showNoData?: boolean;
   };
@@ -82,12 +83,21 @@ export interface IllFocusFixture {
 
 export type PrototypeFixture = VnvFixture | IllLibraryFixture | IllFocusFixture;
 
+export interface PickerFilterFixture {
+  kind: 'equipment' | 'tank' | 'type';
+  value: string;
+}
+
+/** Component type TI (the temperature components). */
+const TI_FILTER: PickerFilterFixture = { kind: 'type', value: 'TI' };
+
 /** The typical case: one component with 6 sensors (Figma header: 241-AN-TMAC-103-TI · 6 sensors). */
 const VNV_LOADED = {
   locationId: '241-AN-TMAC-103-TI',
   start: '1/1/2025',
   end: '11/12/2026',
-  showAllData: true,
+  /** Off: the default daily view (one reading per sensor per day). */
+  showAllData: false,
 } as const;
 
 /** The most sensors the VNV graph will ever show (40): the stress case. */
@@ -107,7 +117,7 @@ export const PROTOTYPE_STATES = {
     loaded: VNV_LOADED,
     view: 'chart',
     popover: 'load-form',
-    loadForm: { ...LOAD_FORM_DATES, locationId: VNV_LOADED.locationId, filters: ['TI'] },
+    loadForm: { ...LOAD_FORM_DATES, locationId: VNV_LOADED.locationId, filters: [TI_FILTER] },
   },
   'vnv-load-form-no-data': {
     module: 'vnv',
@@ -115,7 +125,7 @@ export const PROTOTYPE_STATES = {
     loaded: VNV_LOADED,
     view: 'chart',
     popover: 'load-form',
-    loadForm: { ...LOAD_FORM_DATES, locationId: VNV_LOADED.locationId, filters: ['TI'], showNoData: true },
+    loadForm: { ...LOAD_FORM_DATES, locationId: VNV_LOADED.locationId, filters: [TI_FILTER], showNoData: true },
   },
   'vnv-load-form-search': {
     module: 'vnv',
@@ -124,7 +134,7 @@ export const PROTOTYPE_STATES = {
     view: 'chart',
     popover: 'load-form',
     // Filters are AND-ed name tokens: TI + U3 finds the TMAC U3 sensors (Figma 1:12068).
-    loadForm: { ...LOAD_FORM_DATES, search: 'U3', filters: ['TI'] },
+    loadForm: { ...LOAD_FORM_DATES, search: 'U3', filters: [TI_FILTER] },
   },
   'vnv-chart-40-sensors': { module: 'vnv', loaded: VNV_LOADED_MAX, view: 'chart' },
   'vnv-chart-sensors-hidden': { module: 'vnv', loaded: VNV_LOADED, view: 'chart', hiddenSensorCount: 2 },

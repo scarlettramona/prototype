@@ -147,6 +147,9 @@ export function selectionSeries(points: readonly (readonly [number, number])[], 
     silent: true,
     z: 10,
     animation: false,
+    // Draw every ring at once: Select all shown can ring thousands of points, and
+    // progressive drawing (over 3,000) left some series unringed between merges.
+    progressive: 0,
     tooltip: { show: false },
     itemStyle: { color: 'transparent', borderColor: ringColor, borderWidth: 2 },
   };

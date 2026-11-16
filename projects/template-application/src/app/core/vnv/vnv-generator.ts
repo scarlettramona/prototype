@@ -2,7 +2,7 @@ import { addDays, DAY_MS, eachDay, endOfDay, parseUsDate } from '../mock-data/da
 import type { MockDataConfig } from '../mock-data/mock-data.config';
 import { Rng } from '../mock-data/random';
 import type { Qi } from '../qi/qi.models';
-import type { Baseline, OutOfService, Reading, Sensor, VnvFarm, VnvGroup, VnvLocation } from './vnv.models';
+import type { Baseline, OutOfService, Reading, Sensor, VnvFarm, VnvGroup, VnvLocation, VnvTank } from './vnv.models';
 import type { VnvSource, VnvSourceReading } from './vnv-source';
 
 /** Everything the VNV mock service serves. Readings are generated per sensor on first request. */
@@ -32,9 +32,10 @@ interface RealStats {
 }
 
 /**
- * Builds the VNV dataset: the real sensors and readings, untouched, plus
- * generated sensors (up to 40 in the real location, and the rest of the Load
- * sensors tree) and generated readings from 01/01/2025 to 11/12/2026.
+ * Builds the VNV dataset: the real sensors and readings, untouched, plus the AN
+ * farm tree (`config.vnv.farmTree`) with generated sensors for its TI
+ * components (40 in the real location, 6 elsewhere) and generated readings
+ * from 01/01/2025 to 11/12/2026. Other component types are listed without sensors.
  */
 export function buildVnvDataset(source: VnvSource, config: MockDataConfig): VnvDataset {
   const vnv = config.vnv;
@@ -55,10 +56,9 @@ export function buildVnvDataset(source: VnvSource, config: MockDataConfig): VnvD
     stats.set(id, { mean: mean(values), std: std(values), anchor: (start + end) / 2, start, end: endOfDay(end) });
   }
 
-  // Sensors and the location tree.
+  // Sensors and the farm tree.
   const sensors = new Map<string, Sensor>();
   const derivations = new Map<string, Derivation>();
-  const locations: VnvLocation[] = [];
 
   const main = vnv.mainLocation;
   const mainIds = [...realIds];
@@ -67,7 +67,21 @@ export function buildVnvDataset(source: VnvSource, config: MockDataConfig): VnvD
     if (!mainIds.includes(id)) mainIds.push(id);
   }
   mainIds.sort();
-  locations.push({ id: main.id, groupId: main.groupId, sensorIds: mainIds });
+
+  const groups: VnvGroup[] = vnv.farmTree.map((g) => {
+    const locations: VnvLocation[] = [];
+    const place = (id: string, tank: { id: string; tank: string } | null): string => {
+      const type = componentType(id);
+      const sensorIds = type !== 'TI' ? [] : id === main.id ? mainIds : tiSensorIds(g.equipment, tank?.tank ?? '', vnv.tiSensorsPerComponent);
+      locations.push({ id, groupId: g.id, tankId: tank?.id ?? null, equipment: g.equipment, tank: tank?.tank ?? null, type, sensorIds });
+      return id;
+    };
+    const tanks: VnvTank[] = g.tanks.map((t) => ({ id: t.id, tank: t.tank, locationIds: t.components.map((c) => place(c, t)) }));
+    for (const c of g.components) place(c, null);
+    return { id: g.id, equipment: g.equipment, tanks, locations: locations.sort((a, b) => a.id.localeCompare(b.id)) };
+  });
+  const farm: VnvFarm = { id: vnv.farm, groups };
+
   mainIds.forEach((id, i) => {
     const real = realBySensor.has(id);
     sensors.set(id, {
@@ -84,13 +98,9 @@ export function buildVnvDataset(source: VnvSource, config: MockDataConfig): VnvD
   });
 
   const noDataEnd = parseUsDate(vnv.noDataEnd);
-  for (const loc of vnv.otherLocations) {
-    const ids =
-      loc.sensors === 'tmac'
-        ? [1, 2, 3].flatMap((u) => ['A', 'B'].map((x) => `AN${loc.tank}-TMAC-TI-U${u}-RJ${x}`))
-        : [36, 37, 38, 39, 40, 41].map((n) => `AN${loc.tank}-WST-TI-${String(n).padStart(3, '0')}`);
-    locations.push({ id: loc.id, groupId: loc.groupId, sensorIds: ids });
-    ids.forEach((id, i) => {
+  for (const loc of groups.flatMap((g) => g.locations)) {
+    if (loc.id === main.id) continue;
+    loc.sensorIds.forEach((id, i) => {
       const noData = Rng.for(seed, `vnv:nodata:${id}`).chance(vnv.noDataRate);
       sensors.set(id, {
         id,
@@ -105,13 +115,6 @@ export function buildVnvDataset(source: VnvSource, config: MockDataConfig): VnvD
       derivations.set(id, derive(seed, id, realIds, vnv.offsetF));
     });
   }
-
-  const groupIds = [...new Set(locations.map((l) => l.groupId))].sort();
-  const groups: VnvGroup[] = groupIds.map((gid) => ({
-    id: gid,
-    locations: locations.filter((l) => l.groupId === gid).sort((a, b) => a.id.localeCompare(b.id)),
-  }));
-  const farm: VnvFarm = { id: vnv.farm, groups };
 
   // Reference data.
   const baselines = new Map<string, Baseline>();
@@ -147,6 +150,25 @@ export function buildVnvDataset(source: VnvSource, config: MockDataConfig): VnvD
   };
 
   return { farm, sensors, baselines, outOfService, readingsFor };
+}
+
+/** A component's type: its last id segment without leading digits (`241-AN-01C` → `C`). */
+export function componentType(componentId: string): string {
+  const last = componentId.split('-').pop() ?? '';
+  return last.replace(/^\d+/, '').toUpperCase();
+}
+
+/** Sensor ids for a TI component, in each equipment's naming scheme. */
+function tiSensorIds(equipment: string | null, tank: string, count: number): string[] {
+  const n = (from: number) => Array.from({ length: count }, (_, i) => String(from + i).padStart(3, '0'));
+  switch (equipment) {
+    case 'TMAC':
+      return [1, 2, 3].flatMap((u) => ['A', 'B'].map((x) => `AN${tank}-TMAC-TI-U${u}-RJ${x}`)).slice(0, count);
+    case 'WST':
+      return n(36).map((s) => `AN${tank}-WST-TI-${s}`);
+    default:
+      return n(41).map((s) => `AN${tank}-${equipment ?? 'TI'}-TI-${s}`);
+  }
 }
 
 /** Real sensor: real rows inside the export window, generated around it. */

@@ -1,5 +1,13 @@
 import type { StoredAnalysisState } from '../ill/ill.models';
 
+/** AN tanks 101–107. */
+const AN_TANKS = ['101', '102', '103', '104', '105', '106', '107'] as const;
+
+/** One tank node per AN tank, with the given component types (`241-AN-WST-101-TI`). */
+function anTanks(group: string, types: readonly string[]) {
+  return AN_TANKS.map((tank) => ({ id: `${group}-${tank}`, tank, components: types.map((t) => `${group}-${tank}-${t}`) }));
+}
+
 /**
  * Every knob for the mock data, in one place. The generators read only this
  * (plus the real CSVs), so the same config always produces the same data.
@@ -71,16 +79,30 @@ export const MOCK_DATA_CONFIG = {
       firstNumber: 41,
     },
 
-    /** The rest of the Load sensors tree. */
-    otherLocations: [
-      { groupId: '241-AN-TMAC', id: '241-AN-TMAC-101-TI', sensors: 'tmac', tank: 101 },
-      { groupId: '241-AN-TMAC', id: '241-AN-TMAC-102-TI', sensors: 'tmac', tank: 102 },
-      { groupId: '241-AN-TMAC', id: '241-AN-TMAC-103-TI', sensors: 'tmac', tank: 103 },
-      { groupId: '241-AN-TMAC', id: '241-AN-TMAC-104-TI', sensors: 'tmac', tank: 104 },
-      { groupId: '241-AN-TMAC', id: '241-AN-TMAC-105-TI', sensors: 'tmac', tank: 105 },
-      { groupId: '241-AN-WST', id: '241-AN-WST-101-TI', sensors: 'wst', tank: 101 },
-      { groupId: '241-AN-WST', id: '241-AN-WST-104-TI', sensors: 'wst', tank: 104 },
-    ] as const,
+    /**
+     * The AN farm tree (Scarlett, 2026-11-16): equipment group → tank → component.
+     * A component's type is its last id segment without leading digits (01C → C).
+     * Only TI components get sensors; the others are listed with none.
+     */
+    farmTree: [
+      { id: '241-AN-Other', equipment: null, tanks: [{ id: '241-AN-271', tank: '271', components: ['241-AN-271-LI', '241-AN-271-PR'] }], components: [] },
+      { id: '241-AN-TMAC', equipment: 'TMAC', tanks: anTanks('241-AN-TMAC', ['TI']), components: [] },
+      { id: '241-AN-VTA', equipment: 'VTA', tanks: [], components: ['241-AN-VTA-CAM'] },
+      { id: '241-AN-VTP', equipment: 'VTP', tanks: [], components: ['241-AN-VTP-CAM', '241-AN-VTP-PDI'] },
+      { id: '241-AN-WST', equipment: 'WST', tanks: anTanks('241-AN-WST', ['LI', 'TI']), components: [] },
+      {
+        id: '241-AN-WSTA',
+        equipment: 'WSTA',
+        tanks: AN_TANKS.map((tank) => ({
+          id: `241-AN-WSTA-${tank}`,
+          tank,
+          components: [`241-AN-${tank.slice(1)}C`, `241-AN-WSTA-${tank}-LDI`, `241-AN-WSTA-${tank}-TI`],
+        })),
+        components: [],
+      },
+    ],
+    /** Sensors per TI component, by equipment (the main location has its own 40). */
+    tiSensorsPerComponent: 6,
     /** Share of sensors outside the main location whose data stops early ("no data" in recent ranges). */
     noDataRate: 0.2,
     /** Day their data stops. */

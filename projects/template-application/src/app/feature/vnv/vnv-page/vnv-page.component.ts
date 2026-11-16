@@ -1,6 +1,5 @@
-import { CdkConnectedOverlay, type ConnectedPosition } from '@angular/cdk/overlay';
-import { CdkTrapFocus } from '@angular/cdk/a11y';
-import { afterNextRender, ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, Injector, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked, viewChild, type TemplateRef } from '@angular/core';
+import { MatDialog, type MatDialogRef } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { PrototypeStateService } from '../../../core/prototype-state/prototype-state.service';
 import { SidePanelComponent } from '../../../ui/components/side-panel/side-panel.component';
@@ -19,15 +18,14 @@ import { VnvStore } from '../vnv-store';
 
 /**
  * The VNV screen: page header, Chart or Table view, and the right panel.
- * In Table view a selection docks the VNV form in place of the reference panel
- * (Figma 1:10892). With nothing loaded, the Load sensors form is the page
- * (first visit, 1:10989); once loaded, Load data opens it as a popover (1:11102).
+ * Table view always docks the VNV form in the right panel (Figma 1:10892);
+ * Chart view shows the reference panel. With nothing loaded, the Load sensors
+ * form is the page (first visit, 1:10989); once loaded, Load data opens it in a
+ * large centred dialog (Scarlett, 2026-11-16; replaces the 1:11102 popover).
  */
 @Component({
   selector: 'app-vnv-page',
   imports: [
-    CdkConnectedOverlay,
-    CdkTrapFocus,
     LoadSensorsFormComponent,
     MatProgressBarModule,
     SidePanelComponent,
@@ -49,7 +47,7 @@ import { VnvStore } from '../vnv-store';
       (showAllDataChange)="store.showAllData.set($event)"
       [view]="store.view()"
       (viewChange)="store.view.set($event)"
-      (loadData)="openLoadForm($event)"
+      (loadData)="openLoadForm()"
     />
 
     @if (store.location()) {
@@ -92,23 +90,10 @@ import { VnvStore } from '../vnv-store';
       <div class="first-visit"><mat-progress-bar mode="indeterminate" /></div>
     }
 
-    <ng-template
-      cdkConnectedOverlay
-      [cdkConnectedOverlayOrigin]="loadFormAnchor() ?? host"
-      [cdkConnectedOverlayOpen]="store.loadFormOpen() && !!loadFormAnchor() && !!store.farm()"
-      [cdkConnectedOverlayPositions]="popoverPositions"
-      [cdkConnectedOverlayHasBackdrop]="true"
-      cdkConnectedOverlayBackdropClass="app-popover-backdrop"
-      (backdropClick)="cancelPopover()"
-      (overlayKeydown)="$event.key === 'Escape' && cancelPopover()"
-    >
+    <!-- Load data: the Load sensors form in a large centred dialog. -->
+    <ng-template #loadDialog>
       <app-load-sensors-form
-        mode="popover"
-        role="dialog"
-        aria-label="Load sensors"
-        cdkTrapFocus
-        cdkTrapFocusAutoCapture
-        [style.--load-form-max-height]="'calc(100vh - 160px)'"
+        mode="dialog"
         [farm]="store.farm()!"
         [sensors]="store.sensorIndex()"
         [loadedSensorIds]="store.loadedSensorIds()"
@@ -116,7 +101,7 @@ import { VnvStore } from '../vnv-store';
         [range]="store.range()"
         (rangeChange)="store.range.set($event)"
         (load)="onLoad($event)"
-        (cancel)="cancelPopover()"
+        (cancel)="cancelLoadForm()"
       />
     </ng-template>
   `,
@@ -164,18 +149,13 @@ import { VnvStore } from '../vnv-store';
 })
 export class VnvPageComponent {
   protected readonly store = inject(VnvStore);
-  protected readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-  private readonly injector = inject(Injector);
+  private readonly dialog = inject(MatDialog);
   private readonly prototypeState = inject(PrototypeStateService);
+  private readonly loadDialog = viewChild.required<TemplateRef<unknown>>('loadDialog');
+  private loadDialogRef: MatDialogRef<unknown> | null = null;
 
-  /** Table view with a selection: the VNV form docks in the right panel. */
-  protected readonly docked = computed(() => this.store.view() === 'table' && this.store.selectedIds().size > 0);
-
-  /** The Load data button, which the load form popover hangs from. */
-  protected readonly loadFormAnchor = signal<HTMLElement | null>(null);
-  protected readonly popoverPositions: ConnectedPosition[] = [
-    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
-  ];
+  /** Table view always docks the VNV form in the right panel. */
+  protected readonly docked = computed(() => this.store.view() === 'table');
 
   /** First visit: a fixture's search/filters, nothing selected. */
   protected readonly pageInit = computed<LoadSensorsInit | null>(() => {
@@ -183,7 +163,7 @@ export class VnvPageComponent {
     return f ? { locationId: f.locationId, selectedIds: [], search: f.search, filters: f.filters, showNoData: f.showNoData } : null;
   });
 
-  /** Popover: pre-filled with what's loaded (and a fixture's search/filters). Rebuilt each time it opens. */
+  /** Dialog: pre-filled with what's loaded (and a fixture's search/filters). Rebuilt each time it opens. */
   protected readonly popoverInit = computed<LoadSensorsInit>(() => {
     this.store.loadFormOpen();
     const f = this.store.loadFormInit();
@@ -202,7 +182,7 @@ export class VnvPageComponent {
       const state = this.prototypeState.state();
       untracked(() => {
         if (state?.module === 'vnv') {
-          void this.store.applyState(state).then(() => this.findAnchor());
+          void this.store.applyState(state);
         } else if (!state) {
           this.store.clear();
           this.store.loadFormInit.set(null);
@@ -210,18 +190,41 @@ export class VnvPageComponent {
         }
       });
     });
+    // The Load data dialog follows `loadFormOpen` (Load data, a ?state= fixture, Load / Cancel).
+    effect(() => {
+      const open = this.store.loadFormOpen() && !!this.store.farm() && !!this.store.location();
+      untracked(() => {
+        if (open && !this.loadDialogRef) this.openLoadDialog();
+        else if (!open && this.loadDialogRef) this.loadDialogRef.close();
+      });
+    });
   }
 
-  protected openLoadForm(anchor: HTMLElement): void {
+  protected openLoadForm(): void {
     this.store.loadFormInit.set(null);
-    this.loadFormAnchor.set(anchor);
     this.store.loadFormOpen.set(true);
   }
 
   /** Closes without changes: the dates go back to the range that's loaded. */
-  protected cancelPopover(): void {
+  protected cancelLoadForm(): void {
     if (this.store.location()) this.store.range.set(this.store.loadedRange());
     this.store.loadFormOpen.set(false);
+  }
+
+  private openLoadDialog(): void {
+    const ref = this.dialog.open(this.loadDialog(), {
+      ariaLabel: 'Load sensors',
+      width: '1120px',
+      maxWidth: 'calc(100vw - 48px)',
+      height: 'calc(100vh - 96px)',
+      autoFocus: 'first-tabbable',
+    });
+    this.loadDialogRef = ref;
+    // Escape or the backdrop count as Cancel.
+    ref.afterClosed().subscribe(() => {
+      this.loadDialogRef = null;
+      if (this.store.loadFormOpen()) this.cancelLoadForm();
+    });
   }
 
   protected onLoad(request: LoadSensorsRequest): void {
@@ -231,16 +234,4 @@ export class VnvPageComponent {
     void this.store.load(request.locationId, request.range, request.sensorIds);
   }
 
-  /** For `?state=…-load-form-open`: the popover needs the button once it has rendered. */
-  private findAnchor(): void {
-    afterNextRender(
-      () => {
-        const button = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('app-vnv-page-header button')).find(
-          (b) => b.textContent?.trim() === 'Load data',
-        );
-        if (button) this.loadFormAnchor.set(button);
-      },
-      { injector: this.injector },
-    );
-  }
 }

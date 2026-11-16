@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -17,9 +18,12 @@ import {
   buildSearch,
   buildTree,
   EMPTY_SELECTION,
+  FILTER_KINDS,
   filterOptions,
+  sameFilter,
   setSensors,
   toggleSensor,
+  type PickerFilter,
   type PickerSelection,
 } from './load-sensors-model';
 
@@ -28,7 +32,7 @@ export interface LoadSensorsInit {
   /** Pre-selected sensors (the loaded ones, in the popover). */
   selectedIds: readonly string[];
   search: string;
-  filters: readonly string[];
+  filters: readonly PickerFilter[];
   showNoData: boolean;
 }
 
@@ -50,14 +54,17 @@ export function defaultLoadRange(): DateRangeValue {
 
 /**
  * Load sensors (Figma sensor-query 1:11708 … 1:12068): Farm, dates, search,
- * filter chips, then a location tree and the sensors of the chosen location,
- * and the footer with the selection summary and Load sensors.
+ * Add filters (Equipment / Tank / Component type submenus, as chips), then the
+ * farm tree (equipment → tank → component, each row with its count of sensors
+ * that have data), the sensors of the chosen component, and the footer with
+ * the selection summary and Load sensors.
  * - `page`: first visit, the form is the page; the footer sticks to the window.
- * - `popover`: from Load data; the columns scroll inside and the footer stays put.
+ * - `dialog`: from Load data, in a centred modal; the columns scroll inside.
  */
 @Component({
   selector: 'app-load-sensors-form',
   imports: [
+    NgTemplateOutlet,
     MatButtonModule,
     MatCheckboxModule,
     MatDatepickerModule,
@@ -70,12 +77,12 @@ export function defaultLoadRange(): DateRangeValue {
   ],
   templateUrl: './load-sensors-form.component.html',
   styleUrl: './load-sensors-form.component.scss',
-  host: { class: 'app-filled-fields', '[class.popover]': "mode() === 'popover'", '[class.page]': "mode() === 'page'", '[class.searching]': 'searching()' },
+  host: { class: 'app-filled-fields', '[class.dialog]': "mode() === 'dialog'", '[class.page]': "mode() === 'page'", '[class.searching]': 'searching()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoadSensorsFormComponent {
   protected readonly fieldId = `load-sensors-${nextId++}`;
-  readonly mode = input<'page' | 'popover'>('page');
+  readonly mode = input<'page' | 'dialog'>('page');
   readonly farm = input.required<VnvFarm>();
   readonly sensors = input.required<readonly Sensor[]>();
   readonly loadedSensorIds = input<readonly string[]>([]);
@@ -87,7 +94,7 @@ export class LoadSensorsFormComponent {
   readonly cancel = output<void>();
 
   protected readonly search = signal('');
-  protected readonly filters = signal<string[]>([]);
+  protected readonly filters = signal<PickerFilter[]>([]);
   protected readonly selection = signal<PickerSelection>(EMPTY_SELECTION);
   protected readonly activeLocationId = signal<string | null>(null);
   protected readonly expanded = signal<ReadonlySet<string>>(new Set());
@@ -97,12 +104,19 @@ export class LoadSensorsFormComponent {
   private readonly loaded = computed(() => new Set(this.loadedSensorIds()));
   private readonly locations = computed(() => new Map(this.farm().groups.flatMap((g) => g.locations.map((l) => [l.id, l] as const))));
 
-  protected readonly filterMenu = computed(() => filterOptions(this.farm()).filter((t) => !this.filters().includes(t)));
+  private readonly options = computed(() => filterOptions(this.farm()));
+  /** Add filters → Equipment / Tank / Component type, each without the values already chosen. */
+  protected readonly filterMenus = computed(() =>
+    FILTER_KINDS.map((k) => ({
+      ...k,
+      values: this.options()[k.kind].filter((value) => !this.filters().some((f) => sameFilter(f, { kind: k.kind, value }))),
+    })),
+  );
   protected readonly searching = computed(() => this.search().trim() !== '');
-  protected readonly tree = computed(() => buildTree(this.farm(), this.filters(), this.search(), this.selection()));
+  protected readonly tree = computed(() => buildTree(this.farm(), this.sensorsById(), this.filters(), this.search(), this.range()));
   protected readonly list = computed(() => {
     const loc = this.locations().get(this.activeLocationId() ?? '');
-    return loc ? buildList(loc, this.sensorsById(), this.filters(), this.range(), this.loaded(), this.selection(), this.showNoData()) : null;
+    return loc ? buildList(loc, this.sensorsById(), this.range(), this.loaded(), this.selection(), this.showNoData()) : null;
   });
   protected readonly results = computed(() =>
     this.searching() ? buildSearch(this.farm(), this.sensorsById(), this.filters(), this.search(), this.range(), this.selection()) : null,
@@ -133,17 +147,18 @@ export class LoadSensorsFormComponent {
     this.selection.set(locationId && ids.length ? { locationId, ids: new Set(ids) } : EMPTY_SELECTION);
     this.activeLocationId.set(locationId);
     const loc = locationId ? this.locations().get(locationId) : undefined;
-    this.expanded.set(new Set(loc ? [loc.groupId] : []));
+    this.expanded.set(new Set(loc ? [loc.groupId, ...(loc.tankId ? [loc.tankId] : [])] : []));
   }
 
-  protected isExpanded(groupId: string): boolean {
-    return this.searching() || this.expanded().has(groupId);
+  /** Equipment and tank rows; everything is open while searching. */
+  protected isExpanded(id: string): boolean {
+    return this.searching() || this.expanded().has(id);
   }
 
-  protected toggleGroup(groupId: string): void {
+  protected toggleNode(id: string): void {
     const next = new Set(this.expanded());
-    if (next.has(groupId)) next.delete(groupId);
-    else next.add(groupId);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
     this.expanded.set(next);
   }
 
@@ -159,19 +174,23 @@ export class LoadSensorsFormComponent {
     this.selection.set(setSensors(this.selection(), locationId, ids, on));
   }
 
-  /** "Show in tree": leave search and open that location. */
-  protected showInTree(groupId: string, locationId: string): void {
+  /** "Show in tree": leave search and open that component. */
+  protected showInTree(groupId: string, tankId: string | null, locationId: string): void {
     this.search.set('');
     this.activeLocationId.set(locationId);
-    this.expanded.set(new Set([...this.expanded(), groupId]));
+    this.expanded.set(new Set([...this.expanded(), groupId, ...(tankId ? [tankId] : [])]));
   }
 
-  protected addFilter(token: string): void {
-    this.filters.set([...this.filters(), token]);
+  protected addFilter(filter: PickerFilter): void {
+    this.filters.set([...this.filters(), filter]);
   }
 
-  protected removeFilter(token: string): void {
-    this.filters.set(this.filters().filter((t) => t !== token));
+  protected removeFilter(filter: PickerFilter): void {
+    this.filters.set(this.filters().filter((f) => !sameFilter(f, filter)));
+  }
+
+  protected kindLabel(filter: PickerFilter): string {
+    return FILTER_KINDS.find((k) => k.kind === filter.kind)?.label ?? '';
   }
 
   protected setStart(d: Date | null): void {
