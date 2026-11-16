@@ -1,6 +1,9 @@
 @use '@angular/material' as mat;
 
-// component token overrides
+// Buttons: Figma's 2 px corners, and 36 px buttons and icon buttons. The theme
+// runs at density -2 for 48 px form fields; these are the values density -1
+// would set for buttons (Material's per-component density mixins only take M2
+// themes, so the M3 way is the overrides API).
 :root {
   @include mat.fab-overrides(
     (
@@ -12,16 +15,28 @@
 
   @include mat.button-overrides(
     (
-      filled-container-shape: var(--mat-sys-corner-small),
-      outlined-container-shape: var(--mat-sys-corner-small),
-      protected-container-shape: var(--mat-sys-corner-small),
-      tonal-container-shape: var(--mat-sys-corner-small),
-      text-container-shape: var(--mat-sys-corner-small),
+      filled-container-shape: var(--mat-sys-corner-extra-small),
+      outlined-container-shape: var(--mat-sys-corner-extra-small),
+      protected-container-shape: var(--mat-sys-corner-extra-small),
+      tonal-container-shape: var(--mat-sys-corner-extra-small),
+      text-container-shape: var(--mat-sys-corner-extra-small),
+      filled-container-height: 36px,
+      outlined-container-height: 36px,
+      protected-container-height: 36px,
+      tonal-container-height: 36px,
+      text-container-height: 36px,
+      filled-touch-target-display: block,
+      outlined-touch-target-display: block,
+      protected-touch-target-display: block,
+      tonal-touch-target-display: block,
+      text-touch-target-display: block,
     )
   );
   @include mat.icon-button-overrides(
     (
       container-shape: var(--mat-sys-corner-full),
+      state-layer-size: 36px,
+      touch-target-display: block,
     )
   );
 }

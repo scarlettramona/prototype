@@ -1,0 +1,198 @@
+<div class="top">
+  <h2 class="heading">Load sensors</h2>
+
+  <div class="app-field field">
+    <span class="app-field__label" [id]="fieldId + '-farm'">Farm</span>
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-select [value]="farm().id" [aria-labelledby]="fieldId + '-farm'">
+        <mat-option [value]="farm().id">{{ farm().id }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="dates">
+    <div class="app-field field">
+      <label class="app-field__label" [for]="fieldId + '-start'">Start date</label>
+      <mat-form-field subscriptSizing="dynamic">
+        <input matInput [id]="fieldId + '-start'" [matDatepicker]="startPicker" [value]="startDate()" (dateChange)="setStart($event.value)" />
+        <mat-datepicker-toggle matIconSuffix [for]="startPicker"><mat-icon matDatepickerToggleIcon>calendar_today</mat-icon></mat-datepicker-toggle>
+        <mat-datepicker #startPicker />
+      </mat-form-field>
+    </div>
+    <div class="app-field field">
+      <label class="app-field__label" [for]="fieldId + '-end'">End date</label>
+      <mat-form-field subscriptSizing="dynamic">
+        <input matInput [id]="fieldId + '-end'" [matDatepicker]="endPicker" [value]="endDate()" (dateChange)="setEnd($event.value)" />
+        <mat-datepicker-toggle matIconSuffix [for]="endPicker"><mat-icon matDatepickerToggleIcon>calendar_today</mat-icon></mat-datepicker-toggle>
+        <mat-datepicker #endPicker />
+      </mat-form-field>
+    </div>
+    @if (mode() === 'page') {
+      <button mat-button type="button" class="set-default" (click)="setDefaultDates()">Set to default</button>
+    }
+  </div>
+
+  <div class="query">
+    <mat-form-field subscriptSizing="dynamic" class="search">
+      <mat-icon matIconPrefix>search</mat-icon>
+      <input matInput placeholder="Search sensors" aria-label="Search sensors" [value]="search()" (input)="search.set($any($event.target).value)" />
+    </mat-form-field>
+    <div class="chips">
+      <button mat-button type="button" [matMenuTriggerFor]="filterMenuRef">
+        <mat-icon>add</mat-icon>
+        Add filters
+      </button>
+      <!-- Add filters → Equipment / Tank / Component type → values. -->
+      <mat-menu #filterMenuRef="matMenu">
+        @for (m of filterMenus(); track m.kind) {
+          <button mat-menu-item type="button" [matMenuTriggerFor]="filterValuesRef" [matMenuTriggerData]="{ menu: m }" [disabled]="!m.values.length">
+            {{ m.label }}
+          </button>
+        }
+      </mat-menu>
+      <mat-menu #filterValuesRef="matMenu">
+        <ng-template matMenuContent let-menu="menu">
+          @for (v of menu.values; track v) {
+            <button mat-menu-item type="button" (click)="addFilter({ kind: menu.kind, value: v })">{{ v }}</button>
+          }
+        </ng-template>
+      </mat-menu>
+      @for (f of filters(); track f.kind + f.value) {
+        <span class="chip">
+          {{ f.value }}
+          <button type="button" class="chip__remove" [attr.aria-label]="'Remove ' + kindLabel(f) + ' ' + f.value" (click)="removeFilter(f)">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </span>
+      }
+    </div>
+  </div>
+</div>
+
+<div class="columns">
+  <!-- Equipment → tank → component. The number on the right of every row is how many of its sensors have data in the date range. -->
+  <div class="tree" role="tree" aria-label="Locations">
+    @for (g of tree(); track g.id) {
+      <button type="button" class="tree__row" role="treeitem" aria-level="1" [attr.aria-expanded]="isExpanded(g.id)" (click)="toggleNode(g.id)">
+        <mat-icon class="tree__chevron">{{ isExpanded(g.id) ? 'keyboard_arrow_down' : 'chevron_right' }}</mat-icon>
+        <span class="tree__label">{{ g.id }}</span>
+        <span class="tree__count" [attr.aria-label]="g.dataCount + ' sensors with data'">{{ g.dataCount }}</span>
+      </button>
+      @if (isExpanded(g.id)) {
+        @for (t of g.tanks; track t.id) {
+          <button type="button" class="tree__row tree__row--tank" role="treeitem" aria-level="2" [attr.aria-expanded]="isExpanded(t.id)" (click)="toggleNode(t.id)">
+            <mat-icon class="tree__chevron">{{ isExpanded(t.id) ? 'keyboard_arrow_down' : 'chevron_right' }}</mat-icon>
+            <span class="tree__label">{{ t.id }}</span>
+            <span class="tree__count" [attr.aria-label]="t.dataCount + ' sensors with data'">{{ t.dataCount }}</span>
+          </button>
+          @if (isExpanded(t.id)) {
+            @for (l of t.locations; track l.id) {
+              <ng-container *ngTemplateOutlet="leaf; context: { $implicit: l, level: 3 }" />
+            }
+          }
+        }
+        @for (l of g.locations; track l.id) {
+          <ng-container *ngTemplateOutlet="leaf; context: { $implicit: l, level: 2 }" />
+        }
+      }
+    }
+  </div>
+
+  <ng-template #leaf let-l let-level="level">
+    <button
+      type="button"
+      class="tree__row tree__row--leaf"
+      [class.tree__row--direct]="level === 2"
+      role="treeitem"
+      [attr.aria-level]="level"
+      [class.tree__row--active]="l.id === activeLocationId() && !searching()"
+      [attr.aria-current]="l.id === activeLocationId() ? 'true' : null"
+      (click)="openLocation(l.id); searching() && showInTree(l.groupId, l.tankId, l.id)"
+    >
+      <span class="tree__label">{{ l.id }}</span>
+      <span class="tree__count" [attr.aria-label]="l.dataCount + ' sensors with data'">{{ l.dataCount }}</span>
+    </button>
+  </ng-template>
+
+  <div class="list">
+    @if (results(); as r) {
+      <div class="list__head">
+        <span class="list__title">{{ r.count }} sensors match "{{ r.query }}"</span>
+        <button mat-button type="button" class="link" [disabled]="!summary()" (click)="setAll(selection().locationId ?? '', [...selection().ids], false)">Clear selected</button>
+      </div>
+      @for (g of r.groups; track g.locationId) {
+        <div class="parent" [class.dim]="g.disabled">
+          <mat-checkbox
+            [checked]="g.check.checked"
+            [indeterminate]="g.check.indeterminate"
+            [disabled]="g.check.disabled"
+            [aria-label]="'Select ' + g.locationId + ' matches'"
+            (change)="setAll(g.locationId, g.rows.filter(x => !x.noData).map(x => x.id), $event.checked)"
+          />
+          <span class="parent__path">
+            {{ g.groupId }} <mat-icon>chevron_right</mat-icon>
+            @if (g.tankId) {
+              {{ g.tankId }} <mat-icon>chevron_right</mat-icon>
+            }
+            {{ g.locationId }}
+          </span>
+          @if (!g.disabled) {
+            <button mat-button type="button" class="link" (click)="showInTree(g.groupId, g.tankId, g.locationId)">Show in tree</button>
+          }
+        </div>
+        @for (row of g.rows; track row.id) {
+          <div class="item" [class.dim]="row.noData">
+            <mat-checkbox [checked]="row.checked" [disabled]="row.noData" [aria-label]="row.id" (change)="toggle(g.locationId, row.id)" />
+            <span class="item__name">
+              @for (s of row.segments; track $index) {
+                <span [class.hit]="s.match">{{ s.text }}</span>
+              }
+            </span>
+          </div>
+        }
+      }
+    } @else if (list(); as l) {
+      <div class="list__head">
+        <span class="list__title">{{ l.location.id }}</span>
+      </div>
+      <mat-checkbox
+        class="select-all"
+        [checked]="l.selectAll.checked"
+        [indeterminate]="l.selectAll.indeterminate"
+        [disabled]="l.selectAll.disabled"
+        (change)="setAll(l.location.id, l.rows.filter(x => !x.noData).map(x => x.id), $event.checked)"
+      >
+        Select all
+      </mat-checkbox>
+      @for (row of l.rows; track row.id) {
+        <div class="item item--indent" [class.dim]="row.noData">
+          @if (row.noData) {
+            <span class="item__no-check"></span>
+          } @else {
+            <mat-checkbox [checked]="row.checked" [aria-label]="row.id" (change)="toggle(l.location.id, row.id)" />
+          }
+          <span class="item__name">{{ row.stem }}<b>{{ row.suffix }}</b></span>
+          @if (row.noData) {
+            <span class="tag">no data</span>
+          } @else if (row.loaded) {
+            <span class="tag">loaded</span>
+          }
+        </div>
+      }
+      @if (l.noDataCount) {
+        <div class="notice">
+          <span>{{ l.noDataCount }} {{ l.noDataCount === 1 ? 'sensor' : 'sensors' }} with no data in the selected date range</span>
+          <mat-slide-toggle labelPosition="before" hideIcon [checked]="showNoData()" (change)="showNoData.set($event.checked)">Show all</mat-slide-toggle>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<div class="actions">
+  <span class="summary">{{ summary() }}</span>
+  <div class="actions__buttons">
+    <button mat-button type="button" (click)="onCancel()">Cancel</button>
+    <button mat-flat-button type="button" [disabled]="!summary()" (click)="submit()">Load sensors</button>
+  </div>
+</div>

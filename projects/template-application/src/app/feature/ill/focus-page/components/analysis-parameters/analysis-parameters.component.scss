@@ -1,0 +1,203 @@
+@use '@angular/material' as mat;
+
+// Figma 1:9821: surface-container section; groups outlined (577 / 611 / 611); inputs 240 px,
+// right-aligned with a unit suffix; edited fields get a dot, a primary
+// outline and "Saved <value>" beneath (1:8968).
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-160);
+  padding: var(--spacing-240) var(--spacing-160);
+  background: var(--mat-sys-surface-container);
+}
+
+.head,
+.bar,
+.preset,
+.bar__actions,
+.group__head {
+  display: flex;
+  align-items: center;
+}
+
+.head,
+.bar,
+.group__head {
+  justify-content: space-between;
+}
+
+// Figma 1:9823: a 28 px title row; the 36 px collapse button overhangs it.
+.head {
+  height: 28px;
+}
+
+.title {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-160);
+}
+
+.bar {
+  align-items: flex-end;
+}
+
+.preset {
+  gap: var(--spacing-240);
+}
+
+.preset__select {
+  width: 380px;
+}
+
+.saved {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: var(--spacing-60) var(--spacing-240);
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+
+  dd {
+    margin: 0;
+    font: var(--mat-sys-label-large);
+  }
+}
+
+.bar__actions {
+  gap: var(--spacing-80);
+}
+
+// The ILL and Marker tiles share the row's height (the shorter one keeps empty
+// space at its bottom); Calculation Baseline and Miscellaneous grow to fill theirs.
+.groups {
+  display: grid;
+  grid-template-columns: minmax(0, 577fr) minmax(0, 611fr) minmax(0, 611fr);
+  gap: var(--spacing-160);
+  align-items: stretch;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-240);
+
+  .group {
+    flex: 1 1 auto;
+  }
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-120);
+  padding: var(--spacing-160);
+  border: 1px solid var(--mat-sys-outline-variant);
+}
+
+// Every group header is 36 px, with or without its Edit / Revert button, so titles line up.
+.group__head {
+  min-height: 36px;
+
+  button {
+    min-width: 0;
+  }
+}
+
+.group__title {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+  font-weight: 700;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  align-items: start;
+  gap: var(--spacing-160);
+}
+
+.row--read {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  min-height: 24px;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-60);
+  min-height: 44px;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface);
+}
+
+.row--read .label {
+  min-height: 0;
+}
+
+.label--edited::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary);
+}
+
+.info {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  font-variation-settings: 'FILL' 0;
+}
+
+.read-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.saved-hint {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.comment .saved-hint {
+  align-self: flex-start;
+}
+
+.read,
+.comment__value {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface);
+}
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-40);
+}
+
+.input--edited {
+  @include mat.form-field-overrides(
+    (
+      outlined-outline-color: var(--mat-sys-primary),
+      outlined-hover-outline-color: var(--mat-sys-primary),
+    )
+  );
+}
+
+.num {
+  text-align: right;
+}
+
+.unit {
+  padding-left: var(--spacing-80);
+  color: var(--mat-sys-on-surface-variant);
+}

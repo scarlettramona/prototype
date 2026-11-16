@@ -1,15 +1,22 @@
+// The page scrolls as a whole and the footer sits at the end of the page, not
+// pinned to the viewport. On short pages the content grows so the footer still
+// lands at the bottom of the window. The header stays visible while scrolling.
 :host {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
+}
+
+.shell__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .shell__content {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   flex-direction: column;
-  min-height: 0;
-  overflow: auto;
 }
 
 .shell__footer {

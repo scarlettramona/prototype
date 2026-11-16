@@ -1,0 +1,113 @@
+@use '@angular/material' as mat;
+
+// Figma 1:2094: a 52 px toolbar, the table straight under it, 48 px rows with
+// outline dividers; grouped rows on surface-container-high (1:2334); unsaved
+// values in primary, saved under (1:2883).
+// Columns are Figma's widths; the two comment columns share what is left.
+:host {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  --lead: 56px 68px;
+  --results: 123px 139px 87px 116px 119px 83px 116px 83px;
+  --tail: 165px minmax(125px, 167fr) minmax(100px, 125fr) 48px;
+  --cols: var(--lead) 165px 46px 175px var(--results) var(--tail);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-120);
+  min-height: 52px;
+}
+
+.search {
+  width: 431px;
+}
+
+.group-by {
+  @include mat.button-overrides((text-container-height: 40px));
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.scroll {
+  position: relative;
+  overflow-x: auto;
+}
+
+.table {
+  min-width: 1814px;
+}
+
+.table--grouped {
+  --cols: var(--lead) 46px 175px var(--results) var(--tail);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--cols);
+  align-items: center;
+  min-height: 48px;
+  border-bottom: 1px solid var(--mat-sys-outline);
+}
+
+.row--group {
+  grid-template-columns: var(--lead) 1fr auto;
+  background: var(--mat-sys-surface-container-high);
+  border-bottom: 0;
+  font: var(--mat-sys-title-small);
+}
+
+.row--open {
+  border-bottom: 0;
+}
+
+.cell {
+  min-width: 0;
+  padding: 0 var(--spacing-160);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell--num {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+// Expand and checkbox columns centre their 40 px control.
+.cell--icon {
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.cell--indent {
+  padding-left: var(--spacing-160);
+}
+
+.unsaved {
+  color: var(--mat-sys-primary);
+}
+
+.two-line {
+  font: var(--mat-sys-body-large);
+}
+
+.saved-under {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface);
+}
+
+.group__open {
+  margin-right: var(--spacing-160);
+}
+
+.detail {
+  border-bottom: 1px solid var(--mat-sys-outline);
+}

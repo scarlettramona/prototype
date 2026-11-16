@@ -1,0 +1,13 @@
+@use '@angular/material' as mat;
+
+// Filled form fields as the Figma query forms draw them (Load sensors 1:11792,
+// Load scans 1:2014): surface-variant container, on-surface-variant indicator.
+// Put `.app-filled-fields` on a form's root.
+.app-filled-fields {
+  @include mat.form-field-overrides(
+    (
+      filled-container-color: var(--mat-sys-surface-variant),
+      filled-active-indicator-color: var(--mat-sys-on-surface-variant),
+    )
+  );
+}

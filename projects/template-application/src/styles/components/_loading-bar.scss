@@ -1,0 +1,8 @@
+// While a mock call runs, non-chart surfaces show an indeterminate
+// mat-progress-bar along their top edge (charts use the ECharts mask instead).
+// The host needs `position: relative`.
+.app-loading-bar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+}

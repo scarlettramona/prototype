@@ -1,0 +1,143 @@
+<div class="toolbar">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search">
+    <mat-icon matIconPrefix>search</mat-icon>
+    <input matInput placeholder="Search" aria-label="Search scans" [value]="store.search()" (input)="store.search.set($any($event.target).value)" />
+  </mat-form-field>
+  <button mat-button type="button" class="group-by" (click)="store.grouped.set(!store.grouped())">
+    <mat-icon>{{ store.grouped() ? 'reorder' : 'sort' }}</mat-icon>
+    {{ store.grouped() ? 'Ungroup scans' : 'Group by Well' }}
+  </button>
+  <span class="spacer"></span>
+  <button mat-stroked-button type="button" [disabled]="!store.canPerform()" (click)="store.performAnalysis()">Perform analysis</button>
+  <button mat-stroked-button type="button" [disabled]="!store.canSave()" (click)="store.saveAnalysis()">Save analysis</button>
+</div>
+
+<div class="scroll">
+  @if (store.loading() || store.busy()) {
+    <mat-progress-bar mode="indeterminate" class="app-loading-bar" />
+  }
+  <div class="table app-data-table" [class.table--grouped]="store.grouped()" role="table" aria-label="Scans">
+    <div class="row row--head app-data-table__head" role="row">
+      <span class="cell cell--icon" role="columnheader"></span>
+      <span class="cell cell--icon" role="columnheader">
+        <mat-checkbox
+          aria-label="Select all scans"
+          [checked]="store.headerCheck().checked"
+          [indeterminate]="store.headerCheck().indeterminate"
+          [disabled]="store.headerCheck().disabled"
+          (change)="store.setSelected(ids(store.visible()), $event.checked)"
+        />
+      </span>
+      @if (!store.grouped()) {
+        <span class="cell" role="columnheader">Well</span>
+      }
+      <span class="cell" role="columnheader">QI</span>
+      <span class="cell" role="columnheader">Date</span>
+      @for (c of columns; track c.key) {
+        <span class="cell cell--num" role="columnheader">{{ c.label }}</span>
+      }
+      <span class="cell" role="columnheader">Analyst</span>
+      <span class="cell" role="columnheader">Scan comment</span>
+      <span class="cell" role="columnheader">VNV comment</span>
+      <span class="cell" role="columnheader"></span>
+    </div>
+
+    @if (store.grouped()) {
+      @for (g of store.groups(); track g.wellId) {
+        <div class="row row--group" role="row">
+          <span class="cell cell--icon">
+            <button
+              mat-icon-button
+              type="button"
+              [attr.aria-expanded]="!collapsedWells().has(g.wellId)"
+              [attr.aria-label]="(collapsedWells().has(g.wellId) ? 'Expand ' : 'Collapse ') + g.wellId"
+              (click)="toggleWell(g.wellId)"
+            >
+              <mat-icon>{{ collapsedWells().has(g.wellId) ? 'chevron_right' : 'expand_more' }}</mat-icon>
+            </button>
+          </span>
+          <span class="cell cell--icon">
+            <mat-checkbox
+              [aria-label]="'Select ' + g.wellId"
+              [checked]="store.groupCheck(ids(g.scans)).checked"
+              [indeterminate]="store.groupCheck(ids(g.scans)).indeterminate"
+              (change)="store.setSelected(ids(g.scans), $event.checked)"
+            />
+          </span>
+          <span class="cell group__name">{{ g.wellId }}</span>
+          <button mat-button type="button" class="group__open" (click)="openWell.emit(g.wellId)">Open in focus view</button>
+        </div>
+        @if (!collapsedWells().has(g.wellId)) {
+          @for (s of g.scans; track s.id) {
+            <ng-container *ngTemplateOutlet="scanRow; context: { $implicit: s, indent: true }" />
+          }
+        }
+      }
+    } @else {
+      @for (s of store.visible(); track s.id) {
+        <ng-container *ngTemplateOutlet="scanRow; context: { $implicit: s, indent: false }" />
+      }
+    }
+  </div>
+</div>
+
+<ng-template #scanRow let-s let-indent="indent">
+  <div class="row" role="row" [class.row--open]="store.expandedId() === s.id">
+    <span class="cell cell--icon" [class.cell--indent]="indent">
+      <button
+        mat-icon-button
+        type="button"
+        [attr.aria-expanded]="store.expandedId() === s.id"
+        [attr.aria-label]="(store.expandedId() === s.id ? 'Collapse ' : 'Expand ') + s.wellId + ' ' + date(s.datetime)"
+        (click)="store.expand(s.id)"
+      >
+        <mat-icon>{{ store.expandedId() === s.id ? 'expand_more' : 'chevron_right' }}</mat-icon>
+      </button>
+    </span>
+    <span class="cell cell--icon" [class.cell--indent]="indent">
+      <mat-checkbox [aria-label]="'Select ' + s.wellId + ' ' + date(s.datetime)" [checked]="store.selectedIds().has(s.id)" (change)="store.toggleSelected(s.id)" />
+    </span>
+    @if (!store.grouped()) {
+      <span class="cell" role="cell">{{ s.wellId }}</span>
+    }
+    <span class="cell" role="cell">{{ qi(s.qi) }}</span>
+    <span class="cell" role="cell">{{ date(s.datetime) }}</span>
+    @for (c of columns; track c.key) {
+      @let v = cell(s.analysis, c.key);
+      <span class="cell cell--num" role="cell">
+        <span [class.unsaved]="v.tone === 'unsaved'" [class.two-line]="!!v.bottom">{{ v.top }}</span>
+        @if (v.bottom) {
+          <span class="saved-under">{{ v.bottom }}</span>
+        }
+      </span>
+    }
+    <span class="cell" role="cell">{{ s.analysis.saved?.savedBy ?? '--' }}</span>
+    <span class="cell cell--clip" role="cell" [attr.title]="s.scanComment ?? null">{{ s.scanComment ?? '--' }}</span>
+    <span class="cell cell--clip" role="cell" [attr.title]="s.vnvComment ?? null">{{ s.vnvComment ?? '--' }}</span>
+    <span class="cell cell--icon">
+      <button mat-icon-button type="button" [attr.aria-label]="'More for ' + s.wellId + ' ' + date(s.datetime)" [matMenuTriggerFor]="rowMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #rowMenu="matMenu" xPosition="before">
+        <button mat-menu-item type="button" (click)="openScan.emit(s)">Open in focus view</button>
+        <button mat-menu-item type="button" (click)="exportScan.emit(s.id)">Export smooth data</button>
+      </mat-menu>
+    </span>
+  </div>
+  @if (store.expandedId() === s.id) {
+    <div class="detail" role="row">
+      @if (store.expandedScan(); as full) {
+        <app-scan-detail
+          [scan]="full"
+          [preset]="store.presetFor(full)"
+          [busy]="store.busy()"
+          (save)="saveRow(s.id, $event)"
+          (adjust)="openScan.emit(s)"
+          (export)="exportScan.emit(s.id)"
+        />
+      } @else {
+        <mat-progress-bar mode="indeterminate" />
+      }
+    </div>
+  }
+</ng-template>

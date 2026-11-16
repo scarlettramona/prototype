@@ -85,40 +85,17 @@ $light-palette-overrides: (
    // shadow
 );
 
+// Dark surfaces are the plain neutral tones, matching the Pluto variables in
+// Figma (surface #111415 = neutral 6, surface-container #1e2022 = neutral 12,
+// surface-container-high #282a2c = neutral 17).
+$_neutral: map.get(palette.$primary-palette, neutral);
+
 $dark-palette-overrides: (
-  background: color-mix(
-      in oklab,
-      #{map.get(palette.$primary-palette, 10)} 15%,
-      map.get(map.get(palette.$primary-palette, neutral), 6)
-    ),
-  surface: color-mix(
-      in oklab,
-      #{map.get(palette.$primary-palette, 10)} 15%,
-      map.get(map.get(palette.$primary-palette, neutral), 6)
-    ),
-  surface-container: color-mix(
-      in oklab,
-      #{map.get(palette.$primary-palette, 10)} 15%,
-      map.get(map.get(palette.$primary-palette, neutral), 12)
-    ),
-  surface-container-low: color-mix(
-      in oklab,
-      #{map.get(palette.$primary-palette, 10)} 15%,
-      map.get(map.get(palette.$primary-palette, neutral), 10)
-    ),
-  surface-container-lowest: color-mix(
-      in oklab,
-      #{map.get(palette.$primary-palette, 10)} 15%,
-      map.get(map.get(palette.$primary-palette, neutral), 4)
-    ),
-  surface-container-high: color-mix(
-      in oklab,
-      #{map.get(palette.$primary-palette, 10)} 15%,
-      map.get(map.get(palette.$primary-palette, neutral), 17)
-    ),
-  surface-container-highest: color-mix(
-      in oklab,
-      #{map.get(palette.$primary-palette, 10)} 15%,
-      map.get(map.get(palette.$primary-palette, neutral), 22)
-    ),
+  background: map.get($_neutral, 6),
+  surface: map.get($_neutral, 6),
+  surface-container-lowest: map.get($_neutral, 4),
+  surface-container-low: map.get($_neutral, 10),
+  surface-container: map.get($_neutral, 12),
+  surface-container-high: map.get($_neutral, 17),
+  surface-container-highest: map.get($_neutral, 22),
 );

@@ -1,0 +1,13 @@
+@use '@angular/material' as mat;
+
+// Switches keep Material's own size and handle; only the label uses label-large.
+:root {
+  @include mat.slide-toggle-overrides(
+    (
+      label-text-font: var(--mat-sys-label-large-font),
+      label-text-size: var(--mat-sys-label-large-size),
+      label-text-weight: var(--mat-sys-label-large-weight),
+      label-text-tracking: var(--mat-sys-label-large-tracking),
+    )
+  );
+}
