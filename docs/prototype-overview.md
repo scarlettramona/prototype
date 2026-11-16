@@ -384,3 +384,54 @@ Paths are relative to `projects/template-application/src/app/` unless they start
     - `scan-detail`: chart card and analysis card.
 
 **Tests:** `library-model.spec.ts`, `ill-library-store.spec.ts`.
+
+### Phase 7 · ILL focus view
+
+**Decisions** (Scarlett, 2026-11-15, or Figma-wins)
+- **All scans is the chart only** (`1:10048`). There's no scan table under it.
+- **Calculated ILL lines:** drawn for the focused scan only, in its colour.
+  - Saved is solid and unsaved is dashed, matching the legend swatches. Each line has a small value tag.
+  - The legend's Saved / Unsaved rows show or hide them.
+- **Add scans** is a menu of this well's closed scans; picking one reopens it as a tab. It's disabled when every scan is open.
+- **Leaving or closing a tab with unsaved work** opens a dialog:
+  - Title "Unsaved analysis", body "You have unsaved analysis results. Save them before you leave?"
+  - Buttons Cancel · Discard · Save analysis. Escape or the backdrop counts as Cancel.
+  - The wording is agreed; Figma has no frame for it.
+- **Unsaved work** means unsaved results or an edited QI or comment. Edited parameters that haven't been run don't count.
+- **Primary buttons:**
+  - Save analysis is primary while there's something to save; otherwise Run analysis is.
+  - Discard (beside Save analysis) appears only with unsaved results; Figma has no Discard.
+- **Tabs:**
+  - The active-tab underline is **2 px** (Figma), not 3.
+  - The dot that replaces the × uses primary (no amber).
+- **Edited parameters:** a primary dot before the label, a primary outline, and "Saved <value> <unit>" under the field. Revert appears only on groups with edits.
+- **Calculation Baseline and Miscellaneous** are read-only until **Edit** turns their rows into inputs.
+  - The preset select loads a preset into the draft.
+  - **Save as default** overwrites the in-memory `Default` preset.
+- Edits are measured against the **saved** parameters, or the Default preset if nothing is saved. The draft starts at the latest run's parameters.
+- **Fixtures:**
+  - `ill-scan-zoomed` also seeds one edit (ILL Normal Lower Range 12.000, saved 10.500), matching `1:8968`.
+  - `ill-scans-popover` hides all but the focused scan and one other.
+
+**Pieces** (`feature/ill/focus-page/`)
+- **`ill-focus-store.ts`:** `IllFocusStore` (provided by the page) and `ALL_TAB`.
+  - Signals and computeds: well scans, `openIds`, `active`, the shared `window`, `fitY`, `hidden`, `lines`, `legendOpen`, `paramsOpen`, `editingGroups`, `presets`, plus the per-scan parameter and review drafts.
+  - Computed views: `focused`, `visibleScans`, `closedScans`, `draft`, `reference`, `edited`, `review`, `canSave`, `primaryAction`, `dirtyIds`, and `dirty(id)`.
+  - Methods:
+    - `load(wellId, tab?)`, `applyState`.
+    - `select`, `open`, `close`, `setWindow`, `setHidden`, `setAllVisible`.
+    - `setField`, `revert`, `editGroup`, `loadPreset`, `saveAsDefault`, `setReview`.
+    - `run`, `save(ids?)`, `discard(ids?)`.
+  - After a mutation it calls `IllLibraryStore.refresh(ids)` (new), so the library rows stay current.
+- **`focus-model.ts`** (pure): `RESULT_ROWS`/`resultRows`, `PARAM_GROUPS` (Figma labels, including "Review tolerence"), `paramValue`/`withParam`/`formatParam`, `referenceParameters`/`initialDraft`/`editedFields`/`groupEdited`, `countsAt`, `depthYRange`, `closedScanIds`.
+- **`depth-chart-options.ts`:** `buildDepthChartOptions(data, window, yRange, tagText)`, `depthWindowOption` for `[merge]`, and the hover readout.
+- **`focus-page.component.ts`:**
+  - The header: a back button and "Scan library" breadcrumb, with the well as the title.
+  - The tab bar, then chart + Scan details + Analysis parameters (a scan tab) or the chart alone (All scans).
+  - Route inputs: `wellId` and `?tab=`.
+  - `confirmLeave()` is wired as the route's `canDeactivate`.
+- **`components/`:**
+  - `focus-tab-bar`, `focus-chart` (with the legend popover and the shared navigator, `inverse`), `scans-legend`.
+  - `scan-details`, `analysis-parameters`, `unsaved-dialog` (the first `MatDialog` in the app).
+
+**Tests:** `focus-model.spec.ts`, `ill-focus-store.spec.ts`.

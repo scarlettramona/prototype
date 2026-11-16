@@ -180,19 +180,29 @@ export class IllLibraryStore {
     if (state.expandedScanId) await this.expand(state.expandedScanId);
   }
 
+  /** Re-reads scans changed elsewhere (the focus view) so their rows stay current. */
+  async refresh(ids: readonly string[]): Promise<void> {
+    const listed = new Set(this.results().map((r) => r.id));
+    const present = ids.filter((id) => listed.has(id));
+    if (present.length) this.replace(await this.service.getScans(present));
+  }
+
   /** Runs `action` per scan, then refreshes those rows (and the expanded scan) in place. */
   private async mutate(ids: readonly string[], action: (id: string) => Promise<unknown>): Promise<void> {
     if (ids.length === 0) return;
     this.busy.set(true);
     try {
       for (const id of ids) await action(id);
-      const fresh = await this.service.getScans(ids);
-      const byId = new Map(fresh.map((s) => [s.id, s]));
-      this.results.update((rows) => rows.map((r) => (byId.has(r.id) ? summary(byId.get(r.id)!) : r)));
-      const open = this.expandedId();
-      if (open && byId.has(open)) this.expandedScan.set(byId.get(open)!);
+      this.replace(await this.service.getScans(ids));
     } finally {
       this.busy.set(false);
     }
+  }
+
+  private replace(fresh: readonly Scan[]): void {
+    const byId = new Map(fresh.map((s) => [s.id, s]));
+    this.results.update((rows) => rows.map((r) => (byId.has(r.id) ? summary(byId.get(r.id)!) : r)));
+    const open = this.expandedId();
+    if (open && byId.has(open)) this.expandedScan.set(byId.get(open)!);
   }
 }

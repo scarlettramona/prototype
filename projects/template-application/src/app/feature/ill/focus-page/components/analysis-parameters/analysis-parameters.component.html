@@ -1,0 +1,122 @@
+<div class="head">
+  <h2 class="title" id="params-title">Analysis parameters</h2>
+  <button
+    mat-icon-button
+    type="button"
+    [attr.aria-expanded]="store.paramsOpen()"
+    aria-controls="params-body"
+    [attr.aria-label]="store.paramsOpen() ? 'Collapse analysis parameters' : 'Expand analysis parameters'"
+    (click)="store.paramsOpen.set(!store.paramsOpen())"
+  >
+    <mat-icon>{{ store.paramsOpen() ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
+  </button>
+</div>
+
+@if (store.paramsOpen() && store.draft(); as draft) {
+  <div id="params-body" class="body" role="region" aria-labelledby="params-title">
+    <div class="bar">
+      <div class="preset">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="preset__select">
+          <mat-select [value]="draft.preset" (selectionChange)="store.loadPreset($event.value)" aria-label="Parameter preset">
+            @for (p of store.presets(); track p.preset) {
+              <mat-option [value]="p.preset">{{ p.preset }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <dl class="saved">
+          <dt>Saved on</dt>
+          <dd>{{ savedOn() }}</dd>
+          <dt>Saved by</dt>
+          <dd>{{ savedBy() }}</dd>
+        </dl>
+      </div>
+      <div class="bar__actions">
+        <button mat-button type="button" (click)="store.saveAsDefault()">Save as default</button>
+        @if (store.primaryAction() === 'run') {
+          <button mat-flat-button type="button" [disabled]="store.busy()" (click)="store.run()">Run analysis</button>
+        } @else {
+          <button mat-stroked-button type="button" [disabled]="store.busy()" (click)="store.run()">Run analysis</button>
+        }
+      </div>
+    </div>
+
+    <div class="groups">
+      <div class="stack">
+        <ng-container *ngTemplateOutlet="group; context: { $implicit: groups[0] }" />
+        <ng-container *ngTemplateOutlet="group; context: { $implicit: groups[1] }" />
+      </div>
+      <ng-container *ngTemplateOutlet="group; context: { $implicit: groups[2] }" />
+      <ng-container *ngTemplateOutlet="group; context: { $implicit: groups[3] }" />
+    </div>
+  </div>
+}
+
+<ng-template #group let-g>
+  <section class="group" [attr.aria-label]="g.title">
+    <div class="group__head">
+      <h3 class="group__title">{{ g.title }}</h3>
+      @if (actionLabel(g); as label) {
+        <button mat-button type="button" (click)="groupAction(g)">{{ label }}</button>
+      }
+    </div>
+
+    @for (field of g.fields; track field.key) {
+      @let edited = isEdited(field);
+      @if (!editable(g)) {
+        @if (field.kind === 'text') {
+          <div class="comment">
+            <span class="label">{{ field.label }}</span>
+            <span class="comment__value">{{ value(field) || '—' }}</span>
+          </div>
+        } @else {
+          <div class="row row--read">
+            <span class="label" [class.label--edited]="edited">
+              {{ field.label }}
+              @if (field.info) {
+                <mat-icon class="info" aria-hidden="true">info</mat-icon>
+              }
+            </span>
+            <span class="read">{{ value(field) }}{{ field.unit ? ' ' + field.unit : '' }}</span>
+          </div>
+        }
+      } @else {
+        <div class="row">
+          <label class="label" [class.label--edited]="edited" [for]="field.group + '-' + field.key">{{ field.label }}</label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="input" [class.input--edited]="edited">
+            @switch (field.kind) {
+              @case ('method') {
+                <mat-select [id]="field.group + '-' + field.key" [value]="value(field)" (selectionChange)="setText(field, $event.value)">
+                  @for (m of methods; track m) {
+                    <mat-option [value]="m">{{ m }}</mat-option>
+                  }
+                </mat-select>
+              }
+              @case ('date') {
+                <input matInput type="date" [id]="field.group + '-' + field.key" [value]="isoDate(field)" (change)="setDate(field, $any($event.target).value)" />
+              }
+              @case ('text') {
+                <input matInput [id]="field.group + '-' + field.key" [value]="value(field)" (change)="setText(field, $any($event.target).value)" />
+              }
+              @default {
+                <input
+                  matInput
+                  class="num"
+                  inputmode="decimal"
+                  [id]="field.group + '-' + field.key"
+                  [value]="value(field)"
+                  (change)="setNumber(field, $any($event.target).value)"
+                />
+              }
+            }
+            @if (field.kind === 'number' && field.unit) {
+              <span matTextSuffix class="unit">{{ field.unit }}</span>
+            }
+            @if (edited) {
+              <mat-hint align="end">{{ savedHint(field) }}</mat-hint>
+            }
+          </mat-form-field>
+        </div>
+      }
+    }
+  </section>
+</ng-template>
