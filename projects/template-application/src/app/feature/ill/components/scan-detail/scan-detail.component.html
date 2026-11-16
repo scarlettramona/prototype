@@ -21,12 +21,12 @@
 
 <section class="card card--analysis" aria-label="Analysis">
   <div class="col">
-    <app-detail-row label="Parameters" [value]="shown()?.parameters?.preset ?? '—'" />
-    <app-detail-row label="Saved on" [value]="saved() ? date(saved()!.savedAt) : ''" />
-    <app-detail-row label="Saved by" [value]="saved()?.savedBy ?? ''" />
+    <app-detail-row label="Parameters" [value]="preset()?.parameters?.preset ?? 'Default'" />
+    <app-detail-row label="Saved on" [value]="preset() ? date(preset()!.savedAt) : ''" />
+    <app-detail-row label="Saved by" [value]="preset()?.savedBy ?? ''" />
     <div class="gap"></div>
-    <app-detail-row label="ILL Method" [value]="shown()?.parameters?.illMethod?.method ?? '—'" />
-    <app-detail-row label="Marker Method" [value]="shown()?.parameters?.markerMethod?.method ?? '—'" />
+    <app-detail-row label="ILL Method" [value]="(shown()?.parameters ?? preset()?.parameters)?.illMethod?.method ?? '—'" />
+    <app-detail-row label="Marker Method" [value]="(shown()?.parameters ?? preset()?.parameters)?.markerMethod?.method ?? '—'" />
   </div>
   <div class="col">
     <app-detail-row label="Analysis" [value]="analysisLabel()" />

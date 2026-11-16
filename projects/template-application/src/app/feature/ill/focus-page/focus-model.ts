@@ -30,6 +30,8 @@ export interface ResultRow {
   value: string;
   /** The unsaved value beside the saved one; `undefined` for a single column. */
   compare?: string;
+  /** `unsaved`: a single column of unsaved results, drawn in primary. */
+  tone?: 'unsaved';
 }
 
 function formatResult(results: AnalysisResults | undefined, key: keyof AnalysisResults): string {
@@ -40,7 +42,8 @@ function formatResult(results: AnalysisResults | undefined, key: keyof AnalysisR
 
 /**
  * Saved and unsaved: two columns (saved, then unsaved in primary). Otherwise
- * one column of whichever exists, or `—` with no analysis.
+ * one column: saved in on-surface, or unsaved in primary (a first run), or
+ * `—` with no analysis. Saving turns the unsaved column into the saved one.
  */
 export function resultRows(analysis: Analysis): ResultRow[] {
   const saved = analysis.saved?.results;
@@ -48,7 +51,9 @@ export function resultRows(analysis: Analysis): ResultRow[] {
   return RESULT_ROWS.map(({ key, label, unit }) =>
     saved && unsaved
       ? { label, unit, value: formatResult(saved, key), compare: formatResult(unsaved, key) }
-      : { label, unit, value: formatResult(saved ?? unsaved, key) },
+      : unsaved
+        ? { label, unit, value: formatResult(unsaved, key), tone: 'unsaved' as const }
+        : { label, unit, value: formatResult(saved, key) },
   );
 }
 
@@ -86,8 +91,6 @@ export interface ParamField {
 export interface ParamGroupDef {
   group: ParamGroup;
   title: string;
-  /** Read-only rows with an Edit action (Calculation Baseline, Miscellaneous). */
-  readOnly: boolean;
   fields: ParamField[];
 }
 
@@ -105,7 +108,6 @@ export const PARAM_GROUPS: readonly ParamGroupDef[] = [
   {
     group: 'calculationBaseline',
     title: 'Calculation Baseline',
-    readOnly: true,
     fields: [
       f('calculationBaseline', 'baselineValue', 'Baseline value', 'in', 'number', true),
       f('calculationBaseline', 'baselineSlopeRate', 'Baseline slope rate', 'in/yr', 'number', true),
@@ -115,7 +117,6 @@ export const PARAM_GROUPS: readonly ParamGroupDef[] = [
   {
     group: 'miscellaneous',
     title: 'Miscellaneous',
-    readOnly: true,
     fields: [
       f('miscellaneous', 'markerDepth', 'Marker depth'),
       f('miscellaneous', 'reviewTolerance', 'Review tolerence'),
@@ -127,7 +128,6 @@ export const PARAM_GROUPS: readonly ParamGroupDef[] = [
   {
     group: 'illMethod',
     title: 'ILL method',
-    readOnly: false,
     fields: [
       f('illMethod', 'method', 'ILL Method', '', 'method'),
       f('illMethod', 'normalUpperRange', 'ILL Normal Upper Range'),
@@ -141,7 +141,6 @@ export const PARAM_GROUPS: readonly ParamGroupDef[] = [
   {
     group: 'markerMethod',
     title: 'Marker method',
-    readOnly: false,
     fields: [
       f('markerMethod', 'method', 'Marker Method', '', 'method'),
       f('markerMethod', 'normalUpperRange', 'Marker Normal Upper Range'),
@@ -171,14 +170,14 @@ export function formatParam(value: ParamValue, kind: FieldKind): string {
   return String(value);
 }
 
-/** What edits are measured against: the saved parameters, else the Default preset. */
-export function referenceParameters(scan: Scan): AnalysisParameters {
-  return structuredClone(scan.analysis.saved?.parameters ?? defaultParameters());
+/** What edits are measured against: the saved parameters, else the Default preset (`defaults`). */
+export function referenceParameters(scan: Scan, defaults: AnalysisParameters = defaultParameters()): AnalysisParameters {
+  return structuredClone(scan.analysis.saved?.parameters ?? defaults);
 }
 
 /** Where editing starts: the latest run's parameters, else the reference. */
-export function initialDraft(scan: Scan): AnalysisParameters {
-  return structuredClone(scan.analysis.unsaved?.parameters ?? referenceParameters(scan));
+export function initialDraft(scan: Scan, defaults: AnalysisParameters = defaultParameters()): AnalysisParameters {
+  return structuredClone(scan.analysis.unsaved?.parameters ?? referenceParameters(scan, defaults));
 }
 
 /** `group.key` of every field whose draft differs from the reference. */

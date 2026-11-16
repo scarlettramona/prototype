@@ -41,6 +41,41 @@ describe('IllFocusStore', () => {
     expect(store.visibleScans().length).toBe(2);
   });
 
+  it('keeps every tile read-only until Edit; Revert, Run and Save as default return it to read mode', async () => {
+    await store.applyState(state('ill-scan-saved'));
+    expect(store.editingGroups().size).toBe(0);
+    expect(store.selectedPreset()?.savedBy).toBeTruthy();
+
+    store.editGroup('calculationBaseline');
+    store.editGroup('markerMethod');
+    store.setField('calculationBaseline', 'baselineValue', 140);
+    expect([...store.editingGroups()].sort()).toEqual(['calculationBaseline', 'markerMethod']);
+    store.revert('calculationBaseline');
+    expect(store.editingGroups().has('calculationBaseline')).toBe(false);
+    expect(store.edited().size).toBe(0);
+
+    store.setField('markerMethod', 'counts', 950);
+    await store.run();
+    expect(store.editingGroups().size).toBe(0);
+    expect([...store.edited()]).toEqual(['markerMethod.counts']);
+    expect(store.focused()!.analysis.unsaved).toBeDefined();
+
+    await store.saveAsDefault();
+    expect(store.edited().size).toBe(0);
+    expect(store.defaultPreset()!.parameters.markerMethod.counts).toBe(950);
+    expect(store.defaultPreset()!.savedAt).toBeGreaterThan(0);
+  });
+
+  it('shows saved on / by only once the analysis is saved', async () => {
+    await store.applyState(state('ill-scan-first-run-unsaved'));
+    const s = store.focused()!;
+    expect(s.analysis.saved).toBeUndefined();
+    expect(s.analysis.unsaved).toBeDefined();
+    await store.save();
+    expect(store.focused()!.analysis.saved?.savedBy).toBeTruthy();
+    expect(store.focused()!.analysis.unsaved).toBeUndefined();
+  });
+
   it('shares the zoom window across tabs, and Reset clears it', async () => {
     await store.applyState(state('ill-scan-saved'));
     store.setWindow({ start: 200, end: 20 });

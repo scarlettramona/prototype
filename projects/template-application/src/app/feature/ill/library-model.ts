@@ -75,7 +75,7 @@ export function summaryParts(query: ScanQuery): { wells: string; dates: string; 
 export function matchesSearch(scan: ScanSummary, text: string): boolean {
   const q = text.trim().toLowerCase();
   if (!q) return true;
-  return [scan.wellId, formatDateTime(scan.datetime), scan.analysis.analyst ?? '', scan.scanComment ?? '', scan.vnvComment ?? '']
+  return [scan.wellId, formatDateTime(scan.datetime), scan.analysis.saved?.savedBy ?? '', scan.scanComment ?? '', scan.vnvComment ?? '']
     .some((v) => v.toLowerCase().includes(q));
 }
 

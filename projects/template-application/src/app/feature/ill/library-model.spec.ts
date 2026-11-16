@@ -45,7 +45,7 @@ describe('Scan library model', () => {
   });
 
   it('searches well, date, analyst and comments', () => {
-    const s = scan('S101 R02 N 400166', 0, { saved, analyst: 'Arch Bence' }, { scanComment: 'Non pretium' });
+    const s = scan('S101 R02 N 400166', 0, { saved }, { scanComment: 'Non pretium' });
     expect(matchesSearch(s, 's101')).toBe(true);
     expect(matchesSearch(s, 'bence')).toBe(true);
     expect(matchesSearch(s, 'pretium')).toBe(true);

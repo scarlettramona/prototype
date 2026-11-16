@@ -1,9 +1,10 @@
 import { inject, Injectable } from '@angular/core';
+import { parseUsDate } from '../mock-data/dates';
 import { delay, MOCK_LATENCY } from '../mock-data/latency';
 import { MOCK_DATA_CONFIG } from '../mock-data/mock-data.config';
 import { MockDataService } from '../mock-data/mock-data.service';
 import { analyse, cloneParameters, defaultParameters } from './ill-analysis';
-import type { AnalysisParameters, Scan, ScanQuery, ScanReviewRequest, ScanSummary, Well } from './ill.models';
+import type { AnalysisParameters, ParameterPreset, Scan, ScanQuery, ScanReviewRequest, ScanSummary, Well } from './ill.models';
 import { byNewest, matchesScanQuery } from './ill-query';
 
 /**
@@ -14,6 +15,14 @@ import { byNewest, matchesScanQuery } from './ill-query';
 export class IllMockService {
   private readonly data = inject(MockDataService);
   private readonly latency = inject(MOCK_LATENCY);
+  /** The parameter presets, edited in memory by Save as default. */
+  private presets: ParameterPreset[] = [
+    {
+      parameters: defaultParameters(),
+      savedAt: parseUsDate(MOCK_DATA_CONFIG.ill.defaultPreset.savedAt),
+      savedBy: MOCK_DATA_CONFIG.ill.defaultPreset.savedBy,
+    },
+  ];
 
   async getWells(): Promise<Well[]> {
     const ds = await this.data.illDataset();
@@ -43,9 +52,17 @@ export class IllMockService {
     return this.respond(ids.map((id) => structuredClone(ds.scans.get(id)!)));
   }
 
-  /** The parameter presets for the select. */
-  async getPresets(): Promise<AnalysisParameters[]> {
-    return this.respond([defaultParameters()]);
+  /** The parameter presets for the select, each with its saved on / by. */
+  async getPresets(): Promise<ParameterPreset[]> {
+    return this.respond(structuredClone(this.presets));
+  }
+
+  /** Save as default: overwrites the preset named `parameters.preset`, saved now by the current user. */
+  async savePreset(parameters: AnalysisParameters): Promise<ParameterPreset[]> {
+    const preset: ParameterPreset = { parameters: cloneParameters(parameters), savedAt: Date.now(), savedBy: MOCK_DATA_CONFIG.currentUser };
+    const i = this.presets.findIndex((p) => p.parameters.preset === parameters.preset);
+    this.presets = i < 0 ? [...this.presets, preset] : this.presets.map((p, j) => (j === i ? preset : p));
+    return this.respond(structuredClone(this.presets));
   }
 
   /** Runs the analysis with `parameters`, replacing any unsaved results. */
@@ -56,7 +73,6 @@ export class IllMockService {
       results: analyse(scan.points, parameters, scan.datetime),
       runAt: Date.now(),
     };
-    scan.analysis.analyst ??= MOCK_DATA_CONFIG.currentUser;
     return this.respond(structuredClone(scan));
   }
 

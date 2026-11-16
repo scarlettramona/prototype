@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { defaultParameters } from '../../../core/ill/ill-analysis';
 import { IllMockService } from '../../../core/ill/ill-mock.service';
-import type { AnalysisParameters, Scan } from '../../../core/ill/ill.models';
+import type { AnalysisParameters, ParameterPreset, Scan } from '../../../core/ill/ill.models';
 import type { ResolvedIllFocusState } from '../../../core/prototype-state/resolve-prototype-state';
 import { IllLibraryStore } from '../ill-library-store';
 import {
@@ -54,9 +54,22 @@ export class IllFocusStore {
 
   private readonly drafts = signal<ReadonlyMap<string, AnalysisParameters>>(new Map());
   private readonly reviews = signal<ReadonlyMap<string, ScanReviewDraft>>(new Map());
-  /** Read-only groups switched to inputs with Edit (per tab visit). */
+  /** A scan's reference after Save as default: its draft, now the Default preset. */
+  private readonly references = signal<ReadonlyMap<string, AnalysisParameters>>(new Map());
+  /**
+   * Groups switched to inputs with Edit (per tab visit). Every group starts
+   * read-only; Revert, Run analysis, Save as default and Save analysis switch
+   * them back.
+   */
   readonly editingGroups = signal<ReadonlySet<ParamGroup>>(new Set());
-  readonly presets = signal<readonly AnalysisParameters[]>([defaultParameters()]);
+  /** The presets for the select, each with its saved on / by (from the service). */
+  readonly presets = signal<readonly ParameterPreset[]>([]);
+  readonly defaultPreset = computed(() => this.presets().find((p) => p.parameters.preset === 'Default') ?? this.presets()[0] ?? null);
+  /** The preset named in the draft (its saved on / by sit beside the select). */
+  readonly selectedPreset = computed(() => {
+    const name = this.draft()?.preset;
+    return this.presets().find((p) => p.parameters.preset === name) ?? this.defaultPreset();
+  });
 
   private loadToken = 0;
 
@@ -84,7 +97,7 @@ export class IllFocusStore {
   // ── The focused scan's drafts ──
   readonly reference = computed(() => {
     const s = this.focused();
-    return s ? referenceParameters(s) : null;
+    return s ? (this.references().get(s.id) ?? referenceParameters(s, this.defaults())) : null;
   });
   readonly draft = computed(() => {
     const s = this.focused();
@@ -125,8 +138,9 @@ export class IllFocusStore {
     this.wellId.set(wellId);
     this.loading.set(true);
     try {
-      const scans = await this.service.getWellScans(wellId);
+      const [scans, presets] = await Promise.all([this.service.getWellScans(wellId), this.service.getPresets()]);
       if (token !== this.loadToken) return;
+      this.presets.set(presets);
       this.reset(scans);
       this.openIds.set(scans.map((s) => s.id));
       this.active.set(tab && scans.some((s) => s.id === tab) ? tab : ALL_TAB);
@@ -141,8 +155,9 @@ export class IllFocusStore {
     this.wellId.set(state.wellId);
     this.loading.set(true);
     try {
-      const scans = await this.service.getWellScans(state.wellId);
+      const [scans, presets] = await Promise.all([this.service.getWellScans(state.wellId), this.service.getPresets()]);
       if (token !== this.loadToken) return;
+      this.presets.set(presets);
       this.reset(scans);
       this.openIds.set(state.scanIds);
       this.active.set(state.activeTab);
@@ -154,8 +169,14 @@ export class IllFocusStore {
         this.hidden.set(new Set(others.filter((_, i) => i !== 3)));
       }
       if (state.name === 'ill-scan-zoomed' && state.activeTab !== ALL_TAB) {
-        // Figma 1:8968: one edited field, ILL Normal Lower Range 12.000 (saved 10.500).
+        // Figma 1:8968: ILL method in edit, ILL Normal Lower Range 12.000 (saved 10.500).
+        this.editGroup('illMethod');
         this.setField('illMethod', 'normalLowerRange', 12);
+      }
+      if (state.run && state.activeTab !== ALL_TAB) {
+        // A re-run of a saved scan edits one field (Figma 1:8968); a first run uses the Default preset.
+        if (this.focused()?.analysis.saved) this.setField('illMethod', 'normalLowerRange', 12);
+        await this.run();
       }
     } finally {
       if (token === this.loadToken) this.loading.set(false);
@@ -170,6 +191,7 @@ export class IllFocusStore {
     this.legendOpen.set(false);
     this.drafts.set(new Map());
     this.reviews.set(new Map());
+    this.references.set(new Map());
     this.editingGroups.set(new Set());
   }
 
@@ -256,15 +278,30 @@ export class IllFocusStore {
 
   loadPreset(name: string): void {
     const s = this.focused();
-    const preset = this.presets().find((p) => p.preset === name);
-    if (s && preset) this.setDraft(s.id, structuredClone(preset));
+    const preset = this.presets().find((p) => p.parameters.preset === name);
+    if (s && preset) this.setDraft(s.id, structuredClone(preset.parameters));
   }
 
-  /** Save as default: the current values become the in-memory Default preset. */
-  saveAsDefault(): void {
+  /**
+   * Save as default: the current values become the Default preset (saved now,
+   * by the current user). They are the scan's new reference, so the edit dots
+   * clear, and every group goes back to read mode.
+   */
+  async saveAsDefault(): Promise<void> {
+    const s = this.focused();
     const d = this.draft();
-    if (!d) return;
-    this.presets.update((list) => list.map((p) => (p.preset === 'Default' ? { ...structuredClone(d), preset: 'Default' } : p)));
+    if (!s || !d || this.busy()) return;
+    const params: AnalysisParameters = { ...structuredClone(d), preset: 'Default' };
+    this.busy.set(true);
+    try {
+      this.presets.set(await this.service.savePreset(params));
+      this.setDraft(s.id, params);
+      this.references.update((m) => new Map(m).set(s.id, structuredClone(params)));
+      this.editingGroups.set(new Set());
+      await this.library?.refreshPresets();
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   // ── Review ──
@@ -284,6 +321,8 @@ export class IllFocusStore {
     const d = this.draft();
     if (!s || !d || this.busy()) return;
     await this.mutate([s.id], (id) => this.service.runAnalysis(id, d));
+    // Back to read mode; edited fields keep their dot and saved value until saved.
+    this.editingGroups.set(new Set());
   }
 
   /** Saves the focused scan (or `ids`): unsaved results and any review edits. */
@@ -298,6 +337,7 @@ export class IllFocusStore {
       }
     });
     for (const id of ids) this.dropDrafts(id);
+    this.editingGroups.set(new Set());
   }
 
   /** Drops unsaved results (and review edits) of the focused scan (or `ids`). */
@@ -306,6 +346,7 @@ export class IllFocusStore {
       if (this.scanById().get(id)?.analysis.unsaved) await this.service.discardAnalysis(id);
     });
     for (const id of ids) this.dropDrafts(id);
+    this.editingGroups.set(new Set());
   }
 
   private focusedIds(): string[] {
@@ -328,7 +369,12 @@ export class IllFocusStore {
   }
 
   private draftFor(scan: Scan): AnalysisParameters {
-    return this.drafts().get(scan.id) ?? initialDraft(scan);
+    return this.drafts().get(scan.id) ?? initialDraft(scan, this.defaults());
+  }
+
+  /** The Default preset's parameters (the built-in values until presets load). */
+  private defaults(): AnalysisParameters {
+    return this.defaultPreset()?.parameters ?? defaultParameters();
   }
 
   private setDraft(id: string, draft: AnalysisParameters): void {
@@ -345,6 +391,11 @@ export class IllFocusStore {
       const m = new Map(this.reviews());
       m.delete(id);
       this.reviews.set(m);
+    }
+    if (this.references().has(id)) {
+      const m = new Map(this.references());
+      m.delete(id);
+      this.references.set(m);
     }
   }
 }

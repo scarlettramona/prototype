@@ -29,7 +29,7 @@ import { IllFocusStore } from '../../ill-focus-store';
       <div class="divider"></div>
       <div class="results">
         @for (row of rows(); track row.label) {
-          <app-detail-row [label]="row.label" [value]="row.value" [compareValue]="row.compare" [unit]="row.unit" />
+          <app-detail-row [label]="row.label" [value]="row.value" [compareValue]="row.compare" [unit]="row.unit" [tone]="row.tone === 'unsaved' ? 'primary' : 'default'" />
         }
       </div>
       <div class="divider"></div>
@@ -159,11 +159,12 @@ export class ScanDetailsComponent {
     const s = this.store.focused();
     return s ? formatDateTime(s.datetime) : '';
   });
+  /** Only a saved analysis has a saved on / by. */
   protected readonly savedOn = computed(() => {
     const saved = this.store.focused()?.analysis.saved;
-    return saved ? formatDate(saved.savedAt) : '—';
+    return saved ? formatDate(saved.savedAt) : '';
   });
-  protected readonly savedBy = computed(() => this.store.focused()?.analysis.saved?.savedBy ?? '—');
+  protected readonly savedBy = computed(() => this.store.focused()?.analysis.saved?.savedBy ?? '');
 
   protected setQi(qi: ScanQi): void {
     this.store.setReview({ qi });

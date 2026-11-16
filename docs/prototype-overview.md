@@ -404,8 +404,8 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 - **Tabs:**
   - The active-tab underline is **2 px** (Figma), not 3.
   - The dot that replaces the × uses primary (no amber).
-- **Edited parameters:** a primary dot before the label, a primary outline, and "Saved <value> <unit>" under the field. Revert appears only on groups with edits.
-- **Calculation Baseline and Miscellaneous** are read-only until **Edit** turns their rows into inputs.
+- **Edited parameters:** a primary dot before the label, a primary outline, and "Saved <value> <unit>" under the field. Revert appears only on groups with edits. *(Superseded: see "ILL clean-up" below.)*
+- **Calculation Baseline and Miscellaneous** are read-only until **Edit** turns their rows into inputs. *(Now all four tiles; see "ILL clean-up".)*
   - The preset select loads a preset into the draft.
   - **Save as default** overwrites the in-memory `Default` preset.
 - Edits are measured against the **saved** parameters, or the Default preset if nothing is saved. The draft starts at the latest run's parameters.
@@ -476,3 +476,29 @@ Checked every frame in dark mode at 1912×1024 against its `?state=` fixture. Fi
   - Inputs are 240 px.
   - Group headers are 36 px, so titles align whether or not a group has Edit or Revert.
   - The section title row is 28 px.
+
+### ILL clean-up: analysis and parameter states (Scarlett, 2026-11-16)
+
+These replace earlier decisions where they differ: Phase 6's value cells and Phase 7's always-editable method tiles. Scarlett's notes win over Figma 1:9514 here.
+
+**Blue means "analysed, not saved"**
+- **The stored data is saved or none** (`StoredAnalysisState`). Unsaved results exist only after someone runs **Perform analysis** (library) or **Run analysis** (focus view). Saving them turns them on-surface.
+  - A first run shows one blue column.
+  - A re-run of a saved scan shows blue beside the white saved values (focus view) or above them (library).
+- **Only a saved analysis has an analyst or a saved on / by.** The `Analysis.analyst` field is gone; the library's Analyst column is `saved.savedBy`.
+- **Parameter presets always have a saved on / by** (`ParameterPreset { parameters, savedAt, savedBy }`).
+  - The service holds them in memory: `getPresets()` and `savePreset()` (Save as default).
+  - Default starts at 10/16/2026 · Scarlett Reagan (`MOCK_DATA_CONFIG.ill.defaultPreset`).
+  - The library row's Parameters column and the focus view's preset select show the preset's dates. Analysis / Scan details show the analysis's dates.
+- **The library's Unsaved filter** means never saved, or re-run since.
+
+**Focus-view parameter tiles**
+- **All four tiles start read-only with Edit.** In edit, the button is **Revert**, which restores that tile and returns it to read mode. Several tiles can be in edit at once.
+- **Run analysis** returns every tile to read mode. Edited fields keep the primary dot and "Saved <value>" under them.
+- **Save as default** or **Save analysis** makes those values the new reference, so the dots clear. Save as default also restamps the Default preset's saved on / by.
+- **Tile heights:** ILL method and Marker method share the row's height. Calculation Baseline and Miscellaneous grow to fill the left column.
+
+**Fixtures:** states with unsaved results now get them by running an analysis when the state is applied.
+- Library: `ill-library-saved` performs analysis on its two selected rows.
+- Focus view: `ill-scan-unsaved-rerun`, `ill-scan-first-run-unsaved` and `ill-scans-popover` run an analysis on the active scan (`run: true`). A re-run edits ILL Normal Lower Range to 12.
+- Library: `expandFirstSaved` became `expandFirst`.

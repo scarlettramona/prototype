@@ -23,12 +23,15 @@ describe('IllLibraryStore', () => {
     expect(store.query().analysis).toBe('Unsaved');
   });
 
-  it('loads results, collapsing the form, and expands the first saved scan', async () => {
+  it('loads results, collapsing the form, and expands the first row', async () => {
     await store.applyState(state('ill-library-results'));
     expect(store.formOpen()).toBe(false);
     expect(store.results().length).toBeGreaterThan(0);
-    expect(store.results().every((s) => !!s.analysis.unsaved)).toBe(true);
+    // Unsaved filter: none of these scans has results yet (no blue values until Perform analysis).
+    expect(store.results().every((s) => !s.analysis.saved && !s.analysis.unsaved)).toBe(true);
+    expect(store.expandedId()).toBe(store.results()[0].id);
     expect(store.expandedScan()?.points.length).toBe(513);
+    expect(store.presetFor(store.results()[0])?.savedBy).toBeTruthy();
   });
 
   it('applies the grouped selection and the saved filter', async () => {
@@ -40,6 +43,8 @@ describe('IllLibraryStore', () => {
     await store.applyState(state('ill-library-saved'));
     expect(store.results().every((s) => !!s.analysis.saved)).toBe(true);
     expect(store.selectedIds().size).toBe(2);
+    // Perform analysis on the selection: unsaved results over the saved ones (Figma 1:2883).
+    expect(store.selected().every((s) => !!s.analysis.unsaved && !!s.analysis.saved)).toBe(true);
   });
 
   it('filters by search text', async () => {
@@ -67,12 +72,17 @@ describe('IllLibraryStore', () => {
 
   it('saves a row: QI, comments and any unsaved results', async () => {
     await store.loadScans({ ...defaultScanQuery() });
-    const row = store.results().find((s) => s.analysis.unsaved)!;
+    const row = store.results().find((s) => !s.analysis.saved)!;
+    expect(row.analysis.unsaved).toBeUndefined();
+    store.setSelected([row.id], true);
+    await store.performAnalysis();
+    expect(store.results().find((s) => s.id === row.id)!.analysis.unsaved).toBeDefined();
     await store.expand(row.id);
     await store.saveRow(row.id, { qi: 'Suspect', scanComment: 'Sit amet', vnvComment: 'Non pretium' });
     const after = store.results().find((s) => s.id === row.id)!;
     expect(after).toMatchObject({ qi: 'Suspect', scanComment: 'Sit amet', vnvComment: 'Non pretium' });
     expect(after.analysis.unsaved).toBeUndefined();
+    expect(after.analysis.saved?.savedBy).toBeTruthy();
     expect(store.expandedScan()?.qi).toBe('Suspect');
   });
 

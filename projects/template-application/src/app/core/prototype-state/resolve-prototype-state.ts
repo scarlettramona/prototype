@@ -30,6 +30,8 @@ export interface ResolvedIllLibraryState {
   loaded: boolean;
   groupByWell: boolean;
   selectedScanIds: string[];
+  /** Perform analysis on the selection once loaded. */
+  performOnSelection: boolean;
   expandedScanId: string | null;
 }
 
@@ -45,6 +47,8 @@ export interface ResolvedIllFocusState {
   activeTab: string;
   popover: 'scans-legend' | null;
   zoom: [number, number] | null;
+  /** Run an analysis on the active scan once loaded. */
+  run: boolean;
 }
 
 export type ResolvedPrototypeState = ResolvedVnvState | ResolvedIllLibraryState | ResolvedIllFocusState;
@@ -132,10 +136,10 @@ function resolveLibrary(name: PrototypeStateName, f: IllLibraryFixture, ds: IllD
   }
 
   let expandedScanId: string | null = null;
-  if (f.expandFirstSaved) {
-    expandedScanId = results.find((s) => s.analysis.saved)?.id ?? null;
-    if (!expandedScanId) throw new Error(`${name}: no saved scan to expand`);
+  if (f.expandFirst) {
+    expandedScanId = results[0]?.id ?? null;
   }
+  if (f.performOnSelection && selectedScanIds.length === 0) throw new Error(`${name}: nothing selected to analyse`);
 
   return {
     name,
@@ -146,6 +150,7 @@ function resolveLibrary(name: PrototypeStateName, f: IllLibraryFixture, ds: IllD
     loaded: f.loaded,
     groupByWell: f.groupByWell,
     selectedScanIds,
+    performOnSelection: f.performOnSelection ?? false,
     expandedScanId,
   };
 }
@@ -172,6 +177,7 @@ function resolveFocus(name: PrototypeStateName, f: IllFocusFixture, ds: IllDatas
     activeTab,
     popover: f.popover ?? null,
     zoom: f.zoom ? [f.zoom[0], f.zoom[1]] : null,
+    run: f.run ?? false,
   };
 }
 

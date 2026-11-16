@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { defaultParameters } from '../../core/ill/ill-analysis';
 import { IllMockService } from '../../core/ill/ill-mock.service';
-import type { Scan, ScanQi, ScanQuery, ScanSummary } from '../../core/ill/ill.models';
+import type { ParameterPreset, Scan, ScanQi, ScanQuery, ScanSummary } from '../../core/ill/ill.models';
 import { parseUsDate } from '../../core/mock-data/dates';
 import { MOCK_DATA_CONFIG } from '../../core/mock-data/mock-data.config';
 import type { ResolvedIllLibraryState } from '../../core/prototype-state/resolve-prototype-state';
@@ -49,6 +49,8 @@ export class IllLibraryStore {
   /** The expanded scan with its depth points. */
   readonly expandedScan = signal<Scan | null>(null);
   readonly busy = signal(false);
+  /** The parameter presets, for the expanded row's Parameters / Saved on / Saved by. */
+  readonly presets = signal<readonly ParameterPreset[]>([]);
 
   /** Every well, and the ones with a recent scan (for the Well field's `*`). */
   readonly wellIds = signal<string[]>([]);
@@ -83,8 +85,9 @@ export class IllLibraryStore {
     this.selectedIds.set(new Set());
     this.collapse();
     try {
-      const results = await this.service.searchScans(query);
+      const [results, presets] = await Promise.all([this.service.searchScans(query), this.service.getPresets()]);
       if (token !== this.loadToken) return;
+      this.presets.set(presets);
       this.results.set(results);
       this.loaded.set(true);
     } finally {
@@ -138,10 +141,22 @@ export class IllLibraryStore {
     this.expandedScan.set(null);
   }
 
-  /** Perform analysis: the Default preset on every selected scan (creates unsaved results). */
+  /** The preset a scan's shown analysis used (or Default when it has none). */
+  presetFor(scan: ScanSummary): ParameterPreset | null {
+    const name = (scan.analysis.unsaved ?? scan.analysis.saved)?.parameters.preset ?? 'Default';
+    return this.presets().find((p) => p.parameters.preset === name) ?? null;
+  }
+
+  /** Re-reads the presets after Save as default in the focus view. */
+  async refreshPresets(): Promise<void> {
+    this.presets.set(await this.service.getPresets());
+  }
+
+  /** Perform analysis: the Default preset on every selected scan (creates unsaved, blue results). */
   async performAnalysis(): Promise<void> {
     const ids = this.selected().map((s) => s.id);
-    await this.mutate(ids, (id) => this.service.runAnalysis(id, defaultParameters()));
+    const preset = this.presets().find((p) => p.parameters.preset === 'Default')?.parameters ?? defaultParameters();
+    await this.mutate(ids, (id) => this.service.runAnalysis(id, preset));
   }
 
   /** Save analysis: commits the selected scans' unsaved results. */
@@ -177,6 +192,7 @@ export class IllLibraryStore {
     }
     await this.loadScans(state.query);
     this.selectedIds.set(new Set(state.selectedScanIds));
+    if (state.performOnSelection) await this.performAnalysis();
     if (state.expandedScanId) await this.expand(state.expandedScanId);
   }
 

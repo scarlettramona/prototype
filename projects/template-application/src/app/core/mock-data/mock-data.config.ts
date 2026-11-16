@@ -1,4 +1,4 @@
-import type { AnalysisState } from '../ill/ill.models';
+import type { StoredAnalysisState } from '../ill/ill.models';
 
 /**
  * Every knob for the mock data, in one place. The generators read only this
@@ -100,16 +100,7 @@ export const MOCK_DATA_CONFIG = {
     focusWell: {
       id: 'B105 R05 N 20571',
       /** One entry per scan, oldest first. */
-      analysisStates: [
-        'saved',
-        'saved+unsaved',
-        'none',
-        'unsaved',
-        'saved',
-        'saved',
-        'saved+unsaved',
-        'saved',
-      ] satisfies readonly AnalysisState[],
+      analysisStates: ['saved', 'saved', 'none', 'none', 'saved', 'saved', 'saved', 'saved'] satisfies readonly StoredAnalysisState[],
     },
     /** Other wells and how many scans each has. The real scan's well gets extra generated scans. */
     wells: [
@@ -132,7 +123,9 @@ export const MOCK_DATA_CONFIG = {
     recentRangeEnd: '10/19/2026',
     recentShare: 0.5,
     /** Analysis-state mix for wells other than the focus well. */
-    analysisMix: { saved: 0.6, 'saved+unsaved': 0.15, none: 0.15, unsaved: 0.1 } satisfies Record<AnalysisState, number>,
+    analysisMix: { saved: 0.75, none: 0.25 } satisfies Record<StoredAnalysisState, number>,
+    /** The Default parameter preset's saved on / by (Figma 1:9514). */
+    defaultPreset: { savedAt: '10/16/2026', savedBy: 'Scarlett Reagan' },
     qiMix: { Good: 0.7, Suspect: 0.15, 'Not set': 0.15 },
     /** Derived profiles: counts scale ±, count offset ±, drop/rise shift (in) ±, noise (× √counts). */
     countGain: 0.04,

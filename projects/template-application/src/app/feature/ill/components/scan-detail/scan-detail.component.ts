@@ -7,7 +7,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { seriesStyle } from '../../../../core/charts/chart-palette';
 import { PlutoChartThemeService } from '../../../../core/charts/pluto-chart-theme';
-import type { Scan, ScanQi } from '../../../../core/ill/ill.models';
+import type { ParameterPreset, Scan, ScanQi } from '../../../../core/ill/ill.models';
 import { formatDate, formatDateTime } from '../../../../core/mock-data/dates';
 import { DetailRowComponent } from '../../../../ui/components/detail-row/detail-row.component';
 import { LabelAboveDirective } from '../../../../ui/components/label-above/label-above.directive';
@@ -32,6 +32,8 @@ export class ScanDetailComponent {
   protected readonly chartTheme = inject(PlutoChartThemeService);
 
   readonly scan = input.required<Scan>();
+  /** The parameter preset the analysis used (Default when there's none): its saved on / by always show. */
+  readonly preset = input<ParameterPreset | null>(null);
   readonly busy = input(false);
   readonly save = output<ScanReview>();
   readonly adjust = output<void>();

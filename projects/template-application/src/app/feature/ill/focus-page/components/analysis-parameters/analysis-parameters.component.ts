@@ -9,7 +9,6 @@ import { formatDate } from '../../../../../core/mock-data/dates';
 import {
   fieldId,
   formatParam,
-  groupEdited,
   PARAM_GROUPS,
   paramValue,
   type ParamField,
@@ -18,11 +17,12 @@ import {
 import { IllFocusStore } from '../../ill-focus-store';
 
 /**
- * Analysis parameters (Figma 1:9821): preset select with Saved on / by,
- * Save as default · Run analysis, then Calculation Baseline and Miscellaneous
- * (read-only until Edit) beside the ILL and Marker method fields. An edited
- * field gets a dot and "Saved <value>" under it; Revert appears on groups
- * with edits.
+ * Analysis parameters (Figma 1:9821): preset select with the preset's Saved
+ * on / by, Save as default · Run analysis, then four tiles. Every tile is
+ * read-only until Edit; in edit, its button is Revert, which restores the tile
+ * and returns it to read mode. Run analysis, Save as default and Save analysis
+ * also return tiles to read mode. An edited field keeps a primary dot and
+ * "Saved <value>" under it, in either mode, until it is saved.
  */
 @Component({
   selector: 'app-analysis-parameters',
@@ -36,18 +36,15 @@ export class AnalysisParametersComponent {
   protected readonly groups = PARAM_GROUPS;
   protected readonly methods = ['Intercept', 'None'];
 
+  /** The preset's own saved on / by: a preset is always saved (Default included). */
   protected readonly savedOn = computed(() => {
-    const saved = this.store.focused()?.analysis.saved;
-    return saved ? formatDate(saved.savedAt) : '—';
+    const p = this.store.selectedPreset();
+    return p ? formatDate(p.savedAt) : '';
   });
-  protected readonly savedBy = computed(() => this.store.focused()?.analysis.saved?.savedBy ?? '—');
+  protected readonly savedBy = computed(() => this.store.selectedPreset()?.savedBy ?? '');
 
   protected editable(g: ParamGroupDef): boolean {
-    return !g.readOnly || this.store.editingGroups().has(g.group);
-  }
-
-  protected showRevert(g: ParamGroupDef): boolean {
-    return groupEdited(this.store.edited(), g.group);
+    return this.store.editingGroups().has(g.group);
   }
 
   protected isEdited(field: ParamField): boolean {
@@ -88,12 +85,11 @@ export class AnalysisParametersComponent {
   }
 
   protected groupAction(g: ParamGroupDef): void {
-    if (this.showRevert(g)) this.store.revert(g.group);
+    if (this.editable(g)) this.store.revert(g.group);
     else this.store.editGroup(g.group);
   }
 
   protected actionLabel(g: ParamGroupDef): string {
-    if (this.showRevert(g)) return 'Revert';
-    return g.readOnly && !this.editable(g) ? 'Edit' : '';
+    return this.editable(g) ? 'Revert' : 'Edit';
   }
 }

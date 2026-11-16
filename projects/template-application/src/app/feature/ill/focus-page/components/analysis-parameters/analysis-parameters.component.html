@@ -18,8 +18,8 @@
       <div class="preset">
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="preset__select">
           <mat-select [value]="draft.preset" (selectionChange)="store.loadPreset($event.value)" aria-label="Parameter preset">
-            @for (p of store.presets(); track p.preset) {
-              <mat-option [value]="p.preset">{{ p.preset }}</mat-option>
+            @for (p of store.presets(); track p.parameters.preset) {
+              <mat-option [value]="p.parameters.preset">{{ p.parameters.preset }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
@@ -65,8 +65,11 @@
       @if (!editable(g)) {
         @if (field.kind === 'text') {
           <div class="comment">
-            <span class="label">{{ field.label }}</span>
+            <span class="label" [class.label--edited]="edited">{{ field.label }}</span>
             <span class="comment__value">{{ value(field) || '—' }}</span>
+            @if (edited) {
+              <span class="saved-hint">{{ savedHint(field) }}</span>
+            }
           </div>
         } @else {
           <div class="row row--read">
@@ -76,7 +79,12 @@
                 <mat-icon class="info" aria-hidden="true">info</mat-icon>
               }
             </span>
-            <span class="read">{{ value(field) }}{{ field.unit ? ' ' + field.unit : '' }}</span>
+            <span class="read-value">
+              <span class="read">{{ value(field) }}{{ field.unit ? ' ' + field.unit : '' }}</span>
+              @if (edited) {
+                <span class="saved-hint">{{ savedHint(field) }}</span>
+              }
+            </span>
           </div>
         }
       } @else {

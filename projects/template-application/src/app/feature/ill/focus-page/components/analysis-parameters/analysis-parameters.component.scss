@@ -73,17 +73,23 @@
   gap: var(--spacing-80);
 }
 
+// The ILL and Marker tiles share the row's height (the shorter one keeps empty
+// space at its bottom); Calculation Baseline and Miscellaneous grow to fill theirs.
 .groups {
   display: grid;
   grid-template-columns: minmax(0, 577fr) minmax(0, 611fr) minmax(0, 611fr);
   gap: var(--spacing-160);
-  align-items: start;
+  align-items: stretch;
 }
 
 .stack {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-240);
+
+  .group {
+    flex: 1 1 auto;
+  }
 }
 
 .group {
@@ -119,7 +125,7 @@
 
 .row--read {
   grid-template-columns: 1fr auto;
-  align-items: center;
+  align-items: start;
   min-height: 24px;
 }
 
@@ -149,6 +155,21 @@
   height: 16px;
   font-size: 16px;
   font-variation-settings: 'FILL' 0;
+}
+
+.read-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.saved-hint {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.comment .saved-hint {
+  align-self: flex-start;
 }
 
 .read,

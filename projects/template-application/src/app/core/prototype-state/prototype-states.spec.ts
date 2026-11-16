@@ -1,3 +1,4 @@
+import { analysisState } from '../ill/ill.models';
 import { buildTestIllDataset, buildTestVnvDataset } from '../mock-data/testing/load-mock-sources';
 import { PROTOTYPE_STATE_NAMES } from './prototype-states';
 import { resolvePrototypeState } from './resolve-prototype-state';
@@ -39,8 +40,10 @@ describe('Prototype states', () => {
 
     const rerun = resolvePrototypeState('ill-scan-unsaved-rerun', data);
     if (rerun.module !== 'ill' || rerun.screen !== 'focus') throw new Error('wrong state shape');
+    // The re-run happens when the store applies the state; the stored scan is saved.
     const scan = data.ill.scans.get(rerun.activeTab)!;
-    expect(scan.analysis.saved && scan.analysis.unsaved).toBeTruthy();
+    expect(rerun.run).toBe(true);
+    expect(analysisState(scan.analysis)).toBe('saved');
     expect(rerun.scanIds.length).toBe(8);
   });
 });

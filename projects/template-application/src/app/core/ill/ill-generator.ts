@@ -1,8 +1,8 @@
 import { DAY_MS, parseUsDate } from '../mock-data/dates';
 import type { MockDataConfig } from '../mock-data/mock-data.config';
 import { Rng } from '../mock-data/random';
-import { analyse, cloneParameters, defaultParameters } from './ill-analysis';
-import type { Analysis, AnalysisState, Scan, ScanPoint, ScanQi, Well } from './ill.models';
+import { analyse, defaultParameters } from './ill-analysis';
+import type { Analysis, Scan, ScanPoint, ScanQi, StoredAnalysisState, Well } from './ill.models';
 import type { IllSourceScan } from './ill-source';
 
 export interface IllDataset {
@@ -64,7 +64,7 @@ export function buildIllDataset(source: IllSourceScan[], config: MockDataConfig)
 
 function generateWell(
   wellId: string,
-  states: AnalysisState[],
+  states: StoredAnalysisState[],
   template: IllSourceScan,
   config: MockDataConfig,
   kind: string,
@@ -126,30 +126,24 @@ export function deriveProfile(real: readonly ScanPoint[], rng: Rng, config: Mock
   });
 }
 
-function buildAnalysis(state: AnalysisState, points: ScanPoint[], datetime: number, rng: Rng, config: MockDataConfig): Analysis {
-  const analyst = rng.pick(config.people);
+/**
+ * Stored data is saved or none: unsaved results only appear once someone
+ * performs or runs an analysis (they are blue until saved).
+ */
+function buildAnalysis(state: StoredAnalysisState, points: ScanPoint[], datetime: number, rng: Rng, config: MockDataConfig): Analysis {
+  const savedBy = rng.pick(config.people);
   if (state === 'none') return {};
 
-  const savedParams = defaultParameters();
-  savedParams.miscellaneous.markerDepth = round3(418.8 + rng.range(-1.5, 1.5));
+  const parameters = defaultParameters();
+  parameters.miscellaneous.markerDepth = round3(418.8 + rng.range(-1.5, 1.5));
   const savedAt = datetime + rng.int(1, 20) * DAY_MS;
-  const saved = { parameters: savedParams, results: analyse(points, savedParams, datetime), savedAt, savedBy: analyst };
-
-  // A re-run with one edited parameter, as the focus-view frame shows (Saved 10.500 → 12.000).
-  const unsavedParams = cloneParameters(savedParams);
-  unsavedParams.illMethod.normalLowerRange = 12;
-  const runAt = savedAt + rng.int(1, 30) * DAY_MS;
-  const unsaved = { parameters: unsavedParams, results: analyse(points, unsavedParams, datetime), runAt };
-
-  if (state === 'saved') return { saved, analyst };
-  if (state === 'unsaved') return { unsaved: { ...unsaved, parameters: savedParams, results: saved.results }, analyst };
-  return { saved, unsaved, analyst };
+  return { saved: { parameters, results: analyse(points, parameters, datetime), savedAt, savedBy } };
 }
 
-function pickState(rng: Rng, config: MockDataConfig): AnalysisState {
+function pickState(rng: Rng, config: MockDataConfig): StoredAnalysisState {
   const mix = config.ill.analysisMix;
   let roll = rng.next();
-  for (const state of Object.keys(mix) as AnalysisState[]) {
+  for (const state of Object.keys(mix) as StoredAnalysisState[]) {
     roll -= mix[state];
     if (roll < 0) return state;
   }

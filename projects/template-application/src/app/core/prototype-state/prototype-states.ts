@@ -1,4 +1,4 @@
-import type { AnalysisFilter, AnalysisState, QiFilter } from '../ill/ill.models';
+import type { AnalysisFilter, QiFilter, StoredAnalysisState } from '../ill/ill.models';
 import type { Qi } from '../qi/qi.models';
 
 /**
@@ -9,6 +9,10 @@ import type { Qi } from '../qi/qi.models';
  *
  * `frame` is the Figma node in file Eb0lHuZv2e067FftD2RuqL that the state
  * reproduces, where one exists.
+ *
+ * The stored ILL data is saved or none. States that show unsaved (blue)
+ * results get them the way a user would: by performing or running an analysis
+ * when the fixture is applied (`performOnSelection`, `run`).
  */
 
 export interface VnvFixture {
@@ -51,8 +55,10 @@ export interface IllLibraryFixture {
   groupByWell: boolean;
   /** Select all scans of the first well (grouped) or the first N rows. */
   selection?: 'first-well' | number;
-  /** Expand the first result row whose scan has a saved analysis. */
-  expandFirstSaved?: boolean;
+  /** Expand the first result row. */
+  expandFirst?: boolean;
+  /** Perform analysis on the selection (unsaved results over any saved ones, Figma 1:2883). */
+  performOnSelection?: boolean;
 }
 
 export interface IllFocusFixture {
@@ -61,8 +67,14 @@ export interface IllFocusFixture {
   frame?: string;
   /** Opens every scan of the focus well. */
   well: 'focus';
-  /** `all` = the All scans tab; otherwise the first scan in that analysis state. */
-  activeTab: 'all' | AnalysisState;
+  /** `all` = the All scans tab; otherwise the first scan in that stored analysis state. */
+  activeTab: 'all' | StoredAnalysisState;
+  /**
+   * Run an analysis on the active scan first. A saved scan re-runs with ILL
+   * Normal Lower Range 12 (saved 10.500), as Figma 1:8968 shows; an unanalysed
+   * scan runs the Default preset.
+   */
+  run?: boolean;
   popover?: 'scans-legend';
   /** Depth window in inches, [from, to] in axis order (600 → 0). Default: full range. */
   zoom?: readonly [number, number];
@@ -143,7 +155,7 @@ export const PROTOTYPE_STATES = {
     query: LIBRARY_QUERY,
     loaded: true,
     groupByWell: false,
-    expandFirstSaved: true,
+    expandFirst: true,
   },
   'ill-library-grouped': {
     module: 'ill',
@@ -162,6 +174,7 @@ export const PROTOTYPE_STATES = {
     loaded: true,
     groupByWell: false,
     selection: 2,
+    performOnSelection: true,
   },
   'ill-library-grouped-expanded': {
     module: 'ill',
@@ -170,7 +183,7 @@ export const PROTOTYPE_STATES = {
     query: LIBRARY_QUERY,
     loaded: true,
     groupByWell: true,
-    expandFirstSaved: true,
+    expandFirst: true,
   },
 
   // ILL · Focus view
@@ -184,15 +197,16 @@ export const PROTOTYPE_STATES = {
     activeTab: 'saved',
     zoom: [150, 10],
   },
-  'ill-scan-unsaved-rerun': { module: 'ill', screen: 'focus', well: 'focus', activeTab: 'saved+unsaved' },
+  'ill-scan-unsaved-rerun': { module: 'ill', screen: 'focus', well: 'focus', activeTab: 'saved', run: true },
   'ill-scan-no-analysis': { module: 'ill', screen: 'focus', well: 'focus', activeTab: 'none' },
-  'ill-scan-first-run-unsaved': { module: 'ill', screen: 'focus', well: 'focus', activeTab: 'unsaved' },
+  'ill-scan-first-run-unsaved': { module: 'ill', screen: 'focus', well: 'focus', activeTab: 'none', run: true },
   'ill-scans-popover': {
     module: 'ill',
     screen: 'focus',
     frame: '1:10714',
     well: 'focus',
-    activeTab: 'saved+unsaved',
+    activeTab: 'saved',
+    run: true,
     popover: 'scans-legend',
   },
 } as const satisfies Record<string, PrototypeFixture>;

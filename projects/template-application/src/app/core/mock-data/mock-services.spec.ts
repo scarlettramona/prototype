@@ -57,7 +57,9 @@ describe('Mock services', () => {
       const query = { start: parseUsDate('7/19/2026'), end: parseUsDate('10/19/2026'), wellIds: [], qi: 'Any', analysis: 'Unsaved' } as const;
       const results = await service.searchScans({ ...query, wellIds: [] });
       expect(results.length).toBeGreaterThan(0);
-      expect(results.every((s) => !!s.analysis.unsaved)).toBe(true);
+      // Unsaved = never saved or re-run since. The stored data has no unsaved results.
+      expect(results.every((s) => !s.analysis.saved || !!s.analysis.unsaved)).toBe(true);
+      expect(results.some((s) => !!s.analysis.unsaved)).toBe(false);
       expect(results.some((s) => 'points' in s)).toBe(false);
       const good = await service.searchScans({ ...query, wellIds: [], analysis: 'Any', qi: 'Good' });
       expect(good.every((s) => s.qi === 'Good')).toBe(true);
@@ -69,7 +71,8 @@ describe('Mock services', () => {
       const none = scans.find((s) => analysisState(s.analysis) === 'none')!;
       const [preset] = await service.getPresets();
 
-      const run = await service.runAnalysis(none.id, preset);
+      expect(preset.savedBy).toBe(MOCK_DATA_CONFIG.ill.defaultPreset.savedBy);
+      const run = await service.runAnalysis(none.id, preset.parameters);
       expect(analysisState(run.analysis)).toBe('unsaved');
       expect(run.analysis.unsaved!.results.calculatedIll).toBeGreaterThan(128);
 
@@ -77,7 +80,7 @@ describe('Mock services', () => {
       expect(analysisState(saved.analysis)).toBe('saved');
       expect(saved.analysis.saved!.savedBy).toBe(MOCK_DATA_CONFIG.currentUser);
 
-      const edited = structuredClone(preset);
+      const edited = structuredClone(preset.parameters);
       edited.illMethod.normalUpperRange = 20;
       const rerun = await service.runAnalysis(none.id, edited);
       expect(analysisState(rerun.analysis)).toBe('saved+unsaved');
@@ -87,6 +90,18 @@ describe('Mock services', () => {
       expect(analysisState(discarded.analysis)).toBe('saved');
       const [reloaded] = await service.getScans([none.id]);
       expect(analysisState(reloaded.analysis)).toBe('saved');
+    });
+
+    it('saves a preset as the new default, with a new saved on / by', async () => {
+      const service = TestBed.inject(IllMockService);
+      const [before] = await service.getPresets();
+      const params = structuredClone(before.parameters);
+      params.miscellaneous.markerDepth = 420;
+      const [after] = await service.savePreset(params);
+      expect(after.parameters.miscellaneous.markerDepth).toBe(420);
+      expect(after.savedBy).toBe(MOCK_DATA_CONFIG.currentUser);
+      expect(after.savedAt).toBeGreaterThan(before.savedAt);
+      expect((await service.getPresets())[0].parameters.miscellaneous.markerDepth).toBe(420);
     });
 
     it('sets scan-level QI and comments', async () => {

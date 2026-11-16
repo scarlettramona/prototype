@@ -17,8 +17,9 @@ export function matchesScanQuery(scan: Scan | ScanSummary, query: ScanQuery): bo
   switch (query.analysis) {
     case 'Saved':
       return !!scan.analysis.saved;
+    // Work still to save: never saved, or re-run since.
     case 'Unsaved':
-      return !!scan.analysis.unsaved;
+      return !scan.analysis.saved || !!scan.analysis.unsaved;
     default:
       return true;
   }

@@ -111,7 +111,7 @@
         }
       </span>
     }
-    <span class="cell" role="cell">{{ s.analysis.analyst ?? '--' }}</span>
+    <span class="cell" role="cell">{{ s.analysis.saved?.savedBy ?? '--' }}</span>
     <span class="cell cell--clip" role="cell" [attr.title]="s.scanComment ?? null">{{ s.scanComment ?? '--' }}</span>
     <span class="cell cell--clip" role="cell" [attr.title]="s.vnvComment ?? null">{{ s.vnvComment ?? '--' }}</span>
     <span class="cell cell--icon">
@@ -129,6 +129,7 @@
       @if (store.expandedScan(); as full) {
         <app-scan-detail
           [scan]="full"
+          [preset]="store.presetFor(full)"
           [busy]="store.busy()"
           (save)="saveRow(s.id, $event)"
           (adjust)="openScan.emit(s)"

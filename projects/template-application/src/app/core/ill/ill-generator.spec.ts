@@ -25,7 +25,9 @@ describe('ILL generator', () => {
     expect(scans.length).toBe(8);
     expect(scans.map((s) => analysisState(s.analysis))).toEqual([...focus.analysisStates]);
     expect(new Set(scans.map((s) => s.colorIndex)).size).toBe(8);
-    expect(new Set(['saved', 'saved+unsaved', 'none', 'unsaved'])).toEqual(new Set(scans.map((s) => analysisState(s.analysis))));
+    // Stored data is saved or none: unsaved results only come from running an analysis.
+    expect(new Set(['saved', 'none'])).toEqual(new Set(scans.map((s) => analysisState(s.analysis))));
+    expect([...ds.scans.values()].some((s) => s.analysis.unsaved)).toBe(false);
   });
 
   it('places the calculated ILL near the rise (~134–136 in)', () => {

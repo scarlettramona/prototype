@@ -173,6 +173,7 @@ export class ScanLibraryPageComponent {
             loaded: false,
             groupByWell: false,
             selectedScanIds: [],
+            performOnSelection: false,
             expandedScanId: null,
           });
         }

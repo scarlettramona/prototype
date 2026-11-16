@@ -4,7 +4,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
  * Label · value · unit, with the value right-aligned in a fixed-width column
  * so a stack of rows lines up (Figma: Baseline panel 1:11575, Scan details).
  * `compareValue` adds a second value column in primary — the unsaved result
- * beside the saved one. The unit column keeps its width when empty.
+ * beside the saved one. `tone="primary"` draws a single value in primary (an
+ * unsaved first run). The unit column keeps its width when empty.
  *
  * Column widths come from `--detail-value-width` and `--detail-unit-width`,
  * so a parent can set them once for all its rows.
@@ -13,7 +14,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   selector: 'app-detail-row',
   template: `
     <span class="label">{{ label() }}</span>
-    <span class="value">{{ value() }}</span>
+    <span class="value" [class.value--compare]="tone() === 'primary'">{{ value() }}</span>
     @if (compareValue() !== undefined) {
       <span class="value value--compare">{{ compareValue() }}</span>
     }
@@ -56,6 +57,8 @@ export class DetailRowComponent {
   readonly label = input.required<string>();
   /** Already formatted, e.g. `25.00` or `04/19/2013`. Use `—` for no result. */
   readonly value = input.required<string>();
+  /** `primary`: the single value is unsaved. */
+  readonly tone = input<'default' | 'primary'>('default');
   /** Second (unsaved) value; omit for a single column. */
   readonly compareValue = input<string | undefined>(undefined);
   readonly unit = input('');

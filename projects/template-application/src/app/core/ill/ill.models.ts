@@ -91,15 +91,27 @@ export interface UnsavedAnalysis {
   runAt: number;
 }
 
-/** Saved, unsaved, both, or neither. */
+/**
+ * Saved, unsaved, both, or neither. Unsaved results only exist after someone
+ * performs or runs an analysis in this session; the stored data is saved or none.
+ * The library's Analyst is the saved analysis's `savedBy`.
+ */
 export interface Analysis {
   saved?: SavedAnalysis;
   unsaved?: UnsavedAnalysis;
-  /** Who performed the scan's analysis (library "Analyst" column). */
-  analyst?: string;
+}
+
+/** A named parameter set (the preset select). It always has a saved on / by. */
+export interface ParameterPreset {
+  parameters: AnalysisParameters;
+  savedAt: number;
+  savedBy: string;
 }
 
 export type AnalysisState = 'none' | 'saved' | 'unsaved' | 'saved+unsaved';
+
+/** What the stored (generated) data holds before anyone runs an analysis. */
+export type StoredAnalysisState = 'none' | 'saved';
 
 export function analysisState(a: Analysis): AnalysisState {
   if (a.saved && a.unsaved) return 'saved+unsaved';

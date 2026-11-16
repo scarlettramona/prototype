@@ -30,7 +30,7 @@ function scan(analysis: Scan['analysis'] = {}): Scan {
 describe('Focus view model', () => {
   it('lays out Scan details by analysis state', () => {
     expect(resultRows({ saved })[0]).toEqual({ label: 'Calculated ILL', unit: 'in', value: '134.500' });
-    expect(resultRows({ unsaved })[0]).toEqual({ label: 'Calculated ILL', unit: 'in', value: '135.250' });
+    expect(resultRows({ unsaved })[0]).toEqual({ label: 'Calculated ILL', unit: 'in', value: '135.250', tone: 'unsaved' });
     expect(resultRows({ saved, unsaved })[0]).toEqual({ label: 'Calculated ILL', unit: 'in', value: '134.500', compare: '135.250' });
     expect(resultRows({}).every((r) => r.value === '—' && r.compare === undefined)).toBe(true);
     expect(resultRows({ saved }).find((r) => r.label === 'In tolerance?')?.value).toBe('Yes');
