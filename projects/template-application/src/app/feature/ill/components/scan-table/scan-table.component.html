@@ -82,69 +82,72 @@
 </div>
 
 <ng-template #scanRow let-s let-indent="indent">
-  <div class="row app-data-table__row" role="row" [class.row--open]="store.expandedId() === s.id" [class.app-data-table__row--checked]="store.selectedIds().has(s.id)">
-    <span class="cell cell--icon" [class.cell--indent]="indent">
-      <button
-        mat-icon-button
-        type="button"
-        [attr.aria-expanded]="store.expandedId() === s.id"
-        [attr.aria-label]="(store.expandedId() === s.id ? 'Collapse ' : 'Expand ') + s.wellId + ' ' + date(s.datetime)"
-        (click)="store.expand(s.id)"
-      >
-        <mat-icon>{{ store.expandedId() === s.id ? 'expand_more' : 'chevron_right' }}</mat-icon>
-      </button>
-    </span>
-    <span class="cell cell--icon" [class.cell--indent]="indent">
-      <mat-checkbox [aria-label]="'Select ' + s.wellId + ' ' + date(s.datetime)" [checked]="store.selectedIds().has(s.id)" (change)="store.toggleSelected(s.id)" />
-    </span>
-    @if (!store.grouped()) {
-      <span class="cell" role="cell">{{ s.wellId }}</span>
-    }
-    <span class="cell" role="cell">{{ qi(s.qi) }}</span>
-    <span class="cell cell--date" role="cell">
-      <span class="cell__text">{{ date(s.datetime) }}</span>
-      @if (s.reference) {
-        <span class="ref-badge" role="img" aria-label="Reference scan" matTooltip="Reference scan" tabindex="0"></span>
+  <!-- The row and its expansion panel tint together (hover, checked). -->
+  <div class="scan app-data-table__row" role="rowgroup" [class.app-data-table__row--checked]="store.selectedIds().has(s.id)">
+    <div class="row" role="row" [class.row--open]="store.expandedId() === s.id">
+      <span class="cell cell--icon" [class.cell--indent]="indent">
+        <button
+          mat-icon-button
+          type="button"
+          [attr.aria-expanded]="store.expandedId() === s.id"
+          [attr.aria-label]="(store.expandedId() === s.id ? 'Collapse ' : 'Expand ') + s.wellId + ' ' + date(s.datetime)"
+          (click)="store.expand(s.id)"
+        >
+          <mat-icon>{{ store.expandedId() === s.id ? 'expand_more' : 'chevron_right' }}</mat-icon>
+        </button>
+      </span>
+      <span class="cell cell--icon" [class.cell--indent]="indent">
+        <mat-checkbox [aria-label]="'Select ' + s.wellId + ' ' + date(s.datetime)" [checked]="store.selectedIds().has(s.id)" (change)="store.toggleSelected(s.id)" />
+      </span>
+      @if (!store.grouped()) {
+        <span class="cell" role="cell">{{ s.wellId }}</span>
       }
-    </span>
-    @for (c of columns; track c.key) {
-      @let v = cell(s.analysis, c.key);
-      <span class="cell cell--num" role="cell">
-        <span [class.unsaved]="v.tone === 'unsaved'" [class.two-line]="!!v.bottom">{{ v.top }}</span>
-        @if (v.bottom) {
-          <span class="saved-under">{{ v.bottom }}</span>
+      <span class="cell" role="cell">{{ qi(s.qi) }}</span>
+      <span class="cell cell--date" role="cell">
+        <span class="cell__text">{{ date(s.datetime) }}</span>
+        @if (s.reference) {
+          <span class="ref-badge" role="img" aria-label="Reference scan" matTooltip="Reference scan" tabindex="0"></span>
         }
       </span>
-    }
-    <span class="cell" role="cell">{{ s.analysis.saved?.savedBy ?? '--' }}</span>
-    <span class="cell cell--clip" role="cell" [attr.title]="s.scanComment ?? null">{{ s.scanComment ?? '--' }}</span>
-    <span class="cell cell--clip" role="cell" [attr.title]="s.vnvComment ?? null">{{ s.vnvComment ?? '--' }}</span>
-    <span class="cell cell--icon">
-      <button mat-icon-button type="button" [attr.aria-label]="'More for ' + s.wellId + ' ' + date(s.datetime)" [matMenuTriggerFor]="rowMenu">
-        <mat-icon>more_vert</mat-icon>
-      </button>
-      <mat-menu #rowMenu="matMenu" xPosition="before">
-        <button mat-menu-item type="button" (click)="openScan.emit(s)">Open in focus view</button>
-        <button mat-menu-item type="button" (click)="exportScan.emit(s.id)">Export smooth data</button>
-        <button mat-menu-item type="button" [disabled]="s.reference || store.busy()" (click)="store.setReference(s.id)">Set as reference scan</button>
-      </mat-menu>
-    </span>
-  </div>
-  @if (store.expandedId() === s.id) {
-    <div class="detail" role="row">
-      @if (store.expandedScan(); as full) {
-        <app-scan-detail
-          [scan]="full"
-          [reference]="store.expandedReference()"
-          [preset]="store.presetFor(full)"
-          [busy]="store.busy()"
-          (save)="saveRow(s.id, $event)"
-          (adjust)="openScan.emit(s)"
-          (export)="exportScan.emit(s.id)"
-        />
-      } @else {
-        <mat-progress-bar mode="indeterminate" />
+      @for (c of columns; track c.key) {
+        @let v = cell(s.analysis, c.key);
+        <span class="cell cell--num" role="cell">
+          <span [class.unsaved]="v.tone === 'unsaved'" [class.two-line]="!!v.bottom">{{ v.top }}</span>
+          @if (v.bottom) {
+            <span class="saved-under">{{ v.bottom }}</span>
+          }
+        </span>
       }
+      <span class="cell" role="cell">{{ s.analysis.saved?.savedBy ?? '--' }}</span>
+      <span class="cell cell--clip" role="cell" [attr.title]="s.scanComment ?? null">{{ s.scanComment ?? '--' }}</span>
+      <span class="cell cell--clip" role="cell" [attr.title]="s.vnvComment ?? null">{{ s.vnvComment ?? '--' }}</span>
+      <span class="cell cell--icon">
+        <button mat-icon-button type="button" [attr.aria-label]="'More for ' + s.wellId + ' ' + date(s.datetime)" [matMenuTriggerFor]="rowMenu">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #rowMenu="matMenu" xPosition="before">
+          <button mat-menu-item type="button" (click)="openScan.emit(s)">Open in focus view</button>
+          <button mat-menu-item type="button" (click)="exportScan.emit(s.id)">Export smooth data</button>
+          <button mat-menu-item type="button" [disabled]="s.reference || store.busy()" (click)="store.setReference(s.id)">Set as reference scan</button>
+        </mat-menu>
+      </span>
     </div>
-  }
+    @if (store.expandedId() === s.id) {
+      <div class="detail" role="row">
+        @if (store.expandedScan(); as full) {
+          <app-scan-detail
+            [scan]="full"
+            [reference]="store.expandedReference()"
+            [preset]="store.presetFor(full)"
+            [busy]="store.busy()"
+            (save)="saveRow(s.id, $event)"
+            (adjust)="openScan.emit(s)"
+            (export)="exportScan.emit(s.id)"
+          />
+        } @else {
+          <mat-progress-bar mode="indeterminate" />
+        }
+      </div>
+    }
+  </div>
 </ng-template>

@@ -105,6 +105,14 @@ export class ScanDetailComponent {
     return formatDateTime(scan.datetime);
   }
 
+  /** Cancel: back to the scan's stored QI and comments. */
+  protected cancel(): void {
+    const s = this.scan();
+    this.qi.set(s.qi);
+    this.scanComment.set(s.scanComment ?? '');
+    this.vnvComment.set(s.vnvComment ?? '');
+  }
+
   protected submit(): void {
     this.save.emit({ qi: this.qi(), scanComment: this.scanComment().trim(), vnvComment: this.vnvComment().trim() });
   }
