@@ -20,12 +20,21 @@
   font: var(--mat-sys-body-medium);
 }
 
+// Centred like the VNV first visit (Figma 1:11016): header and content share a
+// 1248 px column; the title keeps its 24 px inset, the content fills the column.
+.header,
+.body {
+  width: min(1248px, 100% - 48px);
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
 .body {
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
   align-items: start;
   gap: var(--spacing-240);
-  padding: var(--spacing-240);
+  margin-block: var(--spacing-240);
 }
 
 .panel {
@@ -34,10 +43,6 @@
   --detail-unit-width: 40px;
 }
 
-// The form is as wide as its fields need (Figma's form panels), not the whole column.
-.form {
-  max-width: 760px;
-}
 
 .details {
   display: flex;
