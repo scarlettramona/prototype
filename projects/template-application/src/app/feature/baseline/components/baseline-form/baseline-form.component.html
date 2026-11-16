@@ -1,0 +1,101 @@
+@if (busy()) {
+  <mat-progress-bar mode="indeterminate" class="app-loading-bar" />
+}
+
+<div class="head">
+  <div class="head__title">
+    <h2 class="title">{{ sensor().id }}</h2>
+    <span class="subtitle">{{ sensor().locationId }}</span>
+  </div>
+  <button matButton="tonal" type="button" (click)="viewReport.emit()">View report</button>
+</div>
+
+<div class="mode">
+  <mat-button-toggle-group
+    hideSingleSelectionIndicator
+    [attr.aria-label]="'Baseline action for ' + sensor().id"
+    [value]="mode()"
+    [disabled]="busy()"
+    (change)="mode.set($event.value)"
+  >
+    <mat-button-toggle value="edit">Edit existing</mat-button-toggle>
+    <mat-button-toggle value="new">Create new</mat-button-toggle>
+  </mat-button-toggle-group>
+  <p class="mode__text">{{ modeText() }}</p>
+</div>
+
+<form class="fields" [formGroup]="form" (ngSubmit)="submit()">
+  <div class="app-field">
+    <label class="app-field__label" [for]="fieldId + '-start'">Baseline start date</label>
+    <mat-form-field subscriptSizing="dynamic">
+      <input matInput required [id]="fieldId + '-start'" formControlName="startDate" [matDatepicker]="picker" [min]="minDate()" />
+      <mat-datepicker-toggle matIconSuffix [for]="picker"><mat-icon matDatepickerToggleIcon>calendar_today</mat-icon></mat-datepicker-toggle>
+      <mat-datepicker #picker />
+      @if (form.controls.startDate.hasError('matDatepickerMin')) {
+        <mat-error>Must be after {{ minDateText() }}</mat-error>
+      } @else if (form.controls.startDate.hasError('matDatepickerParse')) {
+        <mat-error>Enter a date as MM/DD/YYYY</mat-error>
+      } @else {
+        <mat-error>Enter a start date</mat-error>
+      }
+      <mat-hint>MM/DD/YYYY</mat-hint>
+    </mat-form-field>
+  </div>
+  <span></span>
+
+  <div class="app-field">
+    <label class="app-field__label" [for]="fieldId + '-value'">Baseline value</label>
+    <mat-form-field subscriptSizing="dynamic">
+      <input matInput required type="number" step="0.01" [id]="fieldId + '-value'" formControlName="value" />
+      <span matTextSuffix>°F</span>
+      <mat-error>Enter a value</mat-error>
+    </mat-form-field>
+  </div>
+  <div class="app-field">
+    <label class="app-field__label" [for]="fieldId + '-slope'">Baseline slope rate</label>
+    <mat-form-field subscriptSizing="dynamic">
+      <input matInput required type="number" step="0.01" [id]="fieldId + '-slope'" formControlName="slopeRatePerYear" />
+      <span matTextSuffix>°F/yr</span>
+      <mat-error>Enter a slope rate</mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="app-field">
+    <label class="app-field__label" [for]="fieldId + '-lower'">Lower limit offset</label>
+    <mat-form-field subscriptSizing="dynamic">
+      <input matInput required type="number" step="0.01" min="0" [id]="fieldId + '-lower'" formControlName="lowerLimitOffset" />
+      <span matTextSuffix>°F</span>
+      @if (form.controls.lowerLimitOffset.hasError('min')) {
+        <mat-error>Can't be negative</mat-error>
+      } @else {
+        <mat-error>Enter an offset</mat-error>
+      }
+      <mat-hint>{{ lowerText() }}</mat-hint>
+    </mat-form-field>
+  </div>
+  <div class="app-field">
+    <label class="app-field__label" [for]="fieldId + '-upper'">Upper limit offset</label>
+    <mat-form-field subscriptSizing="dynamic">
+      <input matInput required type="number" step="0.01" min="0" [id]="fieldId + '-upper'" formControlName="upperLimitOffset" />
+      <span matTextSuffix>°F</span>
+      @if (form.controls.upperLimitOffset.hasError('min')) {
+        <mat-error>Can't be negative</mat-error>
+      } @else {
+        <mat-error>Enter an offset</mat-error>
+      }
+      <mat-hint>{{ upperText() }}</mat-hint>
+    </mat-form-field>
+  </div>
+
+  <div class="app-field field--wide">
+    <label class="app-field__label" [for]="fieldId + '-comment'">Baseline comment</label>
+    <mat-form-field subscriptSizing="dynamic">
+      <textarea matInput rows="4" [id]="fieldId + '-comment'" formControlName="comment" placeholder="Why the baseline is changing"></textarea>
+    </mat-form-field>
+  </div>
+
+  <div class="actions field--wide">
+    <button mat-button type="button" [disabled]="busy() || !canClear()" (click)="clear()">Clear</button>
+    <button mat-flat-button type="submit" [disabled]="!canSubmit()">Submit</button>
+  </div>
+</form>

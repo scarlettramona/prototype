@@ -1,0 +1,71 @@
+:host {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-240);
+  padding: var(--spacing-240);
+  background: var(--mat-sys-surface-container);
+  border-radius: var(--mat-sys-corner-small);
+  box-sizing: border-box;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-240);
+}
+
+.head__title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-40);
+}
+
+.title {
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+}
+
+.subtitle,
+.mode__text {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.mode {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-80);
+}
+
+// Two equal columns, like the date pairs in the other forms; lower and upper
+// limit offsets share a row.
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-240);
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-160);
+}
+
+// Numbers are typed, not stepped: the browser's spin buttons would sit on the unit suffix.
+input[type='number'] {
+  appearance: textfield;
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+}

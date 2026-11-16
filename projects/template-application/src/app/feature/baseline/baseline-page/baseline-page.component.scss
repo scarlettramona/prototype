@@ -1,0 +1,90 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+// The same header as the Scan library (Figma 1:2128): 24 / 24 / 16 padding,
+// headline-small title, body-medium subtitle.
+.header {
+  padding: var(--spacing-240) var(--spacing-240) var(--spacing-160);
+}
+
+.title {
+  margin: 0 0 var(--spacing-80);
+  font: var(--mat-sys-headline-small);
+}
+
+.subtitle {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--spacing-240);
+  padding: var(--spacing-240);
+}
+
+.panel {
+  position: relative;
+  --detail-value-width: 80px;
+  --detail-unit-width: 40px;
+}
+
+// The form is as wide as its fields need (Figma's form panels), not the whole column.
+.form {
+  max-width: 760px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-80);
+
+  & + & {
+    margin-top: var(--spacing-160);
+  }
+}
+
+// Names and dates: the value column takes what it needs.
+.details--meta {
+  --detail-value-width: max-content;
+  --detail-unit-width: 0;
+}
+
+.comment {
+  margin: var(--spacing-160) 0 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.form--loading {
+  position: relative;
+  min-height: 560px;
+  background: var(--mat-sys-surface-container);
+  border-radius: var(--mat-sys-corner-small);
+}
+
+// The Scan library's empty state.
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-160);
+  min-height: 406px;
+  text-align: center;
+}
+
+.empty__title {
+  margin: 0;
+  font: var(--mat-sys-headline-medium);
+}
+
+.empty__body {
+  margin: 0;
+  font: var(--mat-sys-body-large);
+}

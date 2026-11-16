@@ -1,0 +1,58 @@
+<header class="header">
+  <h1 class="title">Baseline Modifications and Review</h1>
+  <p class="subtitle">Find a sensor to see its current baseline and view its baseline report. You can correct the current baseline or start a new one.</p>
+</header>
+
+<div class="body">
+  <app-side-panel class="panel">
+    @if (store.sensorsLoading()) {
+      <mat-progress-bar mode="indeterminate" class="app-loading-bar" />
+    }
+    <app-sensor-search [sensors]="store.sensors()" [value]="store.selectedId()" (selectedChange)="store.select($event)" />
+
+    @if (store.current(); as c) {
+      <app-panel-section title="Current baseline">
+        <div class="details">
+          <app-detail-row label="Start date" [value]="date(c.startDate)" />
+          <app-detail-row label="Baseline" [value]="temp(c.value)" unit="°F" />
+          <app-detail-row label="Slope rate" [value]="temp(c.slopeRatePerYear)" unit="°F/yr" />
+          <app-detail-row label="Lower limit offset" [value]="temp(c.lowerLimitOffset)" unit="°F" />
+          <app-detail-row label="Upper limit offset" [value]="temp(c.upperLimitOffset)" unit="°F" />
+          <app-detail-row label="Lower limit" [value]="temp(lowerLimit(c))" unit="°F" />
+          <app-detail-row label="Upper limit" [value]="temp(upperLimit(c))" unit="°F" />
+        </div>
+        <div class="details details--meta">
+          <app-detail-row label="Saved on" [value]="date(c.savedAt)" />
+          <app-detail-row label="Saved by" [value]="c.savedBy" />
+        </div>
+        @if (c.comment) {
+          <p class="comment">{{ c.comment }}</p>
+        }
+      </app-panel-section>
+    }
+  </app-side-panel>
+
+  @if (store.selected(); as sensor) {
+    @if (store.current()) {
+      <app-baseline-form
+        class="form"
+        [sensor]="sensor"
+        [history]="store.history()"
+        [mode]="store.mode()"
+        (modeChange)="store.mode.set($event)"
+        [busy]="store.busy()"
+        (submitted)="submit($event)"
+        (viewReport)="viewReport()"
+      />
+    } @else {
+      <div class="form form--loading">
+        <mat-progress-bar mode="indeterminate" class="app-loading-bar" />
+      </div>
+    }
+  } @else {
+    <div class="empty">
+      <p class="empty__title">No sensor selected</p>
+      <p class="empty__body">Search for a sensor to view and edit its baseline.</p>
+    </div>
+  }
+</div>
