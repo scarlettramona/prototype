@@ -1,0 +1,122 @@
+@use '@angular/material' as mat;
+
+// Figma 1:2094 expanded row: two outlined cards on surface-container.
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
+  gap: var(--spacing-160);
+  padding: var(--spacing-160) var(--spacing-240) var(--spacing-240);
+}
+
+.card {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-extra-small);
+  background: var(--mat-sys-surface-container);
+  padding: var(--spacing-160);
+}
+
+.card--chart {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr);
+  gap: var(--spacing-240);
+}
+
+.chart {
+  height: 380px;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-80);
+  --detail-value-width: 72px;
+  --detail-unit-width: 36px;
+}
+
+.legend__scan {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-80);
+  margin-bottom: var(--spacing-160);
+  font: var(--mat-sys-body-medium);
+}
+
+.legend__name {
+  flex: 1 1 auto;
+}
+
+.swatch {
+  width: 14px;
+  height: 2px;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-80);
+}
+
+.end {
+  margin-top: auto;
+  align-self: flex-end;
+}
+
+.card--analysis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--spacing-400);
+  row-gap: var(--spacing-80);
+  align-content: start;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-80);
+  --detail-value-width: 140px;
+  --detail-unit-width: 0px;
+}
+
+.gap {
+  height: var(--spacing-160);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-60);
+  margin-top: var(--spacing-160);
+}
+
+.label {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.toggles {
+  align-self: flex-start;
+  @include mat.button-toggle-overrides(
+    (
+      background-color: transparent,
+      text-color: var(--mat-sys-on-surface),
+      selected-state-background-color: var(--mat-sys-secondary-container),
+      selected-state-text-color: var(--mat-sys-on-secondary-container),
+      divider-color: var(--mat-sys-outline),
+      shape: var(--mat-sys-corner-small),
+      height: 34px,
+    )
+  );
+}
+
+.input {
+  width: 228px;
+  margin-top: var(--spacing-120);
+}
+
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-160);
+  margin-top: var(--spacing-240);
+}

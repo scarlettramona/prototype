@@ -1,0 +1,55 @@
+<section class="card card--chart" aria-label="Depth profile">
+  <div class="chart" echarts [options]="options()" [theme]="chartTheme.theme()"></div>
+  <div class="legend">
+    <div class="legend__scan">
+      <span class="swatch" [style.background]="color()"></span>
+      <span class="legend__name">This scan</span>
+      <span class="legend__value">{{ dateTime() }}</span>
+    </div>
+    @if (shown(); as a) {
+      <div class="rows">
+        <app-detail-row label="Baseline value" [value]="a.parameters.calculationBaseline.baselineValue.toFixed(3)" unit="in" />
+        <app-detail-row label="Baseline slope rate" [value]="a.parameters.calculationBaseline.baselineSlopeRate.toFixed(3)" unit="in/yr" />
+        <app-detail-row label="Marker depth" [value]="a.parameters.miscellaneous.markerDepth.toFixed(3)" unit="in" />
+        <app-detail-row label="Review tolerance" [value]="a.parameters.miscellaneous.reviewTolerance.toFixed(3)" unit="in" />
+        <app-detail-row label="Overall correction offset" [value]="a.parameters.miscellaneous.overallCorrectionOffset.toFixed(3)" unit="in" />
+      </div>
+    }
+    <button mat-button type="button" class="end" (click)="export.emit()">Export</button>
+  </div>
+</section>
+
+<section class="card card--analysis" aria-label="Analysis">
+  <div class="col">
+    <app-detail-row label="Parameters" [value]="shown()?.parameters?.preset ?? '—'" />
+    <app-detail-row label="Saved on" [value]="saved() ? date(saved()!.savedAt) : ''" />
+    <app-detail-row label="Saved by" [value]="saved()?.savedBy ?? ''" />
+    <div class="gap"></div>
+    <app-detail-row label="ILL Method" [value]="shown()?.parameters?.illMethod?.method ?? '—'" />
+    <app-detail-row label="Marker Method" [value]="shown()?.parameters?.markerMethod?.method ?? '—'" />
+  </div>
+  <div class="col">
+    <app-detail-row label="Analysis" [value]="analysisLabel()" />
+    <app-detail-row label="Saved on" [value]="saved() ? date(saved()!.savedAt) : ''" />
+    <app-detail-row label="Saved by" [value]="saved()?.savedBy ?? ''" />
+    <div class="field">
+      <span class="label" id="row-qi">Quality indicator</span>
+      <mat-button-toggle-group class="toggles" aria-labelledby="row-qi" [value]="qi()" (change)="qi.set($event.value)">
+        <mat-button-toggle value="Good">Good</mat-button-toggle>
+        <mat-button-toggle value="Suspect">Suspect</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+    <mat-form-field appLabelAbove subscriptSizing="dynamic" class="input">
+      <mat-label>Scan comment</mat-label>
+      <input matInput placeholder="Placeholder" [value]="scanComment()" (input)="scanComment.set($any($event.target).value)" />
+    </mat-form-field>
+    <mat-form-field appLabelAbove subscriptSizing="dynamic" class="input">
+      <mat-label>VNV Comment</mat-label>
+      <input matInput placeholder="Placeholder" [value]="vnvComment()" (input)="vnvComment.set($any($event.target).value)" />
+    </mat-form-field>
+  </div>
+  <div class="actions">
+    <button mat-button type="button" (click)="adjust.emit()">Adjust in focus view</button>
+    <button mat-flat-button type="button" [disabled]="!canSave()" (click)="submit()">Save analysis</button>
+  </div>
+</section>

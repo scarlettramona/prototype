@@ -70,7 +70,7 @@ export function defaultLoadRange(): DateRangeValue {
   ],
   templateUrl: './load-sensors-form.component.html',
   styleUrl: './load-sensors-form.component.scss',
-  host: { '[class.popover]': "mode() === 'popover'", '[class.page]': "mode() === 'page'", '[class.searching]': 'searching()' },
+  host: { class: 'app-filled-fields', '[class.popover]': "mode() === 'popover'", '[class.page]': "mode() === 'page'", '[class.searching]': 'searching()' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoadSensorsFormComponent {

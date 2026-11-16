@@ -8,12 +8,6 @@
   background: var(--mat-sys-surface-container);
   border-radius: var(--mat-sys-corner-large);
   color: var(--mat-sys-on-surface);
-  @include mat.form-field-overrides(
-    (
-      filled-container-color: var(--mat-sys-surface-variant),
-      filled-active-indicator-color: var(--mat-sys-on-surface-variant),
-    )
-  );
 }
 
 :host(.popover) {

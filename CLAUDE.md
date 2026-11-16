@@ -87,6 +87,8 @@ There is **no linter**; ESLint and Prettier were removed from the template. Keep
 
 - **Popovers:** use a CDK `cdkConnectedOverlay` with `[cdkConnectedOverlayHasBackdrop]="true"` and `cdkConnectedOverlayBackdropClass="app-popover-backdrop"`, close on `backdropClick` and on Escape (`overlayKeydown`), and put `.app-popover` on the content root. Add `cdkTrapFocus cdkTrapFocusAutoCapture` so focus moves in and returns to the trigger.
 - **Vertical rules** between groups in a row use `<span class="app-divider-vertical"></span>`.
+- **Filled form fields** (Figma's `surface-variant` style) get `class: 'app-filled-fields'` on a host or wrapper (`styles/components/_filled-fields.scss`). Don't repeat the overrides per component.
+- **Shared selection state:** tri-state checkboxes use `checkState()` from `core/selection/check-state.ts`.
 - **No amber.** Unsaved or changed values use `--mat-sys-primary`.
 - **VNV legend rows toggle on click** (no checkbox). The ILL scans legend uses checkboxes.
 - **Big charts:** build the full ECharts option only when the data changes, and send window and y-range changes through ngx-echarts `[merge]`. Read the window `untracked` in the full-option computed. Use `[x, y]` arrays plus a `symbol` callback, not an object per point. See the "Chart performance rules" in the overview.

@@ -1,5 +1,8 @@
 import { endOfDay } from '../../../../core/mock-data/dates';
+import { checkState, type CheckState } from '../../../../core/selection/check-state';
 import type { DateRange, Sensor, VnvFarm, VnvLocation } from '../../../../core/vnv/vnv.models';
+
+export { checkState, type CheckState };
 
 /**
  * Pure logic for the Load sensors form (Figma 1:11708…1:12068): name-token
@@ -129,12 +132,6 @@ export interface SensorRowVm {
   checked: boolean;
 }
 
-export interface CheckState {
-  checked: boolean;
-  indeterminate: boolean;
-  disabled: boolean;
-}
-
 export interface SensorListVm {
   location: VnvLocation;
   rows: SensorRowVm[];
@@ -163,11 +160,6 @@ export function buildList(
   const noDataCount = all.filter((r) => r.noData).length;
   const rows = showNoData ? all : all.filter((r) => !r.noData);
   return { location, rows, noDataCount, selectAll: checkState(rows.filter((r) => !r.noData).map((r) => r.checked)) };
-}
-
-export function checkState(flags: readonly boolean[]): CheckState {
-  const n = flags.filter(Boolean).length;
-  return { checked: flags.length > 0 && n === flags.length, indeterminate: n > 0 && n < flags.length, disabled: flags.length === 0 };
 }
 
 // ── Search ──────────────────────────────────────────────────────────────────

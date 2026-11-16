@@ -351,3 +351,36 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 - **`VnvPageComponent`:** with nothing loaded, it renders the form in page mode (first visit). Load data opens it in popover mode with `--load-form-max-height`. `onLoad` loads and switches to Chart view.
 
 **Tests:** `load-sensors-model.spec.ts`, plus additions to `vnv-store.spec.ts`.
+
+### Phase 6 · ILL Scan library
+
+**Decisions** (Scarlett, 2026-11-15, or Figma-wins)
+- **The expanded row's chart shows this scan only:** a depth profile (Corrected Counts against "From Bottom of Tank (inches)", 600 → 0), with the Calculated ILL as a mark line. Saved is dashed `on-surface-variant`; unsaved is solid primary. There's no reference scan.
+- **Perform analysis / Save analysis act on the selected scans.** Perform runs the Default preset and creates unsaved results; Save saves them. Both are disabled with nothing selected, and Save also needs something unsaved.
+- **Row ⋮ menu:** "Open in focus view" and "Export smooth data" (CSV). **This wording is mine and needs Scarlett's confirmation.**
+- **Value cells:**
+  - Saved only: plain.
+  - Unsaved only: primary.
+  - Both: two lines, unsaved on top (primary), saved underneath (small).
+  - None: `--`.
+- **Recent `*`** marks a well with a scan in the last 30 days of data (`recentWells`).
+- **Placeholder copy is used verbatim** (lorem subtitle, form subtitles). **Parameters tab:** no frame, so it's empty.
+- **Layout:** before loading, a centred 1,248 px column (`1:2014`); after, full width (`1:2094`). The form collapses to a filter summary bar, and **Edit filters** reopens it.
+- **Focus links:** Open in focus view goes to `/ill/focus/:wellId`. Adjust in focus view and the ⋮ item add `?tab=<scanId>`.
+- **The store is provided at the ILL route level** (a parent route with `providers`), so coming back from the focus view keeps the results, selection and grouping.
+
+**Pieces**
+- `core/selection/check-state.ts`: `checkState` moved here from the Load sensors form, now shared (the VNV model re-exports it).
+- `styles/components/_filled-fields.scss`: `.app-filled-fields` holds the filled form-field overrides (`surface-variant` container, `on-surface-variant` indicator). Both the Load sensors and Load scans forms use it.
+- `feature/ill/`:
+  - **`ill-library-store.ts`:** `IllLibraryStore` plus `defaultScanQuery()` and `ScanReview`.
+    - Signals: query, form, results, search, grouping, selection, expansion.
+    - `loadScans`, `reset`, `editFilters`, `expand`, `performAnalysis`, `saveAnalysis`, `saveRow`, `applyState`.
+  - **`library-model.ts`** (pure): `RESULT_COLUMNS`, `valueCell`, `qiLetter`, `recentWells`, `wellLabel`, `summaryParts`, `matchesSearch`, `groupByWell`, `scanToCsv`.
+  - **`scan-library-page/`:** header, tabs, form or summary, and the results or empty state. It applies the `ill-library-*` states.
+  - **`components/`:**
+    - `load-scans-form`, `filter-summary`.
+    - `scan-table`: toolbar plus a CSS-grid table, flat or grouped, with expandable rows.
+    - `scan-detail`: chart card and analysis card.
+
+**Tests:** `library-model.spec.ts`, `ill-library-store.spec.ts`.
