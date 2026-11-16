@@ -107,7 +107,7 @@ Paths are relative to `projects/template-application/src/app/` unless they start
 - **Figma wins** over these docs; use file `Eb0lHuZv2e067FftD2RuqL` (node map at the top). Confirmed with Scarlett, 2026-11-15.
 - **Dark surfaces** are plain neutral tones to match Figma (`styles/base/material-system-overrides/_palette-overrides.scss`); the template had tinted them with primary.
 - **Spacing:** use the template's `--spacing-NNN`, matched to Figma by pixel value (see `CLAUDE.md`).
-- **Header** gained the PIWA name and ILL / VNV / Baseline tabs (`layout/header/`). Baseline isn't built, so it's shown but not a link. The user text is Figma's `Welcome, User, User`.
+- **Header** gained the PIWA name and ILL / VNV / Baseline tabs (`layout/header/`). Baseline links to a stub page (see below). The user text is Figma's `Welcome, User, User`.
 - **No linter** exists in the template, so phases check `npm run verify` (tests + build) only.
 - **Mock data is broader than the brief said:** the Scan library frames show many wells, so ILL has 11 wells (see below), not one riser.
 - **Chart theme** is passed to charts as an object (`[theme]="chartTheme.theme()"`), not registered by name: ECharts draws on canvas and can't use `var()`, so the theme is rebuilt from the resolved token colours whenever the app theme toggles.
@@ -511,7 +511,7 @@ These replace earlier decisions where they differ: Phase 6's value cells and Pha
 - **The theme density is -2:** every form field is 48 px, and each value, select arrow and suffix sits on the field's centre line. Buttons and icon buttons stay at 36 px through the overrides API (`_mat-button.scss`). The per-component `form-field-density()` calls are gone.
 - **Header nav:**
   - The active module is Material's filled button (`[matButton]` switched by `routerLinkActive`), and the others are text buttons coloured by `toolbar-overrides(container-text-color)`. The `.mat-mdc-button` specificity chain is gone.
-  - Baseline (not built) is plain text, not a disabled link.
+  - Baseline is a routed button like ILL and VNV. It goes to a stub page at `/baseline` (`feature/baseline/`, lazy, `APP_PATHS.baseline`) that shows the title "Baseline" only, until the page is designed.
 - **Override sheets cleaned up:**
   - Fixed a broken `----mat-sys-corner-extra-small` token.
   - Removed a button-toggle `shape` that overrode the toggles' Figma `corner-small`.

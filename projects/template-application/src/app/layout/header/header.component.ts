@@ -12,8 +12,7 @@ import { ThemeButtonComponent } from '../../ui/patterns/theme-button/theme-butto
 
 interface NavItem {
   label: string;
-  /** Absent for modules this prototype doesn't build (shown, not navigable). */
-  path?: string;
+  path: string;
 }
 
 @Component({
@@ -40,6 +39,6 @@ export class HeaderComponent {
   protected readonly navItems: NavItem[] = [
     { label: 'ILL', path: `/${APP_PATHS.ill}` },
     { label: 'VNV', path: `/${APP_PATHS.vnv}` },
-    { label: 'Baseline' },
+    { label: 'Baseline', path: `/${APP_PATHS.baseline}` },
   ];
 }

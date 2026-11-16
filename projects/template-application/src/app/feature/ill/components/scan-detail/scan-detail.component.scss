@@ -1,5 +1,6 @@
 // Figma 1:2094 expanded row (1:2176): two outlined cards, 1092 and 670 wide with a
 // 16 gap, inset 32 at the sides and bottom; inside the first, a 721 chart and a 312 legend.
+// The cards take the row's surface (no fill of their own), with an outline.
 :host {
   display: grid;
   grid-template-columns: minmax(0, 1092fr) minmax(0, 670fr);
@@ -10,7 +11,6 @@
 .card {
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: var(--mat-sys-corner-extra-small);
-  background: var(--mat-sys-surface-container);
   padding: var(--spacing-160);
 }
 
@@ -60,12 +60,13 @@
   align-self: flex-end;
 }
 
+// Two columns, then the actions, which always sit at the bottom of the card.
 .card--analysis {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
   column-gap: var(--spacing-400);
   row-gap: var(--spacing-80);
-  align-content: start;
 }
 
 .col {
@@ -103,6 +104,7 @@
 
 .actions {
   grid-column: 1 / -1;
+  align-self: end;
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-160);

@@ -7,6 +7,7 @@ export const appRoutes: Route[] = [
   { path: '', pathMatch: 'full', redirectTo: APP_PATHS.vnv },
   { path: APP_PATHS.vnv, loadChildren: () => import('./app/feature/vnv/vnv.routes').then((m) => m.vnvRoutes) },
   { path: APP_PATHS.ill, loadChildren: () => import('./app/feature/ill/ill.routes').then((m) => m.illRoutes) },
+  { path: APP_PATHS.baseline, loadChildren: () => import('./app/feature/baseline/baseline.routes').then((m) => m.baselineRoutes) },
   {
     path: APP_PATHS.dev,
     canMatch: [() => isDevMode()],
