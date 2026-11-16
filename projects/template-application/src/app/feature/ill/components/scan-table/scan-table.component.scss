@@ -87,6 +87,14 @@
   padding: 0;
 }
 
+// The reference row: its Reference tag sits under the date (the column is 175 px).
+.cell--date {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+}
+
 .cell--indent {
   padding-left: var(--spacing-160);
 }

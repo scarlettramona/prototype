@@ -1,5 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { defaultParameters } from '../../../core/ill/ill-analysis';
+import { calculatedPoints } from '../../../core/ill/ill-profiles';
 import { IllMockService } from '../../../core/ill/ill-mock.service';
 import type { AnalysisParameters, ParameterPreset, Scan } from '../../../core/ill/ill.models';
 import type { ResolvedIllFocusState } from '../../../core/prototype-state/resolve-prototype-state';
@@ -49,6 +50,8 @@ export class IllFocusStore {
   readonly hidden = signal<ReadonlySet<string>>(new Set());
   /** The focused scan's Calculated ILL lines (scans legend Saved / Unsaved). */
   readonly lines = signal({ saved: true, unsaved: true });
+  /** Raw lines turned on or off in the legend (per tab visit); other scans follow `rawDefault`. */
+  private readonly rawOverrides = signal<ReadonlyMap<string, boolean>>(new Map());
   readonly legendOpen = signal(false);
   readonly paramsOpen = signal(true);
 
@@ -86,6 +89,10 @@ export class IllFocusStore {
     ).map((id) => byId.get(id)!);
   });
   readonly focused = computed(() => (this.active() === ALL_TAB ? null : (this.scanById().get(this.active()) ?? null)));
+  /** The well's reference scan: always open, on every chart, and its tab can't be closed. */
+  readonly referenceId = computed(() => this.allScans().find((s) => s.reference)?.id ?? null);
+  /** Scans that have a calculated profile (an analysis); the others only have their raw one. */
+  private readonly calculatedIds = computed(() => new Set(this.allScans().filter((s) => calculatedPoints(s)).map((s) => s.id)));
   /** On the chart: open scans not hidden. The focused scan can't be hidden. */
   readonly visibleScans = computed(() => {
     const hidden = this.hidden();
@@ -93,6 +100,29 @@ export class IllFocusStore {
     return this.openScans().filter((s) => s.id === focus || !hidden.has(s.id));
   });
   readonly atFullRange = computed(() => this.window() === null);
+
+  /**
+   * Scans whose raw (dotted) line is drawn. By default: the focused scan in a scan
+   * tab, and every scan when at most one visible scan has a saved analysis; off
+   * otherwise. A scan with no analysis always draws its raw line (it has no other).
+   */
+  readonly rawIds = computed<ReadonlySet<string>>(() => {
+    const overrides = this.rawOverrides();
+    const visible = this.visibleScans();
+    const fewSaved = visible.filter((s) => s.analysis.saved).length <= 1;
+    const focus = this.focused()?.id ?? null;
+    const calculated = this.calculatedIds();
+    return new Set(
+      visible
+        .filter((s) => !calculated.has(s.id) || (overrides.get(s.id) ?? (s.id === focus || fewSaved)))
+        .map((s) => s.id),
+    );
+  });
+
+  /** Has a raw line that can be toggled (it also has a calculated one). */
+  hasCalculated(id: string): boolean {
+    return this.calculatedIds().has(id);
+  }
 
   // ── The focused scan's drafts ──
   readonly reference = computed(() => {
@@ -142,7 +172,7 @@ export class IllFocusStore {
       if (token !== this.loadToken) return;
       this.presets.set(presets);
       this.reset(scans);
-      this.openIds.set(scans.map((s) => s.id));
+      this.openIds.set(this.withReference(scans.map((s) => s.id)));
       this.active.set(tab && scans.some((s) => s.id === tab) ? tab : ALL_TAB);
     } finally {
       if (token === this.loadToken) this.loading.set(false);
@@ -159,7 +189,7 @@ export class IllFocusStore {
       if (token !== this.loadToken) return;
       this.presets.set(presets);
       this.reset(scans);
-      this.openIds.set(state.scanIds);
+      this.openIds.set(this.withReference(state.scanIds));
       this.active.set(state.activeTab);
       this.window.set(state.zoom ? { start: Math.min(...state.zoom), end: Math.max(...state.zoom) } : null);
       this.legendOpen.set(state.popover === 'scans-legend');
@@ -192,6 +222,7 @@ export class IllFocusStore {
     this.drafts.set(new Map());
     this.reviews.set(new Map());
     this.references.set(new Map());
+    this.rawOverrides.set(new Map());
     this.editingGroups.set(new Set());
   }
 
@@ -202,6 +233,7 @@ export class IllFocusStore {
     this.active.set(tab);
     this.editingGroups.set(new Set());
     this.lines.set({ saved: true, unsaved: true });
+    this.rawOverrides.set(new Map());
   }
 
   /** Reopens a closed scan (Add scans) and switches to it. Keeps oldest-first order. */
@@ -214,8 +246,9 @@ export class IllFocusStore {
     this.select(id);
   }
 
-  /** Closes a tab, dropping its drafts. Call `discard`/`save` first if it's dirty. */
+  /** Closes a tab, dropping its drafts. Call `discard`/`save` first if it's dirty. The reference can't be closed. */
   close(id: string): void {
+    if (id === this.referenceId()) return;
     const ids = this.openIds();
     const i = ids.indexOf(id);
     if (i < 0) return;
@@ -246,6 +279,26 @@ export class IllFocusStore {
     if (hidden) next.add(id);
     else next.delete(id);
     this.hidden.set(next);
+  }
+
+  /** Legend Raw rows: show or hide a scan's raw (dotted) line. */
+  setRaw(id: string, on: boolean): void {
+    this.rawOverrides.update((m) => new Map(m).set(id, on));
+  }
+
+  /** Makes `id` the well's reference scan (it moves the Reference tag and the dashed line). */
+  async setReference(id: string): Promise<void> {
+    if (this.busy() || id === this.referenceId()) return;
+    this.busy.set(true);
+    try {
+      const fresh = await this.service.setReferenceScan(id);
+      const byId = new Map(fresh.map((s) => [s.id, s]));
+      this.allScans.update((list) => list.map((s) => (byId.has(s.id) ? { ...s, reference: byId.get(s.id)!.reference } : s)));
+      this.openIds.set(this.withReference(this.openIds()));
+      await this.library?.refresh(fresh.map((s) => s.id));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   /** The All scans row: show all, or hide all but the focused scan. */
@@ -366,6 +419,14 @@ export class IllFocusStore {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /** Open ids with the reference added (it's always open), in the well's oldest-first order. */
+  private withReference(ids: readonly string[]): string[] {
+    const ref = this.referenceId();
+    if (!ref || ids.includes(ref)) return [...ids];
+    const next = new Set([...ids, ref]);
+    return this.allScans().map((s) => s.id).filter((x) => next.has(x));
   }
 
   private draftFor(scan: Scan): AnalysisParameters {

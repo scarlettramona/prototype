@@ -1,4 +1,5 @@
 import type { Analysis, AnalysisResults, Scan, ScanQi, ScanQuery, ScanSummary } from '../../core/ill/ill.models';
+import { primaryPoints } from '../../core/ill/ill-profiles';
 import { DAY_MS, formatDate, formatDateTime } from '../../core/mock-data/dates';
 
 /**
@@ -92,7 +93,8 @@ export function groupByWell<T extends { wellId: string; datetime: number }>(scan
 }
 
 /** "Export smooth data": the scan's depth profile as CSV. */
+/** Export smooth data: the calculated (smoothed, depth-corrected) profile, or the raw one when the scan has no analysis. */
 export function scanToCsv(scan: Scan): string {
-  const rows = scan.points.map((p) => `${p.depthIn},${p.counts}`);
+  const rows = primaryPoints(scan).map((p) => `${p.depthIn},${p.counts}`);
   return [`well,${scan.wellId}`, `scan_datetime,${formatDateTime(scan.datetime)}`, 'corrected_depth_in,corrected_counts', ...rows].join('\n');
 }

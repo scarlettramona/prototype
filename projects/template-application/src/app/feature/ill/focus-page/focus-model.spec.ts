@@ -60,12 +60,12 @@ describe('Focus view model', () => {
   });
 
   it('fits Y to the window, or to the full profile when off', () => {
-    const [lo, hi] = depthYRange([scan()], { start: 100, end: 200 }, true);
+    const [lo, hi] = depthYRange([scan().points], { start: 100, end: 200 }, true);
     expect(lo).toBeGreaterThanOrEqual(180);
     expect(lo).toBeLessThan(205);
     expect(hi).toBeGreaterThan(395);
     expect(hi).toBeLessThanOrEqual(420);
-    expect(depthYRange([scan()], { start: 100, end: 200 }, false)).toEqual([0, 1296]);
+    expect(depthYRange([scan().points], { start: 100, end: 200 }, false)).toEqual([0, 1296]);
     expect(depthYRange([], null, true)).toEqual([0, 1]);
   });
 

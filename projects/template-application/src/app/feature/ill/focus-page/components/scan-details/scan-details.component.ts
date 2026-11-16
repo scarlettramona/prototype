@@ -25,7 +25,12 @@ let nextId = 0;
     @if (store.focused(); as scan) {
       <div class="top">
         <h2 class="title">Scan details</h2>
-        <span class="scan"><span class="dot" [style.background]="color()"></span>{{ dateTime() }}</span>
+        <span class="scan">
+          <span class="dot" [style.background]="color()"></span>{{ dateTime() }}
+          @if (scan.reference) {
+            <span class="app-tag">Reference</span>
+          }
+        </span>
       </div>
       <div class="divider"></div>
       <div class="results">
@@ -63,6 +68,9 @@ let nextId = 0;
       </div>
 
       <div class="actions">
+        @if (!scan.reference) {
+          <button mat-button type="button" [disabled]="store.busy()" (click)="store.setReference(scan.id)">Set as reference scan</button>
+        }
         <button mat-button type="button" (click)="exportScan.emit()">Export smooth data</button>
         @if (store.hasUnsaved()) {
           <button mat-button type="button" [disabled]="store.busy()" (click)="store.discard()">Discard</button>
@@ -137,6 +145,7 @@ let nextId = 0;
     }
     .actions {
       display: flex;
+      flex-wrap: wrap;
       justify-content: flex-end;
       gap: var(--spacing-80);
       margin-top: auto;

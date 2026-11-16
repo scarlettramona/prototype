@@ -124,7 +124,8 @@ describe('IllFocusStore', () => {
 
   it('closes and reopens tabs', async () => {
     await store.applyState(state('ill-scan-saved'));
-    const id = store.active();
+    const id = store.openIds().find((x) => x !== store.referenceId())!;
+    store.select(id);
     const count = store.openIds().length;
     store.close(id);
     expect(store.openIds().length).toBe(count - 1);
@@ -133,6 +134,42 @@ describe('IllFocusStore', () => {
     store.open(id);
     expect(store.openIds().length).toBe(count);
     expect(store.active()).toBe(id);
+  });
+
+  it('keeps the reference scan open: it is auto-added and cannot be closed', async () => {
+    await store.applyState(state('ill-scan-saved'));
+    const ref = store.referenceId()!;
+    expect(ref).toBeTruthy();
+    expect(store.openIds()).toContain(ref);
+    store.close(ref);
+    expect(store.openIds()).toContain(ref);
+    expect(store.closedScans().some((s) => s.id === ref)).toBe(false);
+  });
+
+  it('shows raw lines by default only where few analysed scans are on show', async () => {
+    await store.applyState(state('ill-all-scans'));
+    const analysed = store.visibleScans().filter((s) => s.analysis.saved);
+    expect(analysed.length).toBeGreaterThan(1);
+    // All scans: raw off for analysed scans; scans without analysis always draw raw.
+    for (const s of store.visibleScans()) expect(store.rawIds().has(s.id)).toBe(!s.analysis.saved && !s.analysis.unsaved);
+    // A scan tab: the focused scan's raw is on, the others' off.
+    const focus = analysed[1].id;
+    store.select(focus);
+    expect(store.rawIds().has(focus)).toBe(true);
+    expect(store.rawIds().has(analysed[0].id)).toBe(false);
+    store.setRaw(analysed[0].id, true);
+    store.setRaw(focus, false);
+    expect(store.rawIds().has(analysed[0].id)).toBe(true);
+    expect(store.rawIds().has(focus)).toBe(false);
+  });
+
+  it('sets another scan as the reference', async () => {
+    await store.applyState(state('ill-scan-saved'));
+    const old = store.referenceId()!;
+    const next = store.openIds().find((x) => x !== old)!;
+    await store.setReference(next);
+    expect(store.referenceId()).toBe(next);
+    expect(store.scanById().get(old)!.reference).toBe(false);
   });
 
   it('hides scans, but never the focused one', async () => {

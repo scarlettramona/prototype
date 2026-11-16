@@ -1,10 +1,31 @@
 <section class="card card--chart" aria-label="Depth profile">
   <div class="chart" echarts [options]="options()" [theme]="chartTheme.theme()"></div>
   <div class="legend">
-    <div class="legend__scan">
-      <span class="swatch" [style.background]="color()"></span>
-      <span class="legend__name">This scan</span>
-      <span class="legend__value">{{ dateTime() }}</span>
+    <!-- Figma 1:2094: This scan, then the well's Reference scan, each with its time; a Raw toggle under each. -->
+    <div class="legend__scans">
+      <div class="legend__scan">
+        <app-series-swatch [color]="color()" marker="none" />
+        <span class="legend__name">
+          This scan
+          @if (scan().reference) {
+            <span class="app-tag">Reference</span>
+          }
+        </span>
+        <span class="legend__value">{{ dateTime() }}</span>
+      </div>
+      @if (hasRaw(scan())) {
+        <app-legend-row mode="checkbox" label="Raw" [indent]="true" [swatch]="{ color: color(), dash: rawDash }" [visible]="rawIds().has(scan().id)" (visibleChange)="setRaw(scan().id, $event)" />
+      }
+      @if (reference(); as ref) {
+        <div class="legend__scan">
+          <app-series-swatch [color]="colorOf(ref)" [dash]="referenceDash" marker="none" />
+          <span class="legend__name">Reference scan</span>
+          <span class="legend__value">{{ timeOf(ref) }}</span>
+        </div>
+        @if (hasRaw(ref)) {
+          <app-legend-row mode="checkbox" label="Raw" [indent]="true" [swatch]="{ color: colorOf(ref), dash: rawDash }" [visible]="rawIds().has(ref.id)" (visibleChange)="setRaw(ref.id, $event)" />
+        }
+      }
     </div>
     @if (shown(); as a) {
       <div class="rows">

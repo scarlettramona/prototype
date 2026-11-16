@@ -220,11 +220,11 @@ export function countsAt(points: readonly ScanPoint[], depth: number): number | 
  * 1st–99th percentile plus 8% padding so single spikes don't flatten the rest.
  * Off: the full profile, padded the same way.
  */
-export function depthYRange(scans: readonly Scan[], window: DepthWindow | null, fitY: boolean): [number, number] {
+export function depthYRange(profiles: readonly (readonly ScanPoint[])[], window: DepthWindow | null, fitY: boolean): [number, number] {
   const from = fitY && window ? window.start : DEPTH_MIN;
   const to = fitY && window ? window.end : DEPTH_MAX;
   const values: number[] = [];
-  for (const s of scans) for (const p of s.points) if (p.depthIn >= from && p.depthIn <= to) values.push(p.counts);
+  for (const points of profiles) for (const p of points) if (p.depthIn >= from && p.depthIn <= to) values.push(p.counts);
   if (values.length === 0) return [0, 1];
   values.sort((a, b) => a - b);
   const lo = fitY ? values[Math.floor((values.length - 1) * 0.01)] : values[0];

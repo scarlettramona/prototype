@@ -10,7 +10,10 @@ import { PlutoChartThemeService } from '../../../../core/charts/pluto-chart-them
 import type { ParameterPreset, Scan, ScanQi } from '../../../../core/ill/ill.models';
 import { formatDate, formatDateTime } from '../../../../core/mock-data/dates';
 import { DetailRowComponent } from '../../../../ui/components/detail-row/detail-row.component';
-import { buildDepthChartOptions } from '../../focus-page/depth-chart-options';
+import { calculatedPoints } from '../../../../core/ill/ill-profiles';
+import { LegendRowComponent } from '../../../../ui/components/legend-row/legend-row.component';
+import { SeriesSwatchComponent } from '../../../../ui/components/series-swatch/series-swatch.component';
+import { buildDepthChartOptions, drawnProfiles, RAW_DASH, REFERENCE_DASH, type DepthChartData } from '../../focus-page/depth-chart-options';
 import { depthYRange } from '../../focus-page/focus-model';
 import type { ScanReview } from '../../ill-library-store';
 
@@ -23,7 +26,7 @@ let nextId = 0;
  */
 @Component({
   selector: 'app-scan-detail',
-  imports: [MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, NgxEchartsDirective, DetailRowComponent],
+  imports: [MatButtonModule, MatButtonToggleModule, MatFormFieldModule, MatInputModule, NgxEchartsDirective, DetailRowComponent, LegendRowComponent, SeriesSwatchComponent],
   templateUrl: './scan-detail.component.html',
   styleUrl: './scan-detail.component.scss',
   host: { class: 'app-filled-fields' },
@@ -34,6 +37,8 @@ export class ScanDetailComponent {
   protected readonly chartTheme = inject(PlutoChartThemeService);
 
   readonly scan = input.required<Scan>();
+  /** The well's reference scan, drawn beside this one; `null` when this scan is the reference. */
+  readonly reference = input<Scan | null>(null);
   /** The parameter preset the analysis used (Default when there's none): its saved on / by always show. */
   readonly preset = input<ParameterPreset | null>(null);
   readonly busy = input(false);
@@ -44,6 +49,10 @@ export class ScanDetailComponent {
   protected readonly qi = signal<ScanQi>(null);
   protected readonly scanComment = signal('');
   protected readonly vnvComment = signal('');
+  /** Raw lines turned on or off in the legend; reset when the row shows another scan. */
+  private readonly rawOverrides = signal<ReadonlyMap<string, boolean>>(new Map());
+  protected readonly rawDash = RAW_DASH;
+  protected readonly referenceDash = REFERENCE_DASH;
 
   constructor() {
     effect(() => {
@@ -52,6 +61,7 @@ export class ScanDetailComponent {
         this.qi.set(s.qi);
         this.scanComment.set(s.scanComment ?? '');
         this.vnvComment.set(s.vnvComment ?? '');
+        this.rawOverrides.set(new Map());
       });
     });
   }
@@ -77,12 +87,52 @@ export class ScanDetailComponent {
   protected readonly date = formatDate;
   protected readonly color = computed(() => seriesStyle(this.scan().colorIndex).color);
 
-  /** The focus view's depth chart for this one scan, without zoom (shared builder). */
+  private readonly scans = computed(() => {
+    const ref = this.reference();
+    return ref ? [this.scan(), ref] : [this.scan()];
+  });
+
+  /**
+   * Raw lines drawn: off by default when both scans have a saved analysis,
+   * otherwise on for this scan. A scan without analysis always draws raw.
+   */
+  protected readonly rawIds = computed<ReadonlySet<string>>(() => {
+    const scans = this.scans();
+    const overrides = this.rawOverrides();
+    const fewSaved = scans.filter((s) => s.analysis.saved).length <= 1;
+    const self = this.scan().id;
+    return new Set(scans.filter((s) => !this.hasRaw(s) || (overrides.get(s.id) ?? (s.id === self && fewSaved))).map((s) => s.id));
+  });
+
+  /** The focus view's depth chart for this scan and its well's reference, without zoom (shared builder). */
   protected readonly options = computed<EChartsCoreOption>(() => {
     const scan = this.scan();
-    const data = { scans: [scan], focusedId: scan.id, lines: { saved: true, unsaved: true } };
-    return buildDepthChartOptions(data, null, depthYRange([scan], null, false), this.chartTheme.tokens().surfaceContainerLowest, { zoom: false });
+    const data: DepthChartData = {
+      scans: this.scans(),
+      focusedId: scan.id,
+      lines: { saved: true, unsaved: true },
+      referenceId: this.reference()?.id ?? (scan.reference ? scan.id : null),
+      raw: this.rawIds(),
+    };
+    return buildDepthChartOptions(data, null, depthYRange(drawnProfiles(data), null, false), this.chartTheme.tokens().surfaceContainerLowest, { zoom: false });
   });
+
+  /** Has a raw line to toggle (it also has a calculated one). */
+  protected hasRaw(scan: Scan): boolean {
+    return !!calculatedPoints(scan);
+  }
+
+  protected setRaw(id: string, on: boolean): void {
+    this.rawOverrides.update((m) => new Map(m).set(id, on));
+  }
+
+  protected colorOf(scan: Scan): string {
+    return seriesStyle(scan.colorIndex).color;
+  }
+
+  protected timeOf(scan: Scan): string {
+    return formatDateTime(scan.datetime);
+  }
 
   protected submit(): void {
     this.save.emit({ qi: this.qi(), scanComment: this.scanComment().trim(), vnvComment: this.vnvComment().trim() });

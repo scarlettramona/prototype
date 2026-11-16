@@ -101,7 +101,12 @@
       <span class="cell" role="cell">{{ s.wellId }}</span>
     }
     <span class="cell" role="cell">{{ qi(s.qi) }}</span>
-    <span class="cell" role="cell">{{ date(s.datetime) }}</span>
+    <span class="cell cell--date" role="cell">
+      {{ date(s.datetime) }}
+      @if (s.reference) {
+        <span class="app-tag">Reference</span>
+      }
+    </span>
     @for (c of columns; track c.key) {
       @let v = cell(s.analysis, c.key);
       <span class="cell cell--num" role="cell">
@@ -121,6 +126,7 @@
       <mat-menu #rowMenu="matMenu" xPosition="before">
         <button mat-menu-item type="button" (click)="openScan.emit(s)">Open in focus view</button>
         <button mat-menu-item type="button" (click)="exportScan.emit(s.id)">Export smooth data</button>
+        <button mat-menu-item type="button" [disabled]="s.reference || store.busy()" (click)="store.setReference(s.id)">Set as reference scan</button>
       </mat-menu>
     </span>
   </div>
@@ -129,6 +135,7 @@
       @if (store.expandedScan(); as full) {
         <app-scan-detail
           [scan]="full"
+          [reference]="store.expandedReference()"
           [preset]="store.presetFor(full)"
           [busy]="store.busy()"
           (save)="saveRow(s.id, $event)"
