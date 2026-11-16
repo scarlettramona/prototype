@@ -155,6 +155,12 @@
       <div class="list__head">
         <span class="list__title">{{ l.location.id }}</span>
       </div>
+      @if (l.noDataCount) {
+        <div class="notice">
+          <span>{{ l.noDataCount }} {{ l.noDataCount === 1 ? 'sensor' : 'sensors' }} with no data in the selected date range</span>
+          <mat-slide-toggle labelPosition="before" hideIcon [checked]="showNoData()" (change)="showNoData.set($event.checked)">Show all</mat-slide-toggle>
+        </div>
+      }
       <mat-checkbox
         class="select-all"
         [checked]="l.selectAll.checked"
@@ -177,12 +183,6 @@
           } @else if (row.loaded) {
             <span class="tag">loaded</span>
           }
-        </div>
-      }
-      @if (l.noDataCount) {
-        <div class="notice">
-          <span>{{ l.noDataCount }} {{ l.noDataCount === 1 ? 'sensor' : 'sensors' }} with no data in the selected date range</span>
-          <mat-slide-toggle labelPosition="before" hideIcon [checked]="showNoData()" (change)="showNoData.set($event.checked)">Show all</mat-slide-toggle>
         </div>
       }
     }
