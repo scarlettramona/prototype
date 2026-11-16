@@ -73,8 +73,9 @@
   gap: var(--spacing-80);
 }
 
-// The ILL and Marker tiles share the row's height (the shorter one keeps empty
-// space at its bottom); Calculation Baseline and Miscellaneous grow to fill theirs.
+// The row is as tall as its tallest content, so it follows read and edit mode. The
+// ILL and Marker tiles share that height (the shorter keeps empty space at its
+// bottom); Calculation Baseline and Miscellaneous split any spare space evenly.
 .groups {
   display: grid;
   grid-template-columns: minmax(0, 577fr) minmax(0, 611fr) minmax(0, 611fr);
@@ -123,10 +124,11 @@
   gap: var(--spacing-160);
 }
 
+// Read rows are 20 px on a 32 px pitch (Figma 1:9850), so the tiles shrink in read mode.
 .row--read {
   grid-template-columns: 1fr auto;
   align-items: start;
-  min-height: 24px;
+  min-height: 20px;
 }
 
 .label {
@@ -138,7 +140,9 @@
   color: var(--mat-sys-on-surface);
 }
 
-.row--read .label {
+// The 44 px label height lines labels up with edit inputs; read rows and the comment don't need it.
+.row--read .label,
+.comment .label {
   min-height: 0;
 }
 
