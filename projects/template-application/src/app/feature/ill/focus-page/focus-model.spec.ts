@@ -1,11 +1,13 @@
-import { defaultParameters } from '../../../core/ill/ill-analysis';
+import { analyse, defaultParameters } from '../../../core/ill/ill-analysis';
 import type { AnalysisResults, Scan, ScanPoint } from '../../../core/ill/ill.models';
 import {
+  activeFields,
   closedScanIds,
   countsAt,
   depthYRange,
   editedFields,
   initialDraft,
+  PARAM_GROUPS,
   referenceParameters,
   resultRows,
   withParam,
@@ -68,5 +70,60 @@ describe('Focus view model', () => {
 
   it('lists closed scans in well order', () => {
     expect(closedScanIds(['a', 'b', 'c', 'd'], ['d', 'b'])).toEqual(['a', 'c']);
+  });
+
+  describe('ILL and Marker methods', () => {
+    const [, , illGroup, markerGroup] = PARAM_GROUPS;
+    const labels = (group: typeof illGroup, method: string) =>
+      activeFields(group, withParam(defaultParameters(), group.group as 'illMethod', 'method', method)).map((f) => f.label);
+
+    it('offers 2 Line Intercept for ILL only', () => {
+      expect(illGroup.methods).toContain('2 Line Intercept');
+      expect(markerGroup.methods).not.toContain('2 Line Intercept');
+    });
+
+    it("shows the method select and only the chosen method's fields", () => {
+      expect(labels(illGroup, 'Intercept')).toEqual([
+        'ILL Method',
+        'ILL Normal Upper Range',
+        'ILL Normal Lower Range',
+        'ILL Normal Target Counts',
+        'ILL Upper Range',
+        'ILL Lower Range',
+        'ILL Counts',
+      ]);
+      expect(labels(illGroup, '2 Line Intercept')).toEqual(['ILL Method', 'Depth 1', 'Depth 2', 'Depth 3', 'Depth 4']);
+      expect(labels(illGroup, 'Derivative')).toEqual(['ILL Method', 'ILL Upper Range', 'ILL Lower Range', 'ILL Smoothing Parameter']);
+      expect(labels(markerGroup, 'Count Rate')).toEqual(['Marker Method', 'Marker Window Offset', 'Marker Window Size']);
+      expect(labels(markerGroup, 'Sigmoid')).toEqual([
+        'Marker Method',
+        'Marker Window',
+        'Marker High Low Delta',
+        'Marker Curve Shape',
+        'Marker Low Count Value',
+        'Sigmoid Tolerance',
+      ]);
+      expect(labels(illGroup, 'None')).toEqual(['ILL Method']);
+    });
+
+    it('defaults to the legacy values and keeps Sigmoid Tolerance at 6 decimals', () => {
+      const d = defaultParameters();
+      expect([d.illMethod.depth1, d.illMethod.depth4, d.illMethod.derivativeUpperRange, d.illMethod.highLowDelta]).toEqual([72, 54, 144, 1500]);
+      expect([d.markerMethod.derivativeUpperRange, d.markerMethod.curveShape, d.markerMethod.lowCountValue]).toEqual([484.8, -6.1, 14.9]);
+      expect(markerGroup.fields.find((f) => f.key === 'sigmoidTolerance')!.decimals).toBe(6);
+    });
+
+    it("moves the result with the method and with the chosen method's fields", () => {
+      const ill = (p = defaultParameters()) => analyse(points, p, 0).calculatedIll;
+      const base = ill();
+      for (const method of ['2 Line Intercept', 'Derivative', 'Count Rate', 'Sigmoid'] as const) {
+        const p = withParam(defaultParameters(), 'illMethod', 'method', method);
+        expect(ill(p)).not.toBe(base);
+      }
+      const sigmoid = withParam(defaultParameters(), 'markerMethod', 'method', 'Sigmoid');
+      expect(ill(withParam(sigmoid, 'markerMethod', 'curveShape', -4))).not.toBe(ill(sigmoid));
+      // A method's fields only count while it's chosen.
+      expect(ill(withParam(defaultParameters(), 'illMethod', 'depth1', 90))).toBe(base);
+    });
   });
 });

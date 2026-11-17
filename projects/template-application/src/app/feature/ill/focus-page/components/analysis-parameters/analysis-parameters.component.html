@@ -60,7 +60,7 @@
       }
     </div>
 
-    @for (field of g.fields; track field.key) {
+    @for (field of fields(g); track field.key) {
       @let edited = isEdited(field);
       @if (!editable(g)) {
         @if (field.kind === 'text') {
@@ -94,7 +94,7 @@
             @switch (field.kind) {
               @case ('method') {
                 <mat-select [id]="field.group + '-' + field.key" [value]="value(field)" (selectionChange)="setText(field, $event.value)">
-                  @for (m of methods; track m) {
+                  @for (m of g.methods; track m) {
                     <mat-option [value]="m">{{ m }}</mat-option>
                   }
                 </mat-select>

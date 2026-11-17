@@ -7,6 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { NgTemplateOutlet } from '@angular/common';
 import { formatDate, formatIsoDate } from '../../../../../core/mock-data/dates';
 import {
+  activeFields,
   fieldId,
   formatParam,
   PARAM_GROUPS,
@@ -34,7 +35,6 @@ import { IllFocusStore } from '../../ill-focus-store';
 export class AnalysisParametersComponent {
   protected readonly store = inject(IllFocusStore);
   protected readonly groups = PARAM_GROUPS;
-  protected readonly methods = ['Intercept', 'None'];
 
   /** The preset's own saved on / by: a preset is always saved (Default included). */
   protected readonly savedOn = computed(() => {
@@ -51,9 +51,15 @@ export class AnalysisParametersComponent {
     return this.store.edited().has(fieldId(field));
   }
 
+  /** The group's fields for the draft's method: a method group shows only its chosen method's settings. */
+  protected fields(g: ParamGroupDef): ParamField[] {
+    const d = this.store.draft();
+    return d ? activeFields(g, d) : g.fields;
+  }
+
   protected value(field: ParamField): string {
     const d = this.store.draft();
-    return d ? formatParam(paramValue(d, field), field.kind) : '';
+    return d ? formatParam(paramValue(d, field), field.kind, field.decimals) : '';
   }
 
   /** `yyyy-mm-dd` for the date input. */
@@ -66,12 +72,13 @@ export class AnalysisParametersComponent {
   protected savedHint(field: ParamField): string {
     const r = this.store.reference();
     if (!r) return '';
-    return `Saved ${formatParam(paramValue(r, field), field.kind)}${field.unit ? ' ' + field.unit : ''}`;
+    return `Saved ${formatParam(paramValue(r, field), field.kind, field.decimals)}${field.unit ? ' ' + field.unit : ''}`;
   }
 
   protected setNumber(field: ParamField, raw: string): void {
     const n = Number.parseFloat(raw);
-    if (Number.isFinite(n)) this.store.setField(field.group, field.key, Math.round(n * 1000) / 1000);
+    const scale = 10 ** (field.decimals ?? 3);
+    if (Number.isFinite(n)) this.store.setField(field.group, field.key, Math.round(n * scale) / scale);
   }
 
   protected setDate(field: ParamField, raw: string): void {

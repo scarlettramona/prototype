@@ -1,5 +1,5 @@
 import { defaultParameters } from '../../../core/ill/ill-analysis';
-import type { Analysis, AnalysisParameters, AnalysisResults, Scan, ScanPoint, ScanQi } from '../../../core/ill/ill.models';
+import { ILL_METHODS, MARKER_METHODS, type Analysis, type AnalysisParameters, type AnalysisResults, type Scan, type ScanPoint, type ScanQi } from '../../../core/ill/ill.models';
 import { formatDate } from '../../../core/mock-data/dates';
 
 /** The depth axis: inches from the bottom of the tank, drawn 600 → 0. */
@@ -86,12 +86,18 @@ export interface ParamField {
   kind: FieldKind;
   /** Shows an ⓘ after the label (Figma: Baseline value, Baseline slope rate). */
   info?: boolean;
+  /** Shown only while the group's method is one of these (the method's own settings). */
+  methods?: readonly string[];
+  /** Decimal places shown and kept (default 3). */
+  decimals?: number;
 }
 
 export interface ParamGroupDef {
   group: ParamGroup;
   title: string;
   fields: ParamField[];
+  /** The method select's options (ILL and Marker method groups). */
+  methods?: readonly string[];
 }
 
 const f = (group: ParamGroup, key: string, label: string, unit = 'in', kind: FieldKind = 'number', info = false): ParamField => ({
@@ -102,6 +108,43 @@ const f = (group: ParamGroup, key: string, label: string, unit = 'in', kind: Fie
   kind,
   info,
 });
+
+/** A field that belongs to one method of a method group. */
+const m = (group: 'illMethod' | 'markerMethod', method: string, key: string, label: string, unit = 'in', decimals = 3): ParamField => ({
+  ...f(group, key, label, unit),
+  methods: [method],
+  decimals,
+});
+
+/**
+ * One method group's fields, in the legacy parameter screen's order: the
+ * method select, then each method's own settings. `who` prefixes the labels
+ * (ILL / Marker); 2 Line Intercept is ILL-only; Sigmoid Tolerance is unprefixed.
+ */
+function methodFields(group: 'illMethod' | 'markerMethod', who: 'ILL' | 'Marker'): ParamField[] {
+  return [
+    f(group, 'method', `${who} Method`, '', 'method'),
+    m(group, 'Intercept', 'normalUpperRange', `${who} Normal Upper Range`),
+    m(group, 'Intercept', 'normalLowerRange', `${who} Normal Lower Range`),
+    m(group, 'Intercept', 'normalTargetCounts', `${who} Normal Target Counts`, 'cps'),
+    m(group, 'Intercept', 'upperRange', `${who} Upper Range`),
+    m(group, 'Intercept', 'lowerRange', `${who} Lower Range`),
+    m(group, 'Intercept', 'counts', `${who} Counts`, 'cps'),
+    ...(group === 'illMethod'
+      ? [1, 2, 3, 4].map((n) => m(group, '2 Line Intercept', `depth${n}`, `Depth ${n}`))
+      : []),
+    m(group, 'Derivative', 'derivativeUpperRange', `${who} Upper Range`),
+    m(group, 'Derivative', 'derivativeLowerRange', `${who} Lower Range`),
+    m(group, 'Derivative', 'smoothingParameter', `${who} Smoothing Parameter`, ''),
+    m(group, 'Count Rate', 'windowOffset', `${who} Window Offset`),
+    m(group, 'Count Rate', 'windowSize', `${who} Window Size`),
+    m(group, 'Sigmoid', 'sigmoidWindow', `${who} Window`),
+    m(group, 'Sigmoid', 'highLowDelta', `${who} High Low Delta`, 'cps'),
+    m(group, 'Sigmoid', 'curveShape', `${who} Curve Shape`, '1/in'),
+    m(group, 'Sigmoid', 'lowCountValue', `${who} Low Count Value`, 'cps'),
+    m(group, 'Sigmoid', 'sigmoidTolerance', 'Sigmoid Tolerance', 'in', 6),
+  ];
+}
 
 /** The four groups as Figma lays them out (1:9821). Labels are Figma's, typos included. */
 export const PARAM_GROUPS: readonly ParamGroupDef[] = [
@@ -125,32 +168,8 @@ export const PARAM_GROUPS: readonly ParamGroupDef[] = [
       f('miscellaneous', 'parameterComment', 'Parameter comment', '', 'text'),
     ],
   },
-  {
-    group: 'illMethod',
-    title: 'ILL method',
-    fields: [
-      f('illMethod', 'method', 'ILL Method', '', 'method'),
-      f('illMethod', 'normalUpperRange', 'ILL Normal Upper Range'),
-      f('illMethod', 'normalLowerRange', 'ILL Normal Lower Range'),
-      f('illMethod', 'normalTargetCounts', 'ILL Normal Target Counts'),
-      f('illMethod', 'upperRange', 'ILL Upper Range'),
-      f('illMethod', 'lowerRange', 'ILL Lower Range'),
-      f('illMethod', 'counts', 'ILL Counts'),
-    ],
-  },
-  {
-    group: 'markerMethod',
-    title: 'Marker method',
-    fields: [
-      f('markerMethod', 'method', 'Marker Method', '', 'method'),
-      f('markerMethod', 'normalUpperRange', 'Marker Normal Upper Range'),
-      f('markerMethod', 'normalLowerRange', 'Marker Normal Lower Range'),
-      f('markerMethod', 'normalTargetCounts', 'Marker Normal Target Counts'),
-      f('markerMethod', 'upperRange', 'Marker Upper Range'),
-      f('markerMethod', 'lowerRange', 'Marker Lower Range'),
-      f('markerMethod', 'counts', 'Marker Counts'),
-    ],
-  },
+  { group: 'illMethod', title: 'ILL method', methods: ILL_METHODS, fields: methodFields('illMethod', 'ILL') },
+  { group: 'markerMethod', title: 'Marker method', methods: MARKER_METHODS, fields: methodFields('markerMethod', 'Marker') },
 ];
 
 export type ParamValue = number | string;
@@ -163,9 +182,9 @@ export function withParam(p: AnalysisParameters, group: ParamGroup, key: string,
   return { ...p, [group]: { ...p[group], [key]: value } };
 }
 
-/** `12.000`, `10/29/2026`, `Intercept`, or the comment. */
-export function formatParam(value: ParamValue, kind: FieldKind): string {
-  if (kind === 'number') return (value as number).toFixed(3);
+/** `12.000` (or the field's own precision), `10/29/2026`, `Intercept`, or the comment. */
+export function formatParam(value: ParamValue, kind: FieldKind, decimals = 3): string {
+  if (kind === 'number') return (value as number).toFixed(decimals);
   if (kind === 'date') return formatDate(value as number);
   return String(value);
 }
@@ -189,6 +208,12 @@ export function editedFields(draft: AnalysisParameters, reference: AnalysisParam
     }
   }
   return out;
+}
+
+/** The group's fields for its current method in `p` (every field, for groups without a method). */
+export function activeFields(g: ParamGroupDef, p: AnalysisParameters): ParamField[] {
+  const method = g.methods ? String(paramValue(p, { group: g.group, key: 'method' })) : null;
+  return g.fields.filter((field) => !field.methods || (method !== null && field.methods.includes(method)));
 }
 
 export function fieldId(field: Pick<ParamField, 'group' | 'key'>): string {

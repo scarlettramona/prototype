@@ -1,6 +1,6 @@
 import { mean, round, std } from '../math/stats';
 import { DAY_MS, parseUsDate } from '../mock-data/dates';
-import type { AnalysisParameters, AnalysisResults, ScanPoint } from './ill.models';
+import type { AnalysisParameters, AnalysisResults, IllMethodParameters, MarkerMethodParameters, ScanPoint } from './ill.models';
 
 /** The `Default` preset. */
 export function defaultParameters(): AnalysisParameters {
@@ -18,6 +18,8 @@ export function defaultParameters(): AnalysisParameters {
       lowDepth: 549.66,
       parameterComment: '',
     },
+    // Intercept values follow the Figma frames (1:8968); the other methods' values
+    // come from the legacy app's parameter screen (Scarlett, 2026-11-17).
     illMethod: {
       method: 'Intercept',
       normalUpperRange: 12,
@@ -26,6 +28,20 @@ export function defaultParameters(): AnalysisParameters {
       upperRange: 24,
       lowerRange: 24,
       counts: 1600,
+      depth1: 72,
+      depth2: 66,
+      depth3: 60,
+      depth4: 54,
+      derivativeUpperRange: 144,
+      derivativeLowerRange: 128,
+      smoothingParameter: 0.995,
+      windowOffset: 9.6,
+      windowSize: 24,
+      sigmoidWindow: 4.2,
+      highLowDelta: 1500,
+      curveShape: 6,
+      lowCountValue: 160,
+      sigmoidTolerance: 0.00012,
     },
     markerMethod: {
       method: 'Intercept',
@@ -35,6 +51,16 @@ export function defaultParameters(): AnalysisParameters {
       upperRange: 12,
       lowerRange: 12,
       counts: 900,
+      derivativeUpperRange: 484.8,
+      derivativeLowerRange: 468,
+      smoothingParameter: 0.995,
+      windowOffset: 9.6,
+      windowSize: 24,
+      sigmoidWindow: 7.8,
+      highLowDelta: 780.9,
+      curveShape: -6.1,
+      lowCountValue: 14.9,
+      sigmoidTolerance: 0.00012,
     },
   };
 }
@@ -73,14 +99,8 @@ export function analyse(points: readonly ScanPoint[], p: AnalysisParameters, sca
   }
 
   const ill = p.illMethod;
-  const marker = p.markerMethod;
   const depthCorrection =
-    ill.method === 'None'
-      ? 0
-      : (ill.normalUpperRange - ill.normalLowerRange) * 0.05 +
-        (marker.normalUpperRange - marker.normalLowerRange) * 0.03 +
-        (p.miscellaneous.markerDepth - 418.8) * 0.01 +
-        (ill.normalTargetCounts - 800) * 0.0005;
+    ill.method === 'None' ? 0 : illMethodTerm(ill) + markerMethodTerm(p.markerMethod) + (p.miscellaneous.markerDepth - 418.8) * 0.01;
   const calculatedIll = rawIll + depthCorrection + p.miscellaneous.overallCorrectionOffset;
 
   const years = (scanDatetime - p.calculationBaseline.baselineStartDate) / (365.25 * DAY_MS);
@@ -100,6 +120,67 @@ export function analyse(points: readonly ScanPoint[], p: AnalysisParameters, sca
     rawMarkers: round(mean(upper) / 3, 3),
     rawIll: round(rawIll, 3),
   };
+}
+
+const DEFAULTS = defaultParameters();
+
+/**
+ * The ILL method's share of the depth correction. Intercept is the original
+ * formula; each other method starts from Intercept's default share, adds a
+ * small offset of its own, and moves with its fields' distance from their
+ * defaults, so switching method or editing any field changes the result.
+ */
+function illMethodTerm(m: IllMethodParameters): number {
+  const d = DEFAULTS.illMethod;
+  const base = (d.normalUpperRange - d.normalLowerRange) * 0.05;
+  switch (m.method) {
+    case 'None':
+      return 0;
+    case 'Intercept':
+      return (m.normalUpperRange - m.normalLowerRange) * 0.05 + (m.normalTargetCounts - 800) * 0.0005;
+    case '2 Line Intercept':
+      return base + 0.04 + (mean([m.depth1, m.depth2, m.depth3, m.depth4]) - mean([d.depth1, d.depth2, d.depth3, d.depth4])) * 0.02;
+    default:
+      return base + sharedMethodTerm(m, d);
+  }
+}
+
+/** The marker method's share of the depth correction (see `illMethodTerm`). */
+function markerMethodTerm(m: MarkerMethodParameters): number {
+  const d = DEFAULTS.markerMethod;
+  switch (m.method) {
+    case 'None':
+      return 0;
+    case 'Intercept':
+      return (m.normalUpperRange - m.normalLowerRange) * 0.03;
+    default:
+      return sharedMethodTerm(m, d) / 2;
+  }
+}
+
+/** Derivative, Count Rate and Sigmoid, which ILL and Marker share. */
+function sharedMethodTerm(m: IllMethodParameters | MarkerMethodParameters, d: IllMethodParameters | MarkerMethodParameters): number {
+  switch (m.method) {
+    case 'Derivative':
+      return (
+        0.02 +
+        (m.derivativeUpperRange - m.derivativeLowerRange - (d.derivativeUpperRange - d.derivativeLowerRange)) * 0.02 +
+        (m.smoothingParameter - d.smoothingParameter) * 10
+      );
+    case 'Count Rate':
+      return -0.03 + (m.windowOffset - d.windowOffset) * 0.03 + (m.windowSize - d.windowSize) * 0.01;
+    case 'Sigmoid':
+      return (
+        0.01 +
+        (m.sigmoidWindow - d.sigmoidWindow) * 0.05 +
+        (m.highLowDelta - d.highLowDelta) * 0.0002 +
+        (m.curveShape - d.curveShape) * 0.02 +
+        (m.lowCountValue - d.lowCountValue) * 0.001 +
+        (m.sigmoidTolerance - d.sigmoidTolerance) * 100
+      );
+    default:
+      return 0;
+  }
 }
 
 function median(values: number[]): number {

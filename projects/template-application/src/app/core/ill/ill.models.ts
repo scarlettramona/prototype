@@ -8,7 +8,68 @@ export interface ScanPoint {
   counts: number;
 }
 
-export type IllMethod = 'Intercept' | 'None';
+/** The ILL methods. 2 Line Intercept is ILL-only. */
+export const ILL_METHODS = ['Intercept', '2 Line Intercept', 'Derivative', 'Count Rate', 'Sigmoid', 'None'] as const;
+export type IllMethod = (typeof ILL_METHODS)[number];
+
+/** The marker methods: the ILL methods without 2 Line Intercept. */
+export const MARKER_METHODS = ['Intercept', 'Derivative', 'Count Rate', 'Sigmoid', 'None'] as const;
+export type MarkerMethod = (typeof MARKER_METHODS)[number];
+
+/**
+ * One method's settings (ILL or Marker). Every method's values are kept, so
+ * switching method and back keeps them; the analysis uses the chosen one's.
+ */
+interface MethodParameters {
+  // Intercept
+  /** in */
+  normalUpperRange: number;
+  /** in */
+  normalLowerRange: number;
+  /** counts/second */
+  normalTargetCounts: number;
+  /** in */
+  upperRange: number;
+  /** in */
+  lowerRange: number;
+  /** counts/second */
+  counts: number;
+  // Derivative
+  /** in */
+  derivativeUpperRange: number;
+  /** in */
+  derivativeLowerRange: number;
+  smoothingParameter: number;
+  // Count Rate
+  /** in */
+  windowOffset: number;
+  /** in */
+  windowSize: number;
+  // Sigmoid
+  /** in */
+  sigmoidWindow: number;
+  /** counts/second */
+  highLowDelta: number;
+  /** 1/in */
+  curveShape: number;
+  /** counts/second */
+  lowCountValue: number;
+  /** in */
+  sigmoidTolerance: number;
+}
+
+export interface IllMethodParameters extends MethodParameters {
+  method: IllMethod;
+  // 2 Line Intercept, in
+  depth1: number;
+  depth2: number;
+  depth3: number;
+  depth4: number;
+}
+
+export interface MarkerMethodParameters extends MethodParameters {
+  method: MarkerMethod;
+}
 
 /** The editable analysis parameters, grouped as the focus view shows them. */
 export interface AnalysisParameters {
@@ -32,32 +93,8 @@ export interface AnalysisParameters {
     lowDepth: number;
     parameterComment: string;
   };
-  illMethod: {
-    method: IllMethod;
-    /** in */
-    normalUpperRange: number;
-    /** in */
-    normalLowerRange: number;
-    normalTargetCounts: number;
-    /** in */
-    upperRange: number;
-    /** in */
-    lowerRange: number;
-    counts: number;
-  };
-  markerMethod: {
-    method: IllMethod;
-    /** in */
-    normalUpperRange: number;
-    /** in */
-    normalLowerRange: number;
-    normalTargetCounts: number;
-    /** in */
-    upperRange: number;
-    /** in */
-    lowerRange: number;
-    counts: number;
-  };
+  illMethod: IllMethodParameters;
+  markerMethod: MarkerMethodParameters;
 }
 
 /** One set of analysis results. Units follow the Scan details panel. */
