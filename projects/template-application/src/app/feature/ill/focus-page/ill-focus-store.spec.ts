@@ -16,6 +16,27 @@ describe('IllFocusStore', () => {
     store = TestBed.inject(IllFocusStore);
   });
 
+  it('opens one scan and the reference for a scan, every scan for the well', async () => {
+    const well = [...data.ill.wells.values()].find((w) => w.scanIds.length > 2)!;
+    const scans = well.scanIds;
+    const scan = scans.find((id) => id !== well.referenceScanId)!;
+
+    await store.load(well.id, scan);
+    expect(store.active()).toBe(scan);
+    expect([...store.openIds()].sort()).toEqual([scan, well.referenceScanId].sort());
+
+    await store.load(well.id, well.referenceScanId);
+    expect(store.openIds()).toEqual([well.referenceScanId]);
+
+    await store.load(well.id);
+    expect(store.active()).toBe(ALL_TAB);
+    expect(store.openIds().length).toBe(scans.length);
+
+    await store.load(well.id, 'not-a-scan');
+    expect(store.active()).toBe(ALL_TAB);
+    expect(store.openIds().length).toBe(scans.length);
+  });
+
   it('applies every focus fixture', async () => {
     await store.applyState(state('ill-all-scans'));
     expect(store.active()).toBe(ALL_TAB);

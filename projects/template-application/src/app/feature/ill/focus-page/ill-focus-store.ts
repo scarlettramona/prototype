@@ -134,7 +134,11 @@ export class IllFocusStore {
 
   // ── Loading ──
 
-  /** Opens every scan of `wellId` (Open in focus view), on `tab` if given. */
+  /**
+   * Opens `wellId`. With `tab` (a single scan's Open / Adjust in focus view), only
+   * that scan and the well's reference are open, on that scan's tab. Without it
+   * (the well's Open in focus view), every scan is open, on All scans.
+   */
   async load(wellId: string, tab?: string | null): Promise<void> {
     const token = ++this.loadToken;
     this.wellId.set(wellId);
@@ -144,8 +148,9 @@ export class IllFocusStore {
       if (token !== this.loadToken) return;
       this.presets.set(presets);
       this.reset(scans);
-      this.openIds.set(this.withReference(scans.map((s) => s.id)));
-      this.active.set(tab && scans.some((s) => s.id === tab) ? tab : ALL_TAB);
+      const scan = tab ? scans.find((s) => s.id === tab) : undefined;
+      this.openIds.set(this.withReference(scan ? [scan.id] : scans.map((s) => s.id)));
+      this.active.set(scan ? scan.id : ALL_TAB);
     } finally {
       if (token === this.loadToken) this.loading.set(false);
     }
