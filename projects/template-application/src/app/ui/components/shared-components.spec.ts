@@ -31,9 +31,11 @@ describe('Shared components', () => {
 
     it('selects the other view on click', async () => {
       const { fixture, el, instance } = await render(Host);
+      // Chart view first (where the page opens), then Table view.
       const buttons = el.querySelectorAll('button');
-      expect(buttons[1].getAttribute('aria-checked')).toBe('true');
-      click(buttons[0]);
+      expect([...buttons].map((b) => b.textContent?.trim())).toEqual(['Chart view', 'Table view']);
+      expect(buttons[0].getAttribute('aria-checked')).toBe('true');
+      click(buttons[1]);
       await fixture.whenStable();
       expect(instance.view()).toBe('table');
     });
