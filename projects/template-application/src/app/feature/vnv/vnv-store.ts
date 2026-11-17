@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { QI_VALUES, type Qi } from '../../core/qi/qi.models';
+import { DEFAULT_VISIBLE_QI, type Qi } from '../../core/qi/qi.models';
 import type { ResolvedVnvState } from '../../core/prototype-state/resolve-prototype-state';
 import { dailyReadings } from '../../core/vnv/daily-readings';
 import { VnvMockService } from '../../core/vnv/vnv-mock.service';
@@ -33,7 +33,7 @@ export class VnvStore {
   readonly loading = signal(false);
 
   readonly hiddenSensorIds = signal<ReadonlySet<string>>(new Set());
-  readonly visibleQi = signal<Qi[]>([...QI_VALUES]);
+  readonly visibleQi = signal<Qi[]>([...DEFAULT_VISIBLE_QI]);
   readonly baselineSensorId = signal<string | null>(null);
   readonly oosSensorId = signal<string | null>(null);
 
@@ -107,10 +107,25 @@ export class VnvStore {
     return this.shownReadings().filter((x) => !hidden.has(x.sensorId) && qi.has(x.qi));
   });
 
-  /** Select all shown: every reading drawn in the chart's current window (visible sensors, shown QIs). */
-  selectShown(): void {
+  /** Every reading drawn in the chart's current window (visible sensors, shown QIs). */
+  readonly shownInWindowIds = computed(() => {
     const w = this.effectiveWindow();
-    this.setSelection(this.visibleReadings().filter((r) => r.timestamp >= w.start && r.timestamp <= w.end).map((r) => r.id));
+    return this.visibleReadings()
+      .filter((r) => r.timestamp >= w.start && r.timestamp <= w.end)
+      .map((r) => r.id);
+  });
+
+  /** Every shown reading is selected: Select all shown becomes Deselect all. */
+  readonly allShownSelected = computed(() => {
+    const ids = this.shownInWindowIds();
+    const selected = this.selectedIds();
+    return ids.length > 0 && selected.size >= ids.length && ids.every((id) => selected.has(id));
+  });
+
+  /** Select all shown, or Deselect all once everything shown is selected. */
+  toggleSelectShown(): void {
+    if (this.allShownSelected()) this.clearSelection();
+    else this.setSelection(this.shownInWindowIds());
   }
 
   readonly selectedReadings = computed(() => {
@@ -277,9 +292,11 @@ export class VnvStore {
       if (token !== this.loadToken) return; // superseded
       this.result.set(result);
       this.loadedRange.set(range);
+      // Baseline sensor and Equipment out of service start unselected; a choice
+      // survives a reload only while its sensor is still loaded.
       const ids = result.sensors.map((s) => s.id);
-      if (!ids.includes(this.baselineSensorId() ?? '')) this.baselineSensorId.set(ids.find((id) => !this.hiddenSensorIds().has(id)) ?? null);
-      if (!ids.includes(this.oosSensorId() ?? '')) this.oosSensorId.set(result.outOfService[0]?.sensorId ?? ids[0] ?? null);
+      if (!ids.includes(this.baselineSensorId() ?? '')) this.baselineSensorId.set(null);
+      if (!ids.includes(this.oosSensorId() ?? '')) this.oosSensorId.set(null);
     } finally {
       if (token === this.loadToken) this.loading.set(false);
     }

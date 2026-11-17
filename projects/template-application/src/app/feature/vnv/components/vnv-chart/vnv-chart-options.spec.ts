@@ -4,7 +4,7 @@ import {
   buildVnvChartOptions,
   groupBySensor,
   nearest,
-  readoutFormatter,
+  pointFormatter,
   selectInRect,
   selectionPoints,
   SENSOR_SERIES_PREFIX,
@@ -104,11 +104,23 @@ describe('VNV chart options', () => {
     expect(oos.markArea!.data).toEqual([[{ xAxis: T0 + 10 * D }, { xAxis: T0 + 12 * D }]]);
   });
 
-  it('reads out every visible sensor at the hovered time', () => {
+  it("shows the hovered point's quality, time, value, comment and reviewer, escaping typed text", () => {
     const visible = data().series;
-    const html = readoutFormatter(visible)([{ axisValue: T0 + 5 * D + 1000 }]);
+    const r = visible[0].readings[5];
+    const tooltip = pointFormatter(visible);
+    const html = tooltip({ seriesId: SENSOR_SERIES_PREFIX + 'A', value: [r.timestamp, r.value] });
     expect(html).toContain('>A<');
-    expect(html).toContain('>B<');
+    expect(html).not.toContain('>B<');
+    expect(html).toContain(`>${r.qi}<`);
+    expect(html).toContain(`>${r.value.toFixed(2)} °F<`);
+    expect(html).toMatch(/Comment<\/span><span><\/span>/); // blank without a comment
+
+    const reviewed = { ...r, comment: '<b>Odd</b> spike', reviewer: 'Scarlett Reagan' };
+    const withComment = pointFormatter([{ ...visible[0], readings: [reviewed] }]);
+    const out = withComment({ seriesId: SENSOR_SERIES_PREFIX + 'A', value: [r.timestamp, r.value] });
+    expect(out).toContain('&lt;b&gt;Odd&lt;/b&gt; spike');
+    expect(out).toContain('Scarlett Reagan');
+    expect(tooltip({ seriesId: 'baseline', value: [r.timestamp, 0] })).toBe('');
     expect(nearest(visible[0].readings, T0 + 5.6 * D)!.timestamp).toBe(T0 + 6 * D);
   });
 

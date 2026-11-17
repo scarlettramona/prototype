@@ -1,5 +1,6 @@
 import { parseUsDate, startOfDay } from '../mock-data/dates';
 import { MOCK_DATA_CONFIG } from '../mock-data/mock-data.config';
+import { MOCK_DATA_ANCHOR } from '../mock-data/today';
 import { buildTestVnvDataset, loadVnvSource, readMockFile } from '../mock-data/testing/load-mock-sources';
 import { parseCsvRecords } from '../mock-data/csv';
 import { buildVnvDataset, quantise } from './vnv-generator';
@@ -49,17 +50,17 @@ describe('VNV generator', () => {
   });
 
   it('is deterministic', () => {
-    const again = buildVnvDataset(loadVnvSource(), MOCK_DATA_CONFIG);
+    const again = buildVnvDataset(loadVnvSource(), MOCK_DATA_CONFIG, MOCK_DATA_ANCHOR);
     for (const id of ['AN102-WSTA-TI-041', 'AN102-WSTA-TI-054', 'AN103-TMAC-TI-U1-RJA']) {
       expect(again.readingsFor(id)).toEqual(ds.readingsFor(id));
     }
     expect(again.baselines).toEqual(ds.baselines);
   });
 
-  it('covers 01/01/2025 → 11/12/2026 with 1–4 readings a day, quantised like the exports', () => {
+  it('covers 01/01/2025 → today with 1–4 readings a day, quantised like the exports', () => {
     const readings = ds.readingsFor('AN102-WSTA-TI-041');
     expect(startOfDay(readings[0].timestamp)).toBe(parseUsDate('1/1/2025'));
-    expect(startOfDay(readings.at(-1)!.timestamp)).toBe(parseUsDate('11/12/2026'));
+    expect(startOfDay(readings.at(-1)!.timestamp)).toBe(MOCK_DATA_ANCHOR);
     const perDay = new Map<number, number>();
     for (const r of readings) perDay.set(startOfDay(r.timestamp), (perDay.get(startOfDay(r.timestamp)) ?? 0) + 1);
     expect(Math.min(...perDay.values())).toBeGreaterThanOrEqual(1);

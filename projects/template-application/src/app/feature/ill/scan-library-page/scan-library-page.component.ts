@@ -6,6 +6,7 @@ import { IllMockService } from '../../../core/ill/ill-mock.service';
 import type { ScanSummary } from '../../../core/ill/ill.models';
 import { PrototypeStateService } from '../../../core/prototype-state/prototype-state.service';
 import { APP_PATHS } from '../../../core/routing/app-paths';
+import { MOCK_TODAY } from '../../../core/mock-data/today';
 import { FilterSummaryComponent } from '../components/filter-summary/filter-summary.component';
 import { LoadScansFormComponent } from '../components/load-scans-form/load-scans-form.component';
 import { ScanTableComponent } from '../components/scan-table/scan-table.component';
@@ -26,6 +27,7 @@ import { scanCsvFileName, scanToCsv } from '../library-model';
 })
 export class ScanLibraryPageComponent {
   protected readonly store = inject(IllLibraryStore);
+  private readonly today = inject(MOCK_TODAY);
   private readonly service = inject(IllMockService);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
@@ -48,7 +50,7 @@ export class ScanLibraryPageComponent {
             module: 'ill',
             screen: 'library',
             route: [],
-            query: defaultScanQuery(),
+            query: defaultScanQuery(this.today),
             loaded: false,
             groupByWell: false,
             selectedScanIds: [],

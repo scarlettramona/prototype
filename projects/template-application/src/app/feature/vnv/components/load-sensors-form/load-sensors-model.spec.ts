@@ -1,5 +1,6 @@
 import type { Sensor, VnvFarm, VnvLocation } from '../../../../core/vnv/vnv.models';
 import {
+  toggleExpanded,
   buildList,
   buildSearch,
   buildTree,
@@ -148,5 +149,25 @@ describe('Load sensors model', () => {
     expect(sel).toEqual({ locationId: '241-AN-TMAC-102-TI', ids: new Set(['AN102-TMAC-TI-U1-RJA']) });
     sel = setSensors(sel, '241-AN-TMAC-102-TI', ['AN102-TMAC-TI-U1-RJA'], false);
     expect(sel).toBe(EMPTY_SELECTION);
+  });
+
+  it('keeps one equipment group, and one tank in it, open at a time', () => {
+    const farm = {
+      id: 'AN',
+      groups: [
+        { id: 'G1', tanks: [{ id: 'G1-101' }, { id: 'G1-102' }] },
+        { id: 'G2', tanks: [{ id: 'G2-101' }] },
+      ],
+    } as unknown as VnvFarm;
+    let open = toggleExpanded(farm, new Set(), 'G1');
+    expect([...open]).toEqual(['G1']);
+    open = toggleExpanded(farm, open, 'G1-101');
+    expect([...open]).toEqual(['G1', 'G1-101']);
+    open = toggleExpanded(farm, open, 'G1-102'); // the other tank closes
+    expect([...open]).toEqual(['G1', 'G1-102']);
+    open = toggleExpanded(farm, open, 'G2'); // the other group (and its tank) closes
+    expect([...open]).toEqual(['G2']);
+    expect([...toggleExpanded(farm, open, 'G2')]).toEqual([]);
+    expect([...toggleExpanded(farm, new Set(['G1', 'G1-101']), 'G1-101')]).toEqual(['G1']);
   });
 });

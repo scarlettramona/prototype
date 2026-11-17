@@ -9,6 +9,7 @@ import { parseIllSource } from '../../ill/ill-source';
 import { buildVnvDataset } from '../../vnv/vnv-generator';
 import { parseVnvSource } from '../../vnv/vnv-source';
 import { MOCK_DATA_CONFIG } from '../mock-data.config';
+import { MOCK_DATA_ANCHOR } from '../today';
 
 const ROOT = resolve(process.cwd(), 'projects/template-application/public/mock-data');
 
@@ -25,7 +26,7 @@ export function loadIllSource() {
 }
 
 export function buildTestVnvDataset() {
-  return buildVnvDataset(loadVnvSource(), MOCK_DATA_CONFIG);
+  return buildVnvDataset(loadVnvSource(), MOCK_DATA_CONFIG, MOCK_DATA_ANCHOR);
 }
 
 export function buildTestIllDataset() {

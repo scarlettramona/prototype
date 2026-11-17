@@ -15,12 +15,17 @@ describe('VnvStore', () => {
     store = TestBed.inject(VnvStore);
   });
 
-  it('applies vnv-chart: the typical 6-sensor component, chart view, baseline and OOS selected', async () => {
+  it('applies vnv-chart: the typical 6-sensor component, chart view, no baseline or OOS sensor chosen', async () => {
     await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
     expect(store.headerSummary()).toEqual({ name: '241-AN-TMAC-103-TI', sensorCount: 6 });
     expect(store.result()!.sensors.length).toBe(6);
     expect(store.view()).toBe('chart');
-    expect(store.baselineSensorId()).toBe(store.result()!.sensors[0].id);
+    expect(store.baselineSensorId()).toBeNull();
+    expect(store.oosSensorId()).toBeNull();
+    expect(store.baseline()).toBeNull();
+    expect(store.outOfService()).toEqual([]);
+    // Choosing the sensor with a window shows it.
+    store.oosSensorId.set('AN103-TMAC-TI-U2-RJA');
     expect(store.outOfService().length).toBeGreaterThan(0);
     expect(store.atFullRange()).toBe(true);
   });
@@ -167,16 +172,25 @@ describe('VnvStore', () => {
     expect(store.shownReadings().length).toBe(store.result()!.readings.length);
   });
 
-  it('selects every shown reading in the current window', async () => {
+  it('selects every shown reading in the current window, then deselects all', async () => {
     await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
     const w = { start: new Date(2026, 9, 1).getTime(), end: new Date(2026, 9, 8).getTime() };
     store.setWindow(w);
     store.toggleSensor('AN103-TMAC-TI-U1-RJA');
-    store.selectShown();
+    expect(store.allShownSelected()).toBe(false);
+    store.toggleSelectShown();
+    expect(store.allShownSelected()).toBe(true);
     const selected = store.selectedReadings();
     expect(selected.length).toBeGreaterThan(0);
     expect(selected.every((r) => r.timestamp >= w.start && r.timestamp <= w.end && r.sensorId !== 'AN103-TMAC-TI-U1-RJA')).toBe(true);
     expect(selected.length).toBe(store.visibleReadings().filter((r) => r.timestamp >= w.start && r.timestamp <= w.end).length);
+
+    // Deselect all; a widened window shows unselected readings, so it's Select all shown again.
+    store.toggleSelectShown();
+    expect(store.selectedIds().size).toBe(0);
+    store.toggleSelectShown();
+    store.setWindow({ start: w.start - 7 * 864e5, end: w.end });
+    expect(store.allShownSelected()).toBe(false);
   });
 
   it('toggles sensors and clamps the window to the loaded range', async () => {

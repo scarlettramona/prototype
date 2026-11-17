@@ -51,6 +51,17 @@ export class BaselineMockService {
     return this.respond(history.map((r) => ({ ...r })));
   }
 
+  /**
+   * Undo: puts a sensor's history back to `history` (as `getHistory` or `save`
+   * returned it before), including the baseline VNV draws. Returns it.
+   */
+  async restore(sensorId: string, history: readonly BaselineRecord[]): Promise<BaselineRecord[]> {
+    const restored = history.map((r) => ({ ...r }));
+    this.histories.set(sensorId, restored);
+    if (restored[0]) await this.syncCurrent(restored[0]);
+    return this.respond(restored.map((r) => ({ ...r })));
+  }
+
   private async history(sensorId: string): Promise<BaselineRecord[]> {
     let history = this.histories.get(sensorId);
     if (!history) {

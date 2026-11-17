@@ -285,3 +285,18 @@ export function setSensors(sel: PickerSelection, locationId: string, ids: readon
   }
   return next.size ? { locationId, ids: next } : EMPTY_SELECTION;
 }
+
+/**
+ * Opens or closes a tree node, one open at a time per level: opening an
+ * equipment group closes the other groups (and their tanks); opening a tank
+ * closes the group's other tanks. Closing a group closes its tanks too.
+ */
+export function toggleExpanded(farm: VnvFarm, expanded: ReadonlySet<string>, id: string): Set<string> {
+  const group = farm.groups.find((g) => g.id === id);
+  if (group) {
+    return expanded.has(id) ? new Set() : new Set([id]);
+  }
+  const parent = farm.groups.find((g) => g.tanks.some((t) => t.id === id));
+  if (!parent) return new Set(expanded);
+  return expanded.has(id) ? new Set([parent.id]) : new Set([parent.id, id]);
+}

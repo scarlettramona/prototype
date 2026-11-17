@@ -26,7 +26,7 @@ import { VnvStore } from '../../vnv-store';
       </app-panel-section>
 
       <app-panel-section title="Baseline sensor" titleStyle="label">
-        <app-swatch-select [options]="options()" [value]="store.baselineSensorId()" (valueChange)="store.baselineSensorId.set($event)" ariaLabel="Baseline sensor" />
+        <app-swatch-select [options]="options()" [value]="store.baselineSensorId()" (valueChange)="store.baselineSensorId.set($event)" ariaLabel="Baseline sensor" placeholder="Select a sensor" noneLabel="None" />
         @if (store.baseline(); as b) {
           <div class="details">
             <app-detail-row label="Baseline" [value]="b.value.toFixed(2)" unit="°F" />
@@ -39,7 +39,7 @@ import { VnvStore } from '../../vnv-store';
       </app-panel-section>
 
       <app-panel-section title="Equipment out of service" titleStyle="label">
-        <app-swatch-select [options]="options()" [value]="store.oosSensorId()" (valueChange)="store.oosSensorId.set($event)" ariaLabel="Equipment out of service" />
+        <app-swatch-select [options]="options()" [value]="store.oosSensorId()" (valueChange)="store.oosSensorId.set($event)" ariaLabel="Equipment out of service" placeholder="Select a sensor" noneLabel="None" />
         <div class="details">
           <app-detail-row label="Start date" [value]="oos()?.start ?? ''" />
           <app-detail-row label="End date" [value]="oos()?.end ?? ''" />

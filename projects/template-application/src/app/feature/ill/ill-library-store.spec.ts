@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { analysisState } from '../../core/ill/ill.models';
+import { MOCK_DATA_ANCHOR } from '../../core/mock-data/today';
 import { buildTestIllDataset, buildTestVnvDataset } from '../../core/mock-data/testing/load-mock-sources';
 import { provideTestMockData } from '../../core/mock-data/testing/provide-test-mock-data';
 import { resolvePrototypeState, type ResolvedIllLibraryState } from '../../core/prototype-state/resolve-prototype-state';
@@ -48,14 +49,14 @@ describe('IllLibraryStore', () => {
   });
 
   it('filters by search text', async () => {
-    await store.loadScans({ ...defaultScanQuery() });
+    await store.loadScans({ ...defaultScanQuery(MOCK_DATA_ANCHOR) });
     const well = store.results()[0].wellId;
     store.search.set(well.slice(0, 4));
     expect(store.visible().every((s) => s.wellId.startsWith(well.slice(0, 4)))).toBe(true);
   });
 
   it('performs then saves analysis on the selection', async () => {
-    await store.loadScans({ ...defaultScanQuery(), analysis: 'Saved' });
+    await store.loadScans({ ...defaultScanQuery(MOCK_DATA_ANCHOR), analysis: 'Saved' });
     const pick = store.results().filter((s) => !s.analysis.unsaved).slice(0, 2);
     store.setSelected(pick.map((s) => s.id), true);
     expect(store.canSave()).toBe(false);
@@ -71,7 +72,7 @@ describe('IllLibraryStore', () => {
   });
 
   it('saves a row: QI, comments and any unsaved results', async () => {
-    await store.loadScans({ ...defaultScanQuery() });
+    await store.loadScans({ ...defaultScanQuery(MOCK_DATA_ANCHOR) });
     const row = store.results().find((s) => !s.analysis.saved)!;
     expect(row.analysis.unsaved).toBeUndefined();
     store.setSelected([row.id], true);
@@ -87,7 +88,7 @@ describe('IllLibraryStore', () => {
   });
 
   it('draws the well reference beside an expanded row, and moves it with Set as reference scan', async () => {
-    await store.loadScans({ ...defaultScanQuery(), analysis: 'Any' });
+    await store.loadScans({ ...defaultScanQuery(MOCK_DATA_ANCHOR), analysis: 'Any' });
     const row = store.results().find((s) => !s.reference)!;
     await store.expand(row.id);
     const ref = store.expandedReference()!;
@@ -103,8 +104,8 @@ describe('IllLibraryStore', () => {
   });
 
   it('resets the form to its defaults', async () => {
-    store.query.set({ ...defaultScanQuery(), qi: 'Suspect', wellIds: ['B105 R05 N 20571'] });
+    store.query.set({ ...defaultScanQuery(MOCK_DATA_ANCHOR), qi: 'Suspect', wellIds: ['B105 R05 N 20571'] });
     store.reset();
-    expect(store.query()).toEqual(defaultScanQuery());
+    expect(store.query()).toEqual(defaultScanQuery(MOCK_DATA_ANCHOR));
   });
 });

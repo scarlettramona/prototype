@@ -36,7 +36,28 @@
   position: absolute;
   inset: 0;
 }
-.legend {
+// The floating legend: `.app-popover`'s surface, a draggable header, then the legend.
+.legend-panel {
   gap: 0;
   padding: var(--spacing-80) 0;
+}
+.legend-panel__head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-80);
+  padding: 0 var(--spacing-80) var(--spacing-80) var(--spacing-160);
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  cursor: move;
+}
+.legend-panel__grip {
+  color: var(--mat-sys-on-surface-variant);
+}
+.legend-panel__title {
+  flex: 1 1 auto;
+  margin: 0;
+  font: var(--mat-sys-title-small);
+}
+.legend {
+  gap: 0;
+  padding-top: var(--spacing-80);
 }

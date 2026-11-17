@@ -84,7 +84,7 @@ export class ComponentGalleryComponent {
   // Selects
   protected readonly sensorOptions: SwatchOption[] = SENSORS.map((id, i) => ({ value: id, label: id, swatch: seriesStyle(i) }));
   protected readonly baselineSensor = signal<string | null>(SENSORS[7]);
-  protected readonly oosSensor = signal<string | null>(SENSORS[6]);
+  protected readonly oosSensor = signal<string | null>(null);
 
   // Popovers
   protected readonly vnvPopoverOpen = signal(false);

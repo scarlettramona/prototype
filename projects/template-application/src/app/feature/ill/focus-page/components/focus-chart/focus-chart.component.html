@@ -12,7 +12,16 @@
       }
     </h2>
     <div class="actions">
-      <button mat-button type="button" cdkOverlayOrigin #legendOrigin="cdkOverlayOrigin" (click)="store.legendOpen.set(true)">Open legend</button>
+      <button
+        mat-button
+        type="button"
+        cdkOverlayOrigin
+        #legendOrigin="cdkOverlayOrigin"
+        [attr.aria-expanded]="store.legendOpen()"
+        (click)="store.legendOpen.set(!store.legendOpen())"
+      >
+        Open legend
+      </button>
       <mat-slide-toggle class="fit-y" labelPosition="before" hideIcon [checked]="store.fitY()" (change)="store.fitY.set($event.checked)">
         Fit Y
       </mat-slide-toggle>
@@ -26,12 +35,27 @@
     [cdkConnectedOverlayOrigin]="legendOrigin"
     [cdkConnectedOverlayOpen]="store.legendOpen()"
     [cdkConnectedOverlayPositions]="positions"
-    [cdkConnectedOverlayHasBackdrop]="true"
-    cdkConnectedOverlayBackdropClass="app-popover-backdrop"
-    (backdropClick)="store.legendOpen.set(false)"
     (overlayKeydown)="onKey($event)"
   >
-    <app-scans-legend class="app-popover legend" cdkTrapFocus cdkTrapFocusAutoCapture />
+    <!-- A floating panel, not a modal popover: no backdrop, so the chart stays usable while it's open. Drag it by its header; × or Escape closes it. -->
+    <section
+      class="app-popover legend-panel"
+      role="dialog"
+      aria-label="Legend"
+      cdkDrag
+      cdkDragBoundary=".cdk-overlay-container"
+      [cdkDragFreeDragPosition]="legendPosition()"
+      (cdkDragEnded)="legendPosition.set($event.source.getFreeDragPosition())"
+    >
+      <div class="legend-panel__head" cdkDragHandle>
+        <mat-icon class="legend-panel__grip" aria-hidden="true">drag_indicator</mat-icon>
+        <h3 class="legend-panel__title">Legend</h3>
+        <button mat-icon-button type="button" aria-label="Close legend" cdkFocusInitial (click)="store.legendOpen.set(false)">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <app-scans-legend class="legend" />
+    </section>
   </ng-template>
 
   <div

@@ -15,6 +15,13 @@ function anTanks(group: string, types: readonly string[]) {
 export const MOCK_DATA_CONFIG = {
   seed: 20261115,
 
+  /**
+   * The day the fixed dates below were laid out against (M/D/YYYY). The data
+   * itself ends on the real today: VNV runs up to today, and ILL scan dates move
+   * forward by the days since this anchor (see `core/mock-data/today.ts`).
+   */
+  anchorDate: '11/17/2026',
+
   /** Mock service latency, ms. */
   latencyMs: { min: 300, max: 800 },
 
@@ -53,9 +60,8 @@ export const MOCK_DATA_CONFIG = {
 
   vnv: {
     farm: 'AN',
-    /** Generated data covers this range (M/D/YYYY). */
+    /** Generated data starts here (M/D/YYYY) and runs up to today. */
     rangeStart: '1/1/2025',
-    rangeEnd: '11/12/2026',
     readingsPerDay: { min: 1, max: 4 },
     /** Generated sensors sit this far (±, °F) from the real series they derive from. */
     offsetF: { min: 1, max: 3 },
@@ -135,8 +141,8 @@ export const MOCK_DATA_CONFIG = {
     scanRangeStart: '1/1/2023',
     scanRangeEnd: '11/12/2026',
     /** …with this share in the library's default range, so it shows results. */
-    recentRangeStart: '7/19/2026',
-    recentRangeEnd: '10/19/2026',
+    recentRangeStart: '8/19/2026',
+    recentRangeEnd: '11/12/2026',
     recentShare: 0.5,
     /** Analysis-state mix for wells other than the focus well. */
     analysisMix: { saved: 0.75, none: 0.25 } satisfies Record<StoredAnalysisState, number>,

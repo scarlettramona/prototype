@@ -6,6 +6,8 @@ import type { Baseline, OutOfService, Reading, Sensor } from '../../../../core/v
 
 /** Series ids: sensor series are `sensor:<id>`; everything else is chart furniture. */
 export const SENSOR_SERIES_PREFIX = 'sensor:';
+/** The single point drawn under the pointer on wide views (see `hoverPointSeries`). */
+export const HOVER_SERIES_ID = 'hover-point';
 
 /**
  * Marker budget in sensor-days: markers draw when (visible sensors × window
@@ -71,7 +73,9 @@ export function buildVnvChartOptions(data: VnvChartData, window: XRange, yRange:
         showSymbol: markers,
         showAllSymbol: 'auto',
         sampling: 'lttb',
-        emphasis: { disabled: true },
+        // Hovering a point dims every other sensor (focus: 'series').
+        emphasis: { focus: 'series', lineStyle: { width: 2 } },
+        blur: { lineStyle: { opacity: 0.15 }, itemStyle: { opacity: 0.15 } },
         symbol: (_value: unknown, params: { dataIndex: number }) => symbols[params.dataIndex] ?? 'none',
         data: readings.map((r) => [r.timestamp, r.value]),
       };
@@ -84,11 +88,14 @@ export function buildVnvChartOptions(data: VnvChartData, window: XRange, yRange:
     grid: { left: 48, right: 16, top: 12, bottom: 28 },
     xAxis: { type: 'time', min: data.range.start, max: data.range.end, splitLine: { show: false } },
     yAxis: { type: 'value', scale: true, min: yRange[0], max: yRange[1], axisLabel: { formatter: (v: number) => formatTick(v) } },
+    // Only over a data point: that reading's quality, time, value, comment and reviewer.
+    // Wide views (no points drawn) show it from the chart component's own hover,
+    // so ECharts mustn't hide it again on the same mouse move.
     tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'line', snap: false },
+      trigger: 'item',
+      triggerOn: markers ? 'mousemove' : 'none',
       confine: true,
-      formatter: readoutFormatter(data.series.filter((s) => !data.hidden.has(s.sensor.id))),
+      formatter: pointFormatter(visible),
     },
     dataZoom: [
       {
@@ -116,11 +123,14 @@ export function buildVnvChartOptions(data: VnvChartData, window: XRange, yRange:
       brushStyle: { borderWidth: 1, color: hexAlpha(FURNITURE, 0.12), borderColor: FURNITURE },
       outOfBrush: { colorAlpha: 1 },
     },
+    // Order matters to `sensorSeriesIndex` and `hoverSeriesIndex`: baseline (0 or 3),
+    // out of service, the sensors, the selection rings, then the hover point.
     series: [
       ...baselineSeries(data.baseline, data.range),
       outOfServiceSeries(data.outOfService),
       ...sensorSeries,
       selectionSeries([], ringColor),
+      hoverPointSeries(),
     ],
   };
 }
@@ -250,36 +260,115 @@ function outOfServiceSeries(windows: readonly OutOfService[]): object {
   };
 }
 
-interface ReadoutParam {
-  axisValue?: number;
-  value?: [number, number];
+export interface PointParam {
+  seriesId?: string;
+  /** [t, value], plus the sensor's visible index for the hover point. */
+  value?: [number, number] | [number, number, number];
 }
 
 /**
- * Hover readout: the time under the cursor, then every visible sensor's
- * nearest reading. ECharts' own axis tooltip keeps only the series nearest
- * overall (sensors' timestamps differ), so the lookup happens here.
+ * Hover tooltip for one data point: the sensor, then its quality, time stamp,
+ * value (°F), comment and reviewer. Comment and reviewer are blank when the
+ * reading has none. Text a person typed is escaped.
  */
-export function readoutFormatter(visible: readonly SensorSeries[]): (params: ReadoutParam | ReadoutParam[]) => string {
+export function pointFormatter(visible: readonly SensorSeries[]): (params: PointParam | PointParam[]) => string {
+  const bySeries = new Map(visible.map((s) => [SENSOR_SERIES_PREFIX + s.sensor.id, s]));
   return (params) => {
-    const first = Array.isArray(params) ? params[0] : params;
-    const time = first?.axisValue ?? first?.value?.[0];
-    if (time === undefined || visible.length === 0) return '';
-    const rows = visible
-      .map(({ sensor, readings }) => {
-        const r = nearest(readings, time);
-        return (
-          `<span style="display:inline-block;width:14px;height:2px;vertical-align:middle;background:${seriesStyle(sensor.colorIndex).color}"></span>` +
-          `<span>${sensor.id}</span><b style="text-align:right">${r ? r.value.toFixed(2) : '—'}</b><span>°F</span>`
-        );
-      })
-      .join('');
-    const columns = visible.length > 14 ? 2 : 1;
+    const p = Array.isArray(params) ? params[0] : params;
+    const series = p?.seriesId === HOVER_SERIES_ID ? visible[p.value?.[2] ?? -1] : p?.seriesId ? bySeries.get(p.seriesId) : undefined;
+    const t = p?.value?.[0];
+    const r = series && t !== undefined ? nearest(series.readings, t) : null;
+    if (!series || !r) return '';
+    const row = (label: string, value: string) => `<span style="opacity:.75">${label}</span><span>${value}</span>`;
     return (
-      `<div style="margin-bottom:6px">${formatDateTime(time)}</div>` +
-      `<div style="display:grid;grid-template-columns:repeat(${columns}, auto auto auto auto);column-gap:8px;row-gap:2px;align-items:center">${rows}</div>`
+      `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">` +
+      `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${seriesStyle(series.sensor.colorIndex).color}"></span>` +
+      `<b>${escapeHtml(series.sensor.id)}</b></div>` +
+      `<div style="display:grid;grid-template-columns:auto auto;column-gap:12px;row-gap:2px">` +
+      row('Quality', r.qi) +
+      row('Time', formatDateTime(r.timestamp)) +
+      row('Value', `${r.value.toFixed(2)} °F`) +
+      row('Comment', escapeHtml(r.comment ?? '')) +
+      row('Reviewer', escapeHtml(r.reviewer ?? '')) +
+      `</div>`
     );
   };
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+}
+
+/** The chart series index of the `i`th visible sensor (see the series order in `buildVnvChartOptions`). */
+export function sensorSeriesIndex(data: Pick<VnvChartData, 'baseline'>, i: number): number {
+  return (data.baseline ? 3 : 0) + 1 + i;
+}
+
+/** The hover point's series index: after the sensors and the selection rings. */
+export function hoverSeriesIndex(data: Pick<VnvChartData, 'baseline'>, visibleSensors: number): number {
+  return sensorSeriesIndex(data, visibleSensors) + 1;
+}
+
+/**
+ * Wide views draw no points, so there's nothing for ECharts to hover. The chart
+ * draws the reading nearest the pointer here, as one point, and shows its
+ * tooltip. Its value carries the sensor's index among the visible sensors.
+ * Never dimmed by the hover's blur.
+ */
+function hoverPointSeries(): object {
+  return {
+    id: HOVER_SERIES_ID,
+    type: 'scatter',
+    data: [],
+    symbolSize: 9,
+    z: 5,
+    animation: false,
+    emphasis: { disabled: true },
+    blur: { itemStyle: { opacity: 1 } },
+  };
+}
+
+/** The hover point's update, merged into the chart: `null` clears it. */
+export function hoverPointOption(point: { t: number; value: number; sensorIndex: number; color: string } | null): EChartsCoreOption {
+  return {
+    series: [
+      { id: HOVER_SERIES_ID, data: point ? [{ value: [point.t, point.value, point.sensorIndex], itemStyle: { color: point.color } }] : [] },
+    ],
+  };
+}
+
+/**
+ * The visible reading nearest the pointer, within `maxPx`: for hovering wide
+ * views, where no points are drawn and ECharts can't hover a point itself.
+ * `toPixel` maps [t, value] to chart pixels.
+ */
+export function nearestPoint(
+  visible: readonly SensorSeries[],
+  t: number,
+  pointer: [number, number],
+  toPixel: (point: [number, number]) => [number, number],
+  maxPx: number,
+): { sensorIndex: number; dataIndex: number } | null {
+  let best: { sensorIndex: number; dataIndex: number; d: number } | null = null;
+  visible.forEach((s, sensorIndex) => {
+    const dataIndex = nearestIndex(s.readings, t);
+    if (dataIndex < 0) return;
+    const r = s.readings[dataIndex];
+    const [x, y] = toPixel([r.timestamp, r.value]);
+    const d = Math.hypot(x - pointer[0], y - pointer[1]);
+    if (d <= maxPx && (!best || d < best.d)) best = { sensorIndex, dataIndex, d };
+  });
+  const found = best as { sensorIndex: number; dataIndex: number; d: number } | null;
+  return found ? { sensorIndex: found.sensorIndex, dataIndex: found.dataIndex } : null;
+}
+
+/** Index of the reading closest in time to `t`, or -1 for none. */
+export function nearestIndex(readings: readonly Reading[], t: number): number {
+  if (readings.length === 0) return -1;
+  const i = lowerBound(readings, t);
+  if (i === 0) return 0;
+  if (i === readings.length) return i - 1;
+  return t - readings[i - 1].timestamp <= readings[i].timestamp - t ? i - 1 : i;
 }
 
 /** The reading closest in time to `t`. */

@@ -37,11 +37,12 @@ interface RealStats {
  * components (40 in the real location, 6 elsewhere) and generated readings
  * from 01/01/2025 to 11/12/2026. Other component types are listed without sensors.
  */
-export function buildVnvDataset(source: VnvSource, config: MockDataConfig): VnvDataset {
+/** `today`: the generated data runs up to this day (see `MOCK_TODAY`). */
+export function buildVnvDataset(source: VnvSource, config: MockDataConfig, today: number): VnvDataset {
   const vnv = config.vnv;
   const seed = config.seed;
   const rangeStart = parseUsDate(vnv.rangeStart);
-  const rangeEnd = parseUsDate(vnv.rangeEnd);
+  const rangeEnd = today;
 
   // Real series statistics.
   const realBySensor = groupBy(source.readings, (r) => r.sensorId);
@@ -203,14 +204,13 @@ function generatedReadings(sensor: Sensor, d: Derivation, parent: RealStats, con
 function synthesize(sensor: Sensor, level: number, parent: RealStats, config: MockDataConfig): Reading[] {
   const vnv = config.vnv;
   const rng = Rng.for(config.seed, `vnv:readings:${sensor.id}`);
-  const end = parseUsDate(vnv.rangeEnd);
   const sigma = Math.max(parent.std, 0.4);
   const seasonal = (t: number) => vnv.seasonalAmplitudeF * Math.cos((2 * Math.PI * (dayOfYear(t) - 227)) / 365.25);
   const seasonalAtAnchor = seasonal(parent.anchor);
 
   const out: Reading[] = [];
   let drift = 0;
-  for (const day of eachDay(sensor.dataStart, Math.min(sensor.dataEnd, end))) {
+  for (const day of eachDay(sensor.dataStart, sensor.dataEnd)) {
     drift = 0.8 * drift + rng.normal() * sigma * 0.45;
     const n = rng.int(vnv.readingsPerDay.min, vnv.readingsPerDay.max);
     for (let i = 0; i < n; i++) {

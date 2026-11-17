@@ -2,7 +2,9 @@
   <div chartToolbar class="toolbar">
     <app-quality-filter [value]="store.visibleQi()" (valueChange)="store.visibleQi.set($event)" />
     <div class="toolbar__end">
-      <button mat-button type="button" [disabled]="!store.visibleReadings().length" (click)="store.selectShown()">Select all shown</button>
+      <button mat-button type="button" [disabled]="!store.shownInWindowIds().length" (click)="store.toggleSelectShown()">
+        {{ store.allShownSelected() ? 'Deselect all' : 'Select all shown' }}
+      </button>
       <mat-slide-toggle class="fit-y" labelPosition="before" hideIcon [checked]="store.fitY()" (change)="store.fitY.set($event.checked)">
         Fit Y
       </mat-slide-toggle>

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked
 import { MatDialog, type MatDialogRef } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { PrototypeStateService } from '../../../core/prototype-state/prototype-state.service';
+import { MOCK_TODAY } from '../../../core/mock-data/today';
 import { SidePanelComponent } from '../../../ui/components/side-panel/side-panel.component';
 import { VnvFormComponent } from '../../../ui/components/vnv-form/vnv-form.component';
 import {
@@ -42,6 +43,7 @@ import { VnvStore } from '../vnv-store';
 })
 export class VnvPageComponent {
   protected readonly store = inject(VnvStore);
+  private readonly today = inject(MOCK_TODAY);
   private readonly dialog = inject(MatDialog);
   private readonly prototypeState = inject(PrototypeStateService);
   private readonly loadDialog = viewChild.required<TemplateRef<unknown>>('loadDialog');
@@ -79,7 +81,7 @@ export class VnvPageComponent {
         } else if (!state) {
           this.store.clear();
           this.store.loadFormInit.set(null);
-          this.store.range.set(defaultLoadRange());
+          this.store.range.set(defaultLoadRange(this.today));
         }
       });
     });

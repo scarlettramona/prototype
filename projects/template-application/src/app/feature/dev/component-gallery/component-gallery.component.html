@@ -92,7 +92,7 @@
           </div>
         </app-panel-section>
         <app-panel-section title="Equipment out of service" titleStyle="label">
-          <app-swatch-select [options]="sensorOptions" [(value)]="oosSensor" ariaLabel="Equipment out of service" />
+          <app-swatch-select [options]="sensorOptions" [(value)]="oosSensor" ariaLabel="Equipment out of service" placeholder="Select a sensor" noneLabel="None" />
           <div class="details">
             <app-detail-row label="Start date" value="03/03/2026" />
             <app-detail-row label="End date" value="03/17/2026" />

@@ -5,7 +5,9 @@
     <span class="app-field__label" [id]="fieldId + '-farm'">Farm</span>
     <mat-form-field subscriptSizing="dynamic">
       <mat-select [value]="farm().id" [aria-labelledby]="fieldId + '-farm'">
-        <mat-option [value]="farm().id">{{ farm().id }}</mat-option>
+        @for (f of tankFarms; track f.id) {
+          <mat-option [value]="f.id" [disabled]="f.id !== farm().id">{{ f.label }}</mat-option>
+        }
       </mat-select>
     </mat-form-field>
   </div>

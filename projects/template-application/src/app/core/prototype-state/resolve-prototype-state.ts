@@ -4,7 +4,7 @@ import { byNewest, matchesScanQuery } from '../ill/ill-query';
 import { endOfDay, parseUsDate } from '../mock-data/dates';
 import { MOCK_DATA_CONFIG } from '../mock-data/mock-data.config';
 import { dailyReadings } from '../vnv/daily-readings';
-import { QI_VALUES, type Qi } from '../qi/qi.models';
+import { DEFAULT_VISIBLE_QI, type Qi } from '../qi/qi.models';
 import { APP_PATHS } from '../routing/app-paths';
 import type { VnvDataset } from '../vnv/vnv-generator';
 import { PROTOTYPE_STATES, type IllFocusFixture, type PickerFilterFixture, type IllLibraryFixture, type PrototypeStateName, type VnvFixture } from './prototype-states';
@@ -103,7 +103,7 @@ function resolveVnv(name: PrototypeStateName, f: VnvFixture, ds: VnvDataset): Re
     loaded,
     view: f.view,
     hiddenSensorIds,
-    visibleQi: f.visibleQi ? [...f.visibleQi] : [...QI_VALUES],
+    visibleQi: f.visibleQi ? [...f.visibleQi] : [...DEFAULT_VISIBLE_QI],
     selectedReadingIds,
     popover: f.popover ?? null,
     loadForm: f.loadForm

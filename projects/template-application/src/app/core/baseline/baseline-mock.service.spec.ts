@@ -47,4 +47,14 @@ describe('BaselineMockService', () => {
     const [vnv] = (await TestBed.inject(VnvMockService).load({ sensorIds: [sensorId], start: 0, end: 0 })).baselines;
     expect(vnv.value).toBe(81);
   });
+
+  it('restore puts the history and the VNV baseline back (Undo)', async () => {
+    const before = await service.getHistory(sensorId);
+    await service.save({ sensorId, mode: 'new', values: { ...before[0], startDate: parseUsDate('11/16/2026'), value: 90 } });
+    const restored = await service.restore(sensorId, before);
+    expect(restored).toEqual(before);
+    expect(await service.getHistory(sensorId)).toEqual(before);
+    const [vnv] = (await TestBed.inject(VnvMockService).load({ sensorIds: [sensorId], start: 0, end: 0 })).baselines;
+    expect(vnv.value).toBe(before[0].value);
+  });
 });

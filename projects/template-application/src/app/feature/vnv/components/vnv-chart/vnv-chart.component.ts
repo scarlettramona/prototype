@@ -16,7 +16,7 @@ import { QualityFilterComponent } from '../../../../ui/components/quality-filter
 import { SelectionActionBarComponent } from '../../../../ui/components/selection-action-bar/selection-action-bar.component';
 import { VnvFormComponent } from '../../../../ui/components/vnv-form/vnv-form.component';
 import { VnvStore } from '../../vnv-store';
-import { buildVnvChartOptions, selectInRect, selectionPoints, showMarkers, toCsv, windowOption, yRangeFor, type VnvChartData } from './vnv-chart-options';
+import { buildVnvChartOptions, hoverPointOption, hoverSeriesIndex, nearestPoint, selectInRect, selectionPoints, sensorSeriesIndex, showMarkers, toCsv, type VnvChartData, windowOption, yRangeFor } from './vnv-chart-options';
 
 /** The VNV | ⋯ bar's size (Figma 1:11704), for keeping it inside the chart. */
 const BAR_SIZE = { width: 94, height: 42 };
@@ -28,8 +28,8 @@ interface BrushEndEvent {
 /**
  * The VNV chart card (Figma graph-panel 1:11454): quality filter · Fit Y ·
  * Export, the time series, and the navigator with Reset.
- * Shift + drag selects readings; the VNV | ⋯ bar floats above the selection
- * and opens the VNV form popover (Figma 1:11678).
+ * Shift + drag selects readings; the VNV | ⋯ bar floats in the chart (see
+ * `barPos`) and opens the VNV form popover (Figma 1:11678).
  */
 @Component({
   selector: 'app-vnv-chart',
@@ -109,7 +109,7 @@ export class VnvChartComponent {
   /**
    * Where the VNV | ⋯ bar floats, inside the chart: where the pointer ended a
    * Shift + drag selection; for other selections (Select all shown, the table, a
-   * fixture), above the selection's top-left.
+   * fixture), the plot's top-right corner.
    */
   protected readonly barPos = signal<{ x: number; y: number } | null>(null);
   /** The pointer's position over the chart, kept while Shift is held. */
@@ -212,14 +212,10 @@ export class VnvChartComponent {
         y: Math.round(Math.min(Math.max(0, y + 8), chart.getHeight() - BAR_SIZE.height)),
       };
     } else {
-      let minX = Infinity;
-      let minY = Infinity;
-      for (const [t, v] of inView) {
-        const [x, y] = chart.convertToPixel({ xAxisIndex: 0, yAxisIndex: 0 }, [t, v]) as number[];
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-      }
-      next = { x: Math.max(0, Math.round(minX - 12)), y: Math.max(0, Math.round(minY - 56)) };
+      // Other selections (Select all shown, the table, a fixture): the plot's
+      // top-right corner, where it's easy to spot.
+      const [right, top] = chart.convertToPixel({ xAxisIndex: 0, yAxisIndex: 0 }, [w.end, this.yRange()[1]]) as number[];
+      next = { x: Math.max(0, Math.round(right - BAR_SIZE.width - 8)), y: Math.max(0, Math.round(top + 8)) };
     }
     const prev = this.barPos();
     if (!prev || prev.x !== next.x || prev.y !== next.y) this.barPos.set(next);
@@ -241,11 +237,51 @@ export class VnvChartComponent {
     else this.store.resetWindow();
   }
 
-  /** Keeps the chart and wires ⌘ + wheel zoom. Runs again when the theme changes and the chart is rebuilt. */
+  /** Keeps the chart and wires ⌘ + wheel zoom and wide-view hover. Runs again when the theme changes and the chart is rebuilt. */
   protected onChartInit(chart: ECharts): void {
     this.chart = chart;
     this.unbindWheelZoom?.();
     this.unbindWheelZoom = onWheelZoom(chart, () => this.store.effectiveWindow(), (window) => this.store.setWindow(window));
+    const zr = chart.getZr();
+    zr.on('mousemove', (e: { offsetX: number; offsetY: number }) => this.hoverNearest(e.offsetX, e.offsetY));
+    zr.on('globalout', () => this.hoverNearest(null, null));
+  }
+
+  /** The sensor series index currently hovered by `hoverNearest`. */
+  private hovered: { seriesIndex: number; dataIndex: number } | null = null;
+
+  /**
+   * Wide views draw no points, so ECharts can't hover one: find the reading
+   * nearest the pointer (within 10 px) and show its tooltip, dimming the other
+   * sensors as a point hover does. With points drawn, ECharts' own hover runs.
+   */
+  private hoverNearest(x: number | null, y: number | null): void {
+    const chart = this.chart;
+    if (!chart || this.markers()) return;
+    const data = this.data();
+    const visible = data.series.filter((s) => !data.hidden.has(s.sensor.id));
+    let next: { seriesIndex: number; dataIndex: number } | null = null;
+    if (x !== null && y !== null && !this.shiftHeld) {
+      const at = chart.convertFromPixel({ xAxisIndex: 0 }, x) as number;
+      const toPixel = (p: [number, number]) => chart.convertToPixel({ xAxisIndex: 0, yAxisIndex: 0 }, p) as [number, number];
+      const hit = Number.isFinite(at) ? nearestPoint(visible, at, [x, y], toPixel, 10) : null;
+      if (hit) next = { seriesIndex: sensorSeriesIndex(data, hit.sensorIndex), dataIndex: hit.dataIndex };
+    }
+    const prev = this.hovered;
+    if (prev?.seriesIndex === next?.seriesIndex && prev?.dataIndex === next?.dataIndex) return;
+    if (prev) chart.dispatchAction({ type: 'downplay', seriesIndex: prev.seriesIndex });
+    this.hovered = next;
+    if (next) {
+      const sensorIndex = next.seriesIndex - sensorSeriesIndex(data, 0);
+      const s = visible[sensorIndex];
+      const r = s.readings[next.dataIndex];
+      chart.setOption(hoverPointOption({ t: r.timestamp, value: r.value, sensorIndex, color: seriesStyle(s.sensor.colorIndex).color }));
+      chart.dispatchAction({ type: 'highlight', seriesIndex: next.seriesIndex });
+      chart.dispatchAction({ type: 'showTip', seriesIndex: hoverSeriesIndex(data, visible.length), dataIndex: 0 });
+    } else {
+      chart.setOption(hoverPointOption(null));
+      chart.dispatchAction({ type: 'hideTip' });
+    }
   }
 
   protected exportImage(): void {

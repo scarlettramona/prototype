@@ -1,5 +1,5 @@
 import { round } from '../math/stats';
-import { DAY_MS, parseUsDate } from '../mock-data/dates';
+import { addDays, DAY_MS, parseUsDate } from '../mock-data/dates';
 import type { MockDataConfig } from '../mock-data/mock-data.config';
 import { Rng } from '../mock-data/random';
 import { analyse, defaultParameters } from './ill-analysis';
@@ -17,7 +17,11 @@ export interface IllDataset {
  * profile for the focus well (with the analysis-state spread from the config)
  * and the other wells the Scan library frames show.
  */
-export function buildIllDataset(source: IllSourceScan[], config: MockDataConfig): IllDataset {
+/**
+ * `shiftDays`: generated scan dates move forward this many days (today minus
+ * the data's anchor date), so they stay recent. The real scans keep their dates.
+ */
+export function buildIllDataset(source: IllSourceScan[], config: MockDataConfig, shiftDays = 0): IllDataset {
   const ill = config.ill;
   const seed = config.seed;
   const template = source[0];
@@ -40,14 +44,14 @@ export function buildIllDataset(source: IllSourceScan[], config: MockDataConfig)
   }
   const extraRng = Rng.for(seed, `ill:states:${template.wellId}`);
   const extraStates = Array.from({ length: ill.realWellExtraScans }, () => pickState(extraRng, config));
-  scans.push(...generateWell(template.wellId, extraStates, template, config, 'extra'));
+  scans.push(...generateWell(template.wellId, extraStates, template, config, 'extra', shiftDays));
 
-  scans.push(...generateWell(ill.focusWell.id, [...ill.focusWell.analysisStates], template, config, 'focus'));
+  scans.push(...generateWell(ill.focusWell.id, [...ill.focusWell.analysisStates], template, config, 'focus', shiftDays));
 
   for (const w of ill.wells) {
     const rng = Rng.for(seed, `ill:states:${w.id}`);
     const states = Array.from({ length: w.scans }, () => pickState(rng, config));
-    scans.push(...generateWell(w.id, states, template, config, 'well'));
+    scans.push(...generateWell(w.id, states, template, config, 'well', shiftDays));
   }
 
   // Colour by date order within each well.
@@ -71,13 +75,15 @@ function generateWell(
   template: IllSourceScan,
   config: MockDataConfig,
   kind: string,
+  shiftDays: number,
 ): Scan[] {
   const ill = config.ill;
   const rng = Rng.for(config.seed, `ill:well:${kind}:${wellId}`);
-  const recentStart = parseUsDate(ill.recentRangeStart);
-  const recentEnd = parseUsDate(ill.recentRangeEnd);
-  const allStart = parseUsDate(ill.scanRangeStart);
-  const allEnd = parseUsDate(ill.scanRangeEnd);
+  const day = (date: string) => addDays(parseUsDate(date), shiftDays);
+  const recentStart = day(ill.recentRangeStart);
+  const recentEnd = day(ill.recentRangeEnd);
+  const allStart = day(ill.scanRangeStart);
+  const allEnd = day(ill.scanRangeEnd);
 
   const dates = states
     .map(() => {

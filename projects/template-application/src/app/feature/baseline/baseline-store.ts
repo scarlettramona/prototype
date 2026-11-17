@@ -3,6 +3,12 @@ import { BaselineMockService } from '../../core/baseline/baseline-mock.service';
 import type { BaselineMode, BaselineRecord, BaselineValues } from '../../core/baseline/baseline.models';
 import type { Sensor } from '../../core/vnv/vnv.models';
 
+/** What undoing a save needs: the sensor and its history before the save. */
+export interface BaselineUndo {
+  sensorId: string;
+  history: readonly BaselineRecord[];
+}
+
 /** The Baseline page's state (provided by the page): the sensor list, the selected sensor and its history, and saving. */
 @Injectable()
 export class BaselineStore {
@@ -54,15 +60,35 @@ export class BaselineStore {
     }
   }
 
-  /** Saves the selected sensor's baseline in the current mode, then returns to Edit existing. */
-  async save(values: BaselineValues): Promise<void> {
+  /**
+   * Saves the selected sensor's baseline in the current mode, then returns to
+   * Edit existing. Returns what `undo` needs to put it back.
+   */
+  async save(values: BaselineValues): Promise<BaselineUndo | null> {
     const sensorId = this.selectedId();
-    if (!sensorId) return;
+    if (!sensorId) return null;
     const token = this.token;
+    const before = this.history();
     this.saving.set(true);
     try {
       const history = await this.service.save({ sensorId, mode: this.mode(), values });
       if (token === this.token) {
+        this.history.set(history);
+        this.mode.set('edit');
+      }
+      return { sensorId, history: before };
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /** Undo a save: the sensor's history goes back to before it. */
+  async undo(undo: BaselineUndo): Promise<void> {
+    const token = this.token;
+    this.saving.set(true);
+    try {
+      const history = await this.service.restore(undo.sensorId, undo.history);
+      if (token === this.token && this.selectedId() === undo.sensorId) {
         this.history.set(history);
         this.mode.set('edit');
       }

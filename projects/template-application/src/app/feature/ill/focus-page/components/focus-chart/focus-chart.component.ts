@@ -1,7 +1,9 @@
+import { CdkDrag, CdkDragHandle, type Point } from '@angular/cdk/drag-drop';
 import { CdkConnectedOverlay, CdkOverlayOrigin, type ConnectedPosition } from '@angular/cdk/overlay';
 import { A11yModule } from '@angular/cdk/a11y';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, DOCUMENT, inject, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, DOCUMENT, inject, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import type { ECharts, EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -28,8 +30,11 @@ import { ScansLegendComponent } from '../scans-legend/scans-legend.component';
   imports: [
     A11yModule,
     CdkConnectedOverlay,
+    CdkDrag,
+    CdkDragHandle,
     CdkOverlayOrigin,
     MatButtonModule,
+    MatIconModule,
     MatSlideToggleModule,
     NgxEchartsDirective,
     ChartCardComponent,
@@ -47,6 +52,9 @@ export class FocusChartComponent {
   protected chart: ECharts | null = null;
   protected readonly min = DEPTH_MIN;
   protected readonly max = DEPTH_MAX;
+
+  /** Where the legend was dragged to; it reopens there until the focus view closes. */
+  protected readonly legendPosition = signal<Point>({ x: 0, y: 0 });
 
   protected readonly positions: ConnectedPosition[] = [
     { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },

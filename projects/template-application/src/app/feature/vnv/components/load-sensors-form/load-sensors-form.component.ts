@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -9,8 +9,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { parseUsDate, startOfDay } from '../../../../core/mock-data/dates';
-import { MOCK_DATA_CONFIG } from '../../../../core/mock-data/mock-data.config';
+import { startOfDay } from '../../../../core/mock-data/dates';
+import { defaultDateRange, MOCK_TODAY } from '../../../../core/mock-data/today';
+import { TANK_FARMS } from '../../../../core/vnv/tank-farms';
 import type { Sensor, VnvFarm } from '../../../../core/vnv/vnv.models';
 import type { DateRangeValue } from '../../../../ui/components/date-range-field/date-range-field.component';
 import {
@@ -22,6 +23,7 @@ import {
   filterOptions,
   sameFilter,
   setSensors,
+  toggleExpanded,
   toggleSensor,
   type PickerFilter,
   type PickerSelection,
@@ -44,12 +46,9 @@ export interface LoadSensorsRequest {
 
 let nextId = 0;
 
-/** "Set to default": the last 3 months of data. */
-export function defaultLoadRange(): DateRangeValue {
-  const end = parseUsDate(MOCK_DATA_CONFIG.vnv.rangeEnd);
-  const d = new Date(end);
-  d.setMonth(d.getMonth() - 3);
-  return { start: d.getTime(), end };
+/** "Set to default" and the first visit: the last 90 days, ending today. */
+export function defaultLoadRange(today: number): DateRangeValue {
+  return defaultDateRange(today);
 }
 
 /**
@@ -81,9 +80,12 @@ export function defaultLoadRange(): DateRangeValue {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoadSensorsFormComponent {
+  private readonly today = inject(MOCK_TODAY);
   protected readonly fieldId = `load-sensors-${nextId++}`;
   readonly mode = input<'page' | 'dialog'>('page');
   readonly farm = input.required<VnvFarm>();
+  /** Every tank farm; only the loaded farm (AN, the only one with data) can be chosen. */
+  protected readonly tankFarms = TANK_FARMS;
   readonly sensors = input.required<readonly Sensor[]>();
   readonly loadedSensorIds = input<readonly string[]>([]);
   readonly initial = input<LoadSensorsInit | null>(null);
@@ -155,11 +157,9 @@ export class LoadSensorsFormComponent {
     return this.searching() || this.expanded().has(id);
   }
 
+  /** One equipment group open at a time, and one tank within it (`toggleExpanded`). */
   protected toggleNode(id: string): void {
-    const next = new Set(this.expanded());
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    this.expanded.set(next);
+    this.expanded.set(toggleExpanded(this.farm(), this.expanded(), id));
   }
 
   protected openLocation(locationId: string): void {
@@ -178,7 +178,7 @@ export class LoadSensorsFormComponent {
   protected showInTree(groupId: string, tankId: string | null, locationId: string): void {
     this.search.set('');
     this.activeLocationId.set(locationId);
-    this.expanded.set(new Set([...this.expanded(), groupId, ...(tankId ? [tankId] : [])]));
+    this.expanded.set(new Set([groupId, ...(tankId ? [tankId] : [])]));
   }
 
   protected addFilter(filter: PickerFilter): void {
@@ -202,7 +202,7 @@ export class LoadSensorsFormComponent {
   }
 
   protected setDefaultDates(): void {
-    this.range.set(defaultLoadRange());
+    this.range.set(defaultLoadRange(this.today));
   }
 
   protected submit(): void {
@@ -216,7 +216,7 @@ export class LoadSensorsFormComponent {
   protected onCancel(): void {
     if (this.mode() === 'page') {
       this.reset(null);
-      this.range.set(defaultLoadRange());
+      this.range.set(defaultLoadRange(this.today));
     }
     this.cancel.emit();
   }

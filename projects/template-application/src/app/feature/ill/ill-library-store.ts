@@ -2,17 +2,18 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { defaultParameters } from '../../core/ill/ill-analysis';
 import { IllMockService } from '../../core/ill/ill-mock.service';
 import type { ParameterPreset, Scan, ScanQi, ScanQuery, ScanSummary } from '../../core/ill/ill.models';
-import { parseUsDate } from '../../core/mock-data/dates';
-import { MOCK_DATA_CONFIG } from '../../core/mock-data/mock-data.config';
+import { endOfDay } from '../../core/mock-data/dates';
+import { defaultDateRange, MOCK_TODAY } from '../../core/mock-data/today';
 import type { ResolvedIllLibraryState } from '../../core/prototype-state/resolve-prototype-state';
 import { checkState } from '../../core/selection/check-state';
 import { groupByWell, matchesSearch, recentWells } from './library-model';
 
-/** The Load scans form's defaults (Figma 1:2014). */
-export function defaultScanQuery(): ScanQuery {
+/** The Load scans form's defaults (Figma 1:2014): every well, the last 90 days. */
+export function defaultScanQuery(today: number): ScanQuery {
+  const { start, end } = defaultDateRange(today);
   return {
-    start: parseUsDate(MOCK_DATA_CONFIG.ill.recentRangeStart),
-    end: parseUsDate(MOCK_DATA_CONFIG.ill.recentRangeEnd),
+    start,
+    end,
     wellIds: [],
     qi: 'Any',
     analysis: 'Any',
@@ -35,7 +36,8 @@ export class IllLibraryStore {
   private readonly service = inject(IllMockService);
   private loadToken = 0;
 
-  readonly query = signal<ScanQuery>(defaultScanQuery());
+  private readonly today = inject(MOCK_TODAY);
+  readonly query = signal<ScanQuery>(defaultScanQuery(this.today));
   /** The Load scans form is open (before the first load, or after Edit filters). */
   readonly formOpen = signal(true);
   readonly loaded = signal(false);
@@ -71,10 +73,10 @@ export class IllLibraryStore {
   /** The Well field's options and recent markers, once. */
   loadWells(): Promise<void> {
     this.wellsLoaded ??= this.service
-      .searchScans({ start: 0, end: parseUsDate(MOCK_DATA_CONFIG.ill.scanRangeEnd), wellIds: [], qi: 'Any', analysis: 'Any' })
+      .searchScans({ start: 0, end: endOfDay(this.today), wellIds: [], qi: 'Any', analysis: 'Any' })
       .then((all) => {
         this.wellIds.set([...new Set(all.map((s) => s.wellId))].sort());
-        this.recent.set(recentWells(all, parseUsDate(MOCK_DATA_CONFIG.ill.scanRangeEnd)));
+        this.recent.set(recentWells(all, this.today));
       });
     return this.wellsLoaded;
   }
@@ -99,7 +101,7 @@ export class IllLibraryStore {
 
   /** Reset: back to the form's defaults. */
   reset(): void {
-    this.query.set(defaultScanQuery());
+    this.query.set(defaultScanQuery(this.today));
   }
 
   editFilters(): void {
