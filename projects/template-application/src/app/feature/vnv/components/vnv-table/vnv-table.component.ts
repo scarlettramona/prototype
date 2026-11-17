@@ -1,9 +1,10 @@
-import { ScrollingModule } from '@angular/cdk/scrolling';
-import { ChangeDetectionStrategy, Component, computed, DOCUMENT, inject } from '@angular/core';
+import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, DOCUMENT, inject, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { firstValueFrom } from 'rxjs';
 import { downloadText } from '../../../../core/download/download';
 import { formatDateTime } from '../../../../core/mock-data/dates';
 import { ChartCardComponent } from '../../../../ui/components/chart-card/chart-card.component';
@@ -24,7 +25,9 @@ const ROW = 49;
 /**
  * VNV Table view (Figma 1:10892): checkbox · Sensor · Value · Quality · Date
  * · Comment · Reviewer, with the quality filter, Group by sensor and Export.
- * Same data and selection as the chart; virtual-scrolled for ~68k rows.
+ * Same data and selection as the chart; virtual-scrolled for ~68k rows. It
+ * opens scrolled to the first selected row, so a selection made on the chart
+ * is in view.
  */
 @Component({
   selector: 'app-vnv-table',
@@ -37,6 +40,7 @@ export class VnvTableComponent {
   protected readonly store = inject(VnvStore);
   private readonly document = inject(DOCUMENT);
   protected readonly rowHeight = ROW;
+  private readonly viewport = viewChild(CdkVirtualScrollViewport);
   protected readonly date = formatDateTime;
 
   protected readonly columns: ColumnDef[] = [
@@ -49,6 +53,21 @@ export class VnvTableComponent {
   ];
 
   private readonly sensorOrder = computed(() => this.store.result()?.sensors.map((s) => s.id) ?? []);
+
+  constructor() {
+    // Switching from the chart with a selection: open on the first selected row
+    // (in the table's sort), a row above it so it isn't flush with the header.
+    // The viewport sizes its content after its first rendered range; scrolling
+    // before that is clamped to the top.
+    afterNextRender(async () => {
+      const viewport = this.viewport();
+      const selected = this.store.selectedIds();
+      if (!viewport || !selected.size) return;
+      await firstValueFrom(viewport.renderedRangeStream);
+      const index = this.rows().findIndex((r) => r.kind === 'reading' && selected.has(r.reading.id));
+      if (index > 0) viewport.scrollToIndex(index - 1);
+    });
+  }
 
   protected readonly rows = computed<TableRow[]>(() =>
     buildTableRows(this.store.visibleReadings(), this.store.tableSort(), this.store.grouped(), this.sensorOrder(), this.store.collapsedGroups()),

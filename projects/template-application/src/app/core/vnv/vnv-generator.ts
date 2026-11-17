@@ -1,8 +1,7 @@
 import { mean, round, std } from '../math/stats';
-import { addDays, DAY_MS, eachDay, endOfDay, parseUsDate } from '../mock-data/dates';
+import { DAY_MS, eachDay, endOfDay, parseUsDate } from '../mock-data/dates';
 import type { MockDataConfig } from '../mock-data/mock-data.config';
 import { Rng } from '../mock-data/random';
-import type { Qi } from '../qi/qi.models';
 import type { Baseline, OutOfService, Reading, Sensor, VnvFarm, VnvGroup, VnvLocation, VnvTank } from './vnv.models';
 import type { VnvSource, VnvSourceReading } from './vnv-source';
 
@@ -172,7 +171,11 @@ function tiSensorIds(equipment: string | null, tank: string, count: number): str
   }
 }
 
-/** Real sensor: real rows inside the export window, generated around it. */
+/**
+ * Real sensor: real rows inside the export window, generated around it. Every
+ * reading starts Unreviewed, the real rows included (their exported QI is not
+ * used), so the person using the prototype assigns the first QI.
+ */
 function realSensorReadings(sensor: Sensor, real: VnvSourceReading[], stats: RealStats, config: MockDataConfig): Reading[] {
   const generated = synthesize(sensor, stats.mean, stats, config).filter(
     (r) => r.timestamp < stats.start || r.timestamp > stats.end,
@@ -182,7 +185,7 @@ function realSensorReadings(sensor: Sensor, real: VnvSourceReading[], stats: Rea
     sensorId: r.sensorId,
     timestamp: r.timestamp,
     value: r.value,
-    qi: r.qi,
+    qi: 'Unreviewed',
     real: true,
   }));
   return [...generated, ...realRows].sort((a, b) => a.timestamp - b.timestamp);
@@ -194,13 +197,13 @@ function generatedReadings(sensor: Sensor, d: Derivation, parent: RealStats, con
 
 /**
  * Synthesises a sensor's series: level + yearly seasonal swing + day-to-day
- * drift (AR(1)) + within-day noise, quantised like the exports.
+ * drift (AR(1)) + within-day noise, quantised like the exports. Every reading
+ * starts Unreviewed, with no reviewer or comment.
  */
 function synthesize(sensor: Sensor, level: number, parent: RealStats, config: MockDataConfig): Reading[] {
   const vnv = config.vnv;
   const rng = Rng.for(config.seed, `vnv:readings:${sensor.id}`);
   const end = parseUsDate(vnv.rangeEnd);
-  const unreviewedFrom = addDays(end, -(vnv.unreviewedDays - 1));
   const sigma = Math.max(parent.std, 0.4);
   const seasonal = (t: number) => vnv.seasonalAmplitudeF * Math.cos((2 * Math.PI * (dayOfYear(t) - 227)) / 365.25);
   const seasonalAtAnchor = seasonal(parent.anchor);
@@ -221,22 +224,10 @@ function synthesize(sensor: Sensor, level: number, parent: RealStats, config: Mo
         qi: 'Unreviewed',
         real: false,
       };
-      if (day < unreviewedFrom) review(reading, rng, config, end);
       out.push(reading);
     }
   }
   return out;
-}
-
-function review(reading: Reading, rng: Rng, config: MockDataConfig, end: number): void {
-  const mix = config.vnv.reviewedQiMix;
-  const roll = rng.next();
-  const qi: Qi = roll < mix.Good ? 'Good' : roll < mix.Good + mix.Suspect ? 'Suspect' : 'Transcribed';
-  reading.qi = qi;
-  reading.reviewer = rng.pick(config.people);
-  reading.reviewedAt = Math.min(reading.timestamp + rng.int(1, 20) * DAY_MS, end);
-  const commentRate = qi === 'Good' ? config.vnv.commentRate : 0.8;
-  if (rng.chance(commentRate)) reading.comment = rng.pick(config.comments);
 }
 
 function derive(seed: number, id: string, realIds: string[], offset: { min: number; max: number }): Derivation {

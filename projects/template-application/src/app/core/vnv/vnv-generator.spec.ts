@@ -1,4 +1,4 @@
-import { addDays, parseUsDate, startOfDay } from '../mock-data/dates';
+import { parseUsDate, startOfDay } from '../mock-data/dates';
 import { MOCK_DATA_CONFIG } from '../mock-data/mock-data.config';
 import { buildTestVnvDataset, loadVnvSource, readMockFile } from '../mock-data/testing/load-mock-sources';
 import { parseCsvRecords } from '../mock-data/csv';
@@ -67,15 +67,10 @@ describe('VNV generator', () => {
     expect(readings.every((r) => r.value === quantise(r.value, 0.1))).toBe(true);
   });
 
-  it('reviews older readings and leaves the last two weeks Unreviewed', () => {
-    const readings = ds.readingsFor('AN102-WSTA-TI-041');
-    const cutoff = addDays(parseUsDate('11/12/2026'), -13);
-    const older = readings.filter((r) => r.timestamp < cutoff);
-    expect(readings.filter((r) => r.timestamp >= cutoff).every((r) => r.qi === 'Unreviewed')).toBe(true);
-    expect(older.every((r) => r.qi !== 'Unreviewed' && !!r.reviewer && !!r.reviewedAt)).toBe(true);
-    const qis = new Set(older.map((r) => r.qi));
-    expect(qis).toEqual(new Set(['Good', 'Suspect', 'Transcribed']));
-    expect(older.filter((r) => r.qi === 'Good').length).toBeGreaterThan(older.length * 0.7);
+  it('starts every reading Unreviewed, with no reviewer or comment, real rows included', () => {
+    const readings = [...ds.sensors.values()].flatMap((s) => ds.readingsFor(s.id));
+    expect(readings.some((r) => r.real)).toBe(true);
+    expect(readings.every((r) => r.qi === 'Unreviewed' && !r.reviewer && !r.reviewedAt && !r.comment)).toBe(true);
   });
 
   it('has baselines, out-of-service windows and some no-data sensors', () => {

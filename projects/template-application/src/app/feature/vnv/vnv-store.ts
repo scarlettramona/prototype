@@ -186,6 +186,18 @@ export class VnvStore {
     this.clearSelection();
   }
 
+  /**
+   * Show all data on or off. Turning it off drops selected readings that the
+   * daily view no longer shows, so the selection matches what's on screen.
+   */
+  setShowAllData(on: boolean): void {
+    this.showAllData.set(on);
+    if (on || this.selectedIds().size === 0) return;
+    const shown = new Set(this.shownReadings().map((r) => r.id));
+    const kept = [...this.selectedIds()].filter((id) => shown.has(id));
+    if (kept.length !== this.selectedIds().size) this.selectedIds.set(new Set(kept));
+  }
+
   setSelection(ids: Iterable<string>): void {
     this.selectedIds.set(new Set(ids));
   }

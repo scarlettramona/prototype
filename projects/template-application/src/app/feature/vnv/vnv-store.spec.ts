@@ -87,13 +87,30 @@ describe('VnvStore', () => {
     expect(store.applying()).toBe(false);
   });
 
+  it('drops selected readings the daily view hides when Show all data turns off', async () => {
+    await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
+    store.setShowAllData(true);
+    const all = store.shownReadings().map((r) => r.id);
+    store.setSelection(all);
+    store.setShowAllData(false);
+    const daily = new Set(store.shownReadings().map((r) => r.id));
+    expect(daily.size).toBeLessThan(all.length);
+    expect(store.selectedIds()).toEqual(daily);
+  });
+
   it('pre-fills the form with a QI every selected reading shares', async () => {
     await store.applyState(resolvePrototypeState('vnv-chart', data) as ResolvedVnvState);
-    const good = store.result()!.readings.filter((r) => r.qi === 'Good').slice(0, 3);
-    store.setSelection(good.map((r) => r.id));
+    // Everything starts Unreviewed: no pre-fill until a QI has been applied.
+    const [a, b, c, d] = store.result()!.readings.map((r) => r.id);
+    store.setSelection([a, b, c]);
+    expect(store.formInitial()).toBeNull();
+    await store.applyReview({ qi: 'Good', comment: '' });
+    store.setSelection([d]);
+    await store.applyReview({ qi: 'Suspect', comment: '' });
+
+    store.setSelection([a, b, c]);
     expect(store.formInitial()).toEqual({ qi: 'Good' });
-    const mixed = [...good, store.result()!.readings.find((r) => r.qi === 'Suspect')!];
-    store.setSelection(mixed.map((r) => r.id));
+    store.setSelection([a, b, c, d]);
     expect(store.formInitial()).toBeNull();
   });
 

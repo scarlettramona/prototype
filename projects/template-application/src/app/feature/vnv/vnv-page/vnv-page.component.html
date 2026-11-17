@@ -5,7 +5,7 @@
   (rangeChange)="store.range.set($event)"
   (rangeApplied)="store.reloadRange($event)"
   [showAllData]="store.showAllData()"
-  (showAllDataChange)="store.showAllData.set($event)"
+  (showAllDataChange)="store.setShowAllData($event)"
   [view]="store.view()"
   (viewChange)="store.view.set($event)"
   (loadData)="openLoadForm()"

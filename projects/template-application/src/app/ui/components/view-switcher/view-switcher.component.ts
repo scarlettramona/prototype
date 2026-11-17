@@ -3,7 +3,10 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
 export type ContentView = 'table' | 'chart';
 
-/** Table view / Chart view (Figma `content-switcher` 1:1990). */
+/**
+ * Chart view / Table view (Figma `content-switcher` 1:1990). Chart view comes
+ * first because it's where the page opens (Scarlett, 2026-11-17; Figma has Table first).
+ */
 @Component({
   selector: 'app-view-switcher',
   imports: [MatButtonToggleModule],
@@ -15,8 +18,8 @@ export type ContentView = 'table' | 'chart';
       [value]="value()"
       (change)="value.set($event.value)"
     >
-      <mat-button-toggle class="option" value="table">Table view</mat-button-toggle>
       <mat-button-toggle class="option" value="chart">Chart view</mat-button-toggle>
+      <mat-button-toggle class="option" value="table">Table view</mat-button-toggle>
     </mat-button-toggle-group>
   `,
   styles: `

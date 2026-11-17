@@ -63,12 +63,6 @@ export const MOCK_DATA_CONFIG = {
     seasonalAmplitudeF: 1.4,
     /** Exports are quantised to 0.1 °C (≈0.18 °F) and stored as float32. */
     quantumC: 0.1,
-    /** Readings in the last N days are Unreviewed. */
-    unreviewedDays: 14,
-    /** QI mix for reviewed (older) readings. */
-    reviewedQiMix: { Good: 0.84, Suspect: 0.12, Transcribed: 0.04 },
-    /** Share of reviewed readings that carry a comment. */
-    commentRate: 0.25,
 
     /** The location the real sensors belong to; filled up to `sensorCount`. */
     mainLocation: {
