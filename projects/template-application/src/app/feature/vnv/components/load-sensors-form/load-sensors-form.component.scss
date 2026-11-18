@@ -205,18 +205,24 @@
 }
 
 .parent__path {
-  display: inline-flex;
-  align-items: center;
   flex: 1 1 auto;
   min-width: 0;
+  padding: 0 var(--spacing-80);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-weight: var(--app-font-weight-medium, 500);
+}
 
-  mat-icon {
-    flex-shrink: 0;
-    margin: 0 var(--spacing-40);
-  }
+.parent .link {
+  flex-shrink: 0;
+}
+
+.list__context {
+  margin: 0 0 var(--spacing-40);
+  padding-left: var(--spacing-80);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
 }
 
 .hit {

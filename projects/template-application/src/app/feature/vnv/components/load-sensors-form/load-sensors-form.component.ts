@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { startOfDay } from '../../../../core/mock-data/dates';
 import { defaultDateRange, MOCK_TODAY } from '../../../../core/mock-data/today';
 import { TANK_FARMS } from '../../../../core/vnv/tank-farms';
@@ -73,6 +74,7 @@ export function defaultLoadRange(today: number): DateRangeValue {
     MatMenuModule,
     MatSelectModule,
     MatSlideToggleModule,
+    MatTooltipModule,
   ],
   templateUrl: './load-sensors-form.component.html',
   styleUrl: './load-sensors-form.component.scss',
@@ -123,6 +125,11 @@ export class LoadSensorsFormComponent {
   protected readonly results = computed(() =>
     this.searching() ? buildSearch(this.farm(), this.sensorsById(), this.filters(), this.search(), this.range(), this.selection()) : null,
   );
+  /** Equipment group shared by every search match, shown once instead of on each header. */
+  protected readonly sharedGroup = computed(() => {
+    const ids = new Set(this.results()?.groups.map((g) => g.groupId));
+    return ids.size === 1 ? [...ids][0] : null;
+  });
   protected readonly summary = computed(() => {
     const s = this.selection();
     return s.locationId ? `${s.locationId} | ${s.ids.size} selected` : '';

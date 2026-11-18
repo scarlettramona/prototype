@@ -122,6 +122,9 @@
         <span class="list__title">{{ r.count }} sensors match "{{ r.query }}"</span>
         <button mat-button type="button" class="link" [disabled]="!summary()" (click)="setAll(selection().locationId ?? '', [...selection().ids], false)">Clear selected</button>
       </div>
+      @if (sharedGroup(); as sharedGroup) {
+        <p class="list__context">All in {{ sharedGroup }}</p>
+      }
       @for (g of r.groups; track g.locationId) {
         <div class="parent" [class.dim]="g.disabled">
           <mat-checkbox
@@ -131,13 +134,7 @@
             [aria-label]="'Select ' + g.locationId + ' matches'"
             (change)="setAll(g.locationId, g.rows.filter(x => !x.noData).map(x => x.id), $event.checked)"
           />
-          <span class="parent__path">
-            {{ g.groupId }} <mat-icon>chevron_right</mat-icon>
-            @if (g.tankId) {
-              {{ g.tankId }} <mat-icon>chevron_right</mat-icon>
-            }
-            {{ g.locationId }}
-          </span>
+          <span class="parent__path" [matTooltip]="g.groupId + (g.tankId ? ' › ' + g.tankId : '') + ' › ' + g.locationId" matTooltipShowDelay="400">{{ g.locationId }}</span>
           @if (!g.disabled) {
             <button mat-button type="button" class="link" (click)="showInTree(g.groupId, g.tankId, g.locationId)">Show in tree</button>
           }
