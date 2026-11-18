@@ -22,9 +22,7 @@
     #{map.get(map.get(palette.$primary-palette, secondary), 95)}
   );
 
-  /* data table rows: a light tint on hover, a primary tint when checked */
+  /* data table rows: a light tint on hover (checked rows are not tinted) */
   --app-table-row-hover: color-mix(in srgb, var(--mat-sys-on-surface) 5%, transparent);
-  --app-table-row-checked: color-mix(in srgb, var(--mat-sys-primary) 10%, transparent);
-  --app-table-row-checked-hover: color-mix(in srgb, var(--mat-sys-primary) 15%, transparent);
 }
 // #{map.get(palette.$primary-palette, 10)},

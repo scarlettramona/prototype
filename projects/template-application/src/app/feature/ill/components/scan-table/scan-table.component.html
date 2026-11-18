@@ -83,7 +83,7 @@
 
 <ng-template #scanRow let-s let-indent="indent">
   <!-- The row and its expansion panel tint together (hover, checked). -->
-  <div class="scan app-data-table__row" role="rowgroup" [class.app-data-table__row--checked]="store.selectedIds().has(s.id)">
+  <div class="scan app-data-table__row" role="rowgroup">
     <div class="row" role="row" [class.row--open]="store.expandedId() === s.id">
       <span class="cell cell--icon" [class.cell--indent]="indent">
         <button
