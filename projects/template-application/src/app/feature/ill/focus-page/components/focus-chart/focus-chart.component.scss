@@ -36,6 +36,46 @@
   position: absolute;
   inset: 0;
 }
+// Hovered scan card: above-right of the pointer, flipped when near the edge.
+.hover-card {
+  position: absolute;
+  z-index: 2;
+  gap: var(--spacing-40);
+  padding: var(--spacing-120) var(--spacing-160) var(--spacing-80);
+  white-space: nowrap;
+  transform: translate(12px, calc(-100% - 12px));
+
+  &.hover-card--left {
+    transform: translate(calc(-100% - 12px), calc(-100% - 12px));
+  }
+
+  &.hover-card--below {
+    transform: translate(12px, 12px);
+  }
+
+  &.hover-card--left.hover-card--below {
+    transform: translate(calc(-100% - 12px), 12px);
+  }
+}
+
+.hover-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-80);
+  font: var(--mat-sys-title-small);
+}
+
+.hover-card__value {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.hover-card__actions {
+  display: flex;
+  gap: var(--spacing-40);
+  margin: var(--spacing-40) 0 0 calc(-1 * var(--spacing-80));
+}
+
 // The floating legend: `.app-popover`'s surface, a draggable header, then the legend.
 .legend-panel {
   gap: 0;

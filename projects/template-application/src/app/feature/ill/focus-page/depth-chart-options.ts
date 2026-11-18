@@ -32,7 +32,7 @@ export function buildDepthChartOptions(
   window: DepthWindow | null,
   yRange: [number, number],
   tagText: string,
-  { zoom = true }: { zoom?: boolean } = {},
+  { zoom = true, readout = true }: { zoom?: boolean; readout?: boolean } = {},
 ): EChartsCoreOption {
   const focused = data.scans.find((s) => s.id === data.focusedId) ?? null;
   const series = data.scans.map((scan) => {
@@ -79,12 +79,15 @@ export function buildDepthChartOptions(
       nameGap: 48,
       axisLabel: { formatter: (v: number) => String(Math.round(v)) },
     },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'line', snap: false },
-      confine: true,
-      formatter: readoutFormatter(data.scans, data.referenceId),
-    },
+    // The focus view shows a card for the hovered scan instead (`readout: false`).
+    tooltip: readout
+      ? {
+          trigger: 'axis',
+          axisPointer: { type: 'line', snap: false },
+          confine: true,
+          formatter: readoutFormatter(data.scans, data.referenceId),
+        }
+      : { show: false },
     // Without zoom (the library row has no navigator or Reset), drag does nothing.
     dataZoom: zoom
       ? [

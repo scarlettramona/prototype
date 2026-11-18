@@ -15,9 +15,26 @@ import { formatDateTime } from '../../../../../core/mock-data/dates';
 import { ChartCardComponent } from '../../../../../ui/components/chart-card/chart-card.component';
 import { ChartNavigatorComponent, type NavigatorSeries, type NavigatorWindow } from '../../../../../ui/components/chart-navigator/chart-navigator.component';
 import { buildDepthChartOptions, depthWindowOption } from '../../depth-chart-options';
-import { DEPTH_MAX, DEPTH_MIN, depthYRange } from '../../focus-model';
+import { countsAt, DEPTH_MAX, DEPTH_MIN, depthYRange } from '../../focus-model';
 import { IllFocusStore } from '../../ill-focus-store';
 import { ScansLegendComponent } from '../scans-legend/scans-legend.component';
+import { hitScan } from './scan-hover';
+
+/** The scan card shown while the pointer is on one scan's line. */
+interface HoverCard {
+  scanId: string;
+  depth: number;
+  counts: number | null;
+  /** Pointer position in the chart, px. */
+  x: number;
+  y: number;
+  /** Open to the left / below the pointer when there isn't room right / above. */
+  flipX: boolean;
+  flipY: boolean;
+}
+
+/** How long the card stays after the pointer leaves the line, so it can be reached. */
+const HOVER_GRACE_MS = 400;
 
 /**
  * The focus-view chart card (Figma graph-panel 1:9631): title (scan dot +
@@ -74,7 +91,7 @@ export class FocusChartComponent {
   protected readonly options = computed<EChartsCoreOption>(() => {
     const data = this.data();
     const tag = this.chartTheme.tokens().surfaceContainerLowest;
-    return untracked(() => buildDepthChartOptions(data, this.store.window(), this.yRange(), tag));
+    return untracked(() => buildDepthChartOptions(data, this.store.window(), this.yRange(), tag, { readout: false }));
   });
 
   protected readonly windowMerge = computed(() => depthWindowOption(this.store.window(), this.yRange()));
@@ -91,11 +108,23 @@ export class FocusChartComponent {
     return { text: '', color: t.primary, maskColor: withAlpha(t.surfaceContainer, 0.7), lineWidth: 3 };
   });
 
+  /** Hovered scan: one scan's card instead of a readout of every scan. */
+  protected readonly hover = signal<HoverCard | null>(null);
+  protected readonly hoverScan = computed(() => {
+    const h = this.hover();
+    return h ? (this.store.scanById().get(h.scanId) ?? null) : null;
+  });
+  private hideTimer: ReturnType<typeof setTimeout> | null = null;
+  private overCard = false;
+
   private unbindWheelZoom: (() => void) | null = null;
   private readonly setWindowPerFrame = oncePerFrame((window: ChartWindow) => this.store.setWindow(window));
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.unbindWheelZoom?.());
+    inject(DestroyRef).onDestroy(() => {
+      this.unbindWheelZoom?.();
+      this.clearHideTimer();
+    });
   }
 
   protected color(index: number): string {
@@ -120,7 +149,70 @@ export class FocusChartComponent {
   protected onChartInit(chart: ECharts): void {
     this.chart = chart;
     this.unbindWheelZoom?.();
+    const zr = chart.getZr();
+    zr.on('mousemove', (e: { offsetX: number; offsetY: number; event?: MouseEvent }) => this.onPointerMove(e.offsetX, e.offsetY, e.event?.buttons ?? 0));
+    zr.on('globalout', () => this.scheduleHide());
     this.unbindWheelZoom = onWheelZoom(chart, () => this.store.window() ?? { start: DEPTH_MIN, end: DEPTH_MAX }, (window) => this.store.setWindow(window));
+  }
+
+  // ── Scan hover card ──
+
+  private onPointerMove(x: number, y: number, buttons: number): void {
+    const chart = this.chart;
+    if (!chart || this.overCard) return;
+    // Dragging pans the chart; no card while it moves.
+    if (buttons) return this.hideHover();
+    if (!chart.containPixel({ gridIndex: 0 }, [x, y])) return this.scheduleHide();
+    const depth = (chart.convertFromPixel({ gridIndex: 0 }, [x, y]) as number[])[0];
+    const span = Math.abs((chart.convertFromPixel({ gridIndex: 0 }, [x + 10, y]) as number[])[0] - depth) + 0.5;
+    const toPixel = (p: readonly [number, number]) => chart.convertToPixel({ gridIndex: 0 }, [p[0], p[1]]) as unknown as [number, number];
+    const scans = this.store.visibleScans();
+    const hit = hitScan(scans, [x, y], depth, span, toPixel, 8, this.store.focused()?.id ?? null);
+    if (!hit) return this.scheduleHide();
+    this.clearHideTimer();
+    const scan = scans.find((s) => s.id === hit.id);
+    if (!scan) return;
+    this.hover.set({ scanId: scan.id, depth, counts: countsAt(scan.points, depth), x, y, flipX: x > chart.getWidth() - 320, flipY: y < 150 });
+  }
+
+  protected enterCard(): void {
+    this.overCard = true;
+    this.clearHideTimer();
+  }
+
+  protected leaveCard(): void {
+    this.overCard = false;
+    this.scheduleHide();
+  }
+
+  protected focusScan(id: string): void {
+    this.hideHover();
+    this.store.open(id);
+  }
+
+  protected async setReference(id: string): Promise<void> {
+    this.hideHover();
+    await this.store.setReference(id);
+  }
+
+  /** Starts the grace period once; moving over empty chart doesn't restart it. */
+  private scheduleHide(): void {
+    if (!this.hover() || this.hideTimer) return;
+    this.hideTimer = setTimeout(() => {
+      this.hideTimer = null;
+      if (!this.overCard) this.hover.set(null);
+    }, HOVER_GRACE_MS);
+  }
+
+  private hideHover(): void {
+    this.clearHideTimer();
+    this.overCard = false;
+    this.hover.set(null);
+  }
+
+  private clearHideTimer(): void {
+    if (this.hideTimer) clearTimeout(this.hideTimer);
+    this.hideTimer = null;
   }
 
   protected exportImage(): void {

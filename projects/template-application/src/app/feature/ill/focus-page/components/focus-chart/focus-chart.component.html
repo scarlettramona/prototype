@@ -70,6 +70,44 @@
     (chartDataZoom)="onZoom($event)"
   ></div>
 
+  <!-- Hovering one scan's line shows that scan only, with what you can do to it. -->
+  @if (hover(); as h) {
+    @if (hoverScan(); as scan) {
+      <div
+        class="app-popover hover-card"
+        role="dialog"
+        [attr.aria-label]="label(scan.datetime)"
+        [style.left.px]="h.x"
+        [style.top.px]="h.y"
+        [class.hover-card--left]="h.flipX"
+        [class.hover-card--below]="h.flipY"
+        (mouseenter)="enterCard()"
+        (mouseleave)="leaveCard()"
+      >
+        <div class="hover-card__title">
+          <span class="dot" [style.background]="color(scan.colorIndex)"></span>
+          {{ label(scan.datetime) }}
+          @if (scan.reference) {
+            <span class="app-tag">Reference</span>
+          }
+        </div>
+        <div class="hover-card__value">
+          {{ h.counts === null ? '—' : h.counts.toFixed(1) }} counts at {{ h.depth.toFixed(1) }} in
+        </div>
+        @if (scan.id !== store.focused()?.id || !scan.reference) {
+          <div class="hover-card__actions">
+            @if (scan.id !== store.focused()?.id) {
+              <button mat-button type="button" (click)="focusScan(scan.id)">Focus on scan</button>
+            }
+            @if (!scan.reference) {
+              <button mat-button type="button" [disabled]="store.busy()" (click)="setReference(scan.id)">Set as reference scan</button>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+
   <app-chart-navigator
     chartNavigator
     [series]="navigatorSeries()"
