@@ -1,18 +1,18 @@
 <div class="top">
   <h2 class="heading">Load sensors</h2>
 
-  <div class="app-field field">
-    <span class="app-field__label" [id]="fieldId + '-farm'">Farm</span>
-    <mat-form-field subscriptSizing="dynamic">
-      <mat-select [value]="farm().id" [aria-labelledby]="fieldId + '-farm'">
-        @for (f of tankFarms; track f.id) {
-          <mat-option [value]="f.id" [disabled]="f.id !== farm().id">{{ f.label }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-  </div>
-
+  <!-- Row 1: what data (farm and date range). Row 2: how to find it (search and filters). -->
   <div class="dates">
+    <div class="app-field field">
+      <span class="app-field__label" [id]="fieldId + '-farm'">Farm</span>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-select [value]="farm().id" [aria-labelledby]="fieldId + '-farm'">
+          @for (f of tankFarms; track f.id) {
+            <mat-option [value]="f.id" [disabled]="f.id !== farm().id">{{ f.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
     <div class="app-field field">
       <label class="app-field__label" [for]="fieldId + '-start'">Start date</label>
       <mat-form-field subscriptSizing="dynamic">

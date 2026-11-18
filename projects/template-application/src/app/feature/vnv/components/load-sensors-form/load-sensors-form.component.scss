@@ -44,18 +44,21 @@
 
 .query {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: var(--spacing-160);
 }
 
 .search {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .chips {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-160);
+  gap: var(--spacing-80) var(--spacing-160);
+  max-width: 50%;
 }
 
 .chip {
@@ -127,8 +130,9 @@
   cursor: pointer;
   --app-focus-offset: -2px; // the global focus ring, inset
 
-  &:hover {
-    background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
+  // Hover is its own state: it never replaces the selected row's color.
+  &:hover:not(.tree__row--active) {
+    background: var(--mat-sys-surface-container-high);
   }
 }
 
