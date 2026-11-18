@@ -1,8 +1,9 @@
 <div class="top">
   <h2 class="heading">Load sensors</h2>
 
-  <!-- Row 1: what data (farm and date range). Row 2: how to find it (search and filters). -->
-  <div class="dates">
+  <!-- The page stacks Farm, dates, search and filters on four rows. The dialog
+       uses two to leave the tree more height: Farm with the dates, filters beside search. -->
+  <ng-template #farmField>
     <div class="app-field field">
       <span class="app-field__label" [id]="fieldId + '-farm'">Farm</span>
       <mat-form-field subscriptSizing="dynamic">
@@ -13,6 +14,15 @@
         </mat-select>
       </mat-form-field>
     </div>
+  </ng-template>
+  @if (mode() === 'page') {
+    <ng-container [ngTemplateOutlet]="farmField" />
+  }
+
+  <div class="dates">
+    @if (mode() === 'dialog') {
+      <ng-container [ngTemplateOutlet]="farmField" />
+    }
     <div class="app-field field">
       <label class="app-field__label" [for]="fieldId + '-start'">Start date</label>
       <mat-form-field subscriptSizing="dynamic">

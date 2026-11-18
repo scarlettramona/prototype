@@ -48,6 +48,16 @@
   gap: var(--spacing-160);
 }
 
+// The page keeps search and filters on separate rows.
+:host(.page) .query {
+  flex-direction: column;
+  align-items: stretch;
+
+  .chips {
+    max-width: none;
+  }
+}
+
 .search {
   flex: 1 1 auto;
   min-width: 0;
